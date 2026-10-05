@@ -3,16 +3,18 @@ import assert from "node:assert/strict";
 import { checkEmailSecurity } from "../dist/intents/email-security.js";
 
 test("email security evaluates MX, SPF, and DMARC evidence", async () => {
-  const records = {
-    "example.com": { MX: [{ exchange: "mail.example.com", priority: 10 }], TXT: [["v=spf1 include:mail.example.com -all"]] },
-    "_dmarc.example.com": { TXT: [["v=DMARC1; p=reject; rua=mailto:dmarc@example.com"]] }
-  };
-
   const result = await checkEmailSecurity("Example.COM.", {
     resolveImpl: async (name, type) => {
-      const value = records[name]?.[type];
-      if (value === undefined) throw Object.assign(new Error("ENODATA"), { code: "ENODATA" });
-      return value;
+      if (name === "example.com" && type === "MX") {
+        return [{ exchange: "mail.example.com", priority: 10 }];
+      }
+      if (name === "example.com" && type === "TXT") {
+        return [["v=spf1 include:mail.example.com -all"]];
+      }
+      if (name === "_dmarc.example.com" && type === "TXT") {
+        return [["v=DMARC1; p=reject; rua=mailto:dmarc@example.com"]];
+      }
+      throw Object.assign(new Error("ENODATA"), { code: "ENODATA" });
     },
     now: () => "2026-10-05T05:00:00.000Z"
   });
