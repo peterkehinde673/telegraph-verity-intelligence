@@ -90,7 +90,7 @@ export async function checkEmailSecurity(
   } catch (error) {
     return {
       intent: "EMAIL_SECURITY",
-      verdict: "error",
+      verdict: "insufficient_evidence",
       confidence: 0,
       answer: { domain: normalizedDomain, mx_records: [], spf_present: false, spf_records: [], dmarc_present: false, dmarc_records: [] },
       evidence: [],
