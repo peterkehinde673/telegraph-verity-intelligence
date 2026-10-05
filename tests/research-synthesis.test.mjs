@@ -26,7 +26,7 @@ test("research synthesis preserves supplied evidence and returns a conclusion", 
 });
 
 test("research synthesis passes only normalized source fields to the synthesizer", async () => {
-  let received: Array<{ source_id: string; title: string; excerpt: string | null; url: string | null }> = [];
+  let received = [];
   await researchSynthesis("Question", {
     evidence,
     synthesizeImpl: async (_question, sources) => {
