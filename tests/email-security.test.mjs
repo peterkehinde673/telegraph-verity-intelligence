@@ -4,7 +4,7 @@ import { checkEmailSecurity } from "../dist/intents/email-security.js";
 
 test("email security evaluates MX, SPF, and DMARC evidence", async () => {
   const records = {
-    example.com: { MX: [{ exchange: "mail.example.com", priority: 10 }], TXT: ["v=spf1 include:mail.example.com -all"] },
+    "example.com": { MX: [{ exchange: "mail.example.com", priority: 10 }], TXT: ["v=spf1 include:mail.example.com -all"] },
     "_dmarc.example.com": { TXT: ["v=DMARC1; p=reject; rua=mailto:dmarc@example.com"] }
   };
 
