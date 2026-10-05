@@ -5,7 +5,7 @@ import { normalizeEvidence } from "../evidence/normalize.js";
 export interface SslVerificationAnswer {
   hostname: string; port: number; authorized: boolean;
   protocol?: string; cipher?: string;
-  subject?: Record<string, string>; issuer?: Record<string, string>;
+  subject?: tls.PeerCertificate; issuer?: tls.PeerCertificate;
   valid_from?: string; valid_to?: string; fingerprint256?: string;
   serial_number?: string; subject_alt_names?: string; authorization_error?: string;
 }
