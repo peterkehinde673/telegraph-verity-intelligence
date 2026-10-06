@@ -15,3 +15,20 @@ test("SSL verification uses hostname as TLS SNI and keeps authorization enabled"
 test("SSL evidence uses stable endpoint provenance", () => {
   assert.equal(["tls", "example.com", 443].join(":"), "tls:example.com:443");
 });
+
+
+test("SSL verification rejects an invalid timeout before opening a socket", async () => {
+  let called = false;
+  const { verifySsl } = await import("../dist/intents/ssl-verification.js");
+  const result = await verifySsl("example.com", 443, {
+    timeoutMs: 0,
+    connectImpl: () => {
+      called = true;
+      throw new Error("socket should not be opened");
+    }
+  });
+
+  assert.equal(result.verdict, "rejected");
+  assert.equal(result.uncertainty[0]?.code, "invalid_timeout");
+  assert.equal(called, false);
+});
