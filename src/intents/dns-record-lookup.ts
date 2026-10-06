@@ -27,7 +27,18 @@ export async function lookupDnsRecord(
   const normalizedHost = hostname.trim().toLowerCase().replace(/\.$/, "");
   const retrievedAt = options.now?.() ?? new Date().toISOString();
 
-  if (!normalizedHost) {
+  const hostnameValid =
+    normalizedHost.length <= 253 &&
+    !normalizedHost.includes("..") &&
+    normalizedHost.split(".").every((label) =>
+      label.length > 0 &&
+      label.length <= 63 &&
+      /^[a-z0-9-]+$/i.test(label) &&
+      !label.startsWith("-") &&
+      !label.endsWith("-")
+    );
+
+  if (!normalizedHost || !hostnameValid) {
     return {
       intent: "DNS_RECORD_LOOKUP",
       verdict: "rejected",
