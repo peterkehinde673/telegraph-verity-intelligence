@@ -88,6 +88,6 @@ const server = createServer(async (request, response) => {
   sendJson(response, 404, { error: "not_found" });
 });
 
-server.listen(port, "0.0.0.0", () => {
-  console.log(`Verity listening on port ${port}`);
+server.listen(config.port, "0.0.0.0", () => {
+  console.log(`Verity listening on port ${config.port}`);
 });
