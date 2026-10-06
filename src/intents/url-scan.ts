@@ -100,6 +100,31 @@ export async function scanUrl(
   const lookup = options.lookupImpl ?? dns.lookup;
   const timeoutMs = options.timeoutMs ?? 10_000;
   const maxRedirects = options.maxRedirects ?? MAX_REDIRECTS;
+
+  if (!Number.isInteger(timeoutMs) || timeoutMs < 1) {
+    return {
+      intent: "URL_SCAN",
+      verdict: "rejected",
+      confidence: 1,
+      answer: { input_url: raw, redirect_count: 0, redirects: [], hostname: current.hostname },
+      evidence: [],
+      uncertainty: [{ code: "invalid_timeout", message: "The timeout must be a positive integer." }],
+      retrieved_at: retrievedAt
+    };
+  }
+
+  if (!Number.isInteger(maxRedirects) || maxRedirects < 0 || maxRedirects > 20) {
+    return {
+      intent: "URL_SCAN",
+      verdict: "rejected",
+      confidence: 1,
+      answer: { input_url: raw, redirect_count: 0, redirects: [], hostname: current.hostname },
+      evidence: [],
+      uncertainty: [{ code: "invalid_redirect_limit", message: "The redirect limit must be an integer from 0 to 20." }],
+      retrieved_at: retrievedAt
+    };
+  }
+
   const redirects: string[] = [];
 
   for (let attempt = 0; attempt <= maxRedirects; attempt += 1) {
