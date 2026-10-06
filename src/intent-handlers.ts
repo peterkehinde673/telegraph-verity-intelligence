@@ -19,7 +19,7 @@ import { checkEmailSecurity, type EmailSecurityOptions } from "./intents/email-s
 import { detectMalware, type MalwareDetectionOptions } from "./intents/malware-detection.js";
 import { lookupCve, type CveLookupOptions } from "./intents/cve-lookup.js";
 import { verifySsl, type SslVerificationOptions } from "./intents/ssl-verification.js";
-import { lookupDnsRecord, type DnsRecordLookupOptions } from "./intents/dns-record-lookup.js";
+import { lookupDnsRecord, type DnsLookupOptions } from "./intents/dns-record-lookup.js";
 
 export interface IntentProviderDependencies {
   FACT_CHECK?: FactCheckOptions;
@@ -41,7 +41,7 @@ export interface IntentProviderDependencies {
   MALWARE_DETECTION?: MalwareDetectionOptions;
   CVE_LOOKUP?: CveLookupOptions;
   SSL_VERIFICATION?: SslVerificationOptions;
-  DNS_RECORD_LOOKUP?: DnsRecordLookupOptions;
+  DNS_RECORD_LOOKUP?: DnsLookupOptions;
 }
 
 function stringInput(input: unknown, field: string): string {
