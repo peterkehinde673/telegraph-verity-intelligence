@@ -60,12 +60,17 @@ export async function crossrefSearch(query: string) {
 
   return (data.message?.items ?? []).map((item) => {
     const date = item.published?.["date-parts"]?.[0];
+    const year = date?.[0];
+    const month = date?.[1] ?? 1;
+    const day = date?.[2] ?? 1;
     return {
       title: clean(item.title?.[0]) ?? "Untitled work",
       url: item.URL ?? (item.DOI ? `https://doi.org/${item.DOI}` : ""),
       source_id: item.DOI ? `doi:${item.DOI}` : `crossref:${item.URL ?? "unknown"}`,
       authors: (item.author ?? []).map((author) => [author.given, author.family].filter(Boolean).join(" ")),
-      published_at: date?.length ? new Date(Date.UTC(date[0], (date[1] ?? 1) - 1, date[2] ?? 1)).toISOString() : null,
+      published_at: typeof year === "number" && Number.isInteger(year)
+        ? new Date(Date.UTC(year, month - 1, day)).toISOString()
+        : null,
       abstract: clean(item.abstract),
       source_type: "crossref"
     };
