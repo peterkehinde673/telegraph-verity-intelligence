@@ -20,6 +20,7 @@ import { detectMalware, type MalwareDetectionOptions } from "./intents/malware-d
 import { lookupCve, type CveLookupOptions } from "./intents/cve-lookup.js";
 import { verifySsl, type SslVerificationOptions } from "./intents/ssl-verification.js";
 import { lookupDnsRecord, type DnsLookupOptions } from "./intents/dns-record-lookup.js";
+import { wikipediaSearch, crossrefSearch, googleNewsRss } from "./providers/public-sources.js";
 
 export interface IntentProviderDependencies {
   FACT_CHECK?: FactCheckOptions;
@@ -68,7 +69,7 @@ export function createIntentHandlers(
 ): Partial<Record<VerityIntent, IntentHandler>> {
   return {
     FACT_CHECK: handler((input) => factCheck(stringInput(input, "claim"), providers.FACT_CHECK)),
-    RESEARCH_QUERY: handler((input) => researchQuery(stringInput(input, "query"), providers.RESEARCH_QUERY)),
+    RESEARCH_QUERY: handler((input) => researchQuery(stringInput(input, "query"), providers.RESEARCH_QUERY ?? { searchImpl: wikipediaSearch })),
     RESEARCH_SYNTHESIS: handler((input) => {
       const value = objectInput(input);
       const evidence = Array.isArray(value.evidence) ? value.evidence as never[] : [];
@@ -77,8 +78,8 @@ export function createIntentHandlers(
         evidence: evidence as never
       });
     }),
-    NEWS_HEADLINES: handler((input) => newsHeadlines(stringInput(input, "topic"), providers.NEWS_HEADLINES)),
-    ACADEMIC_SEARCH: handler((input) => academicSearch(stringInput(input, "query"), providers.ACADEMIC_SEARCH)),
+    NEWS_HEADLINES: handler((input) => newsHeadlines(stringInput(input, "topic"), providers.NEWS_HEADLINES ?? { fetchImpl: googleNewsRss })),
+    ACADEMIC_SEARCH: handler((input) => academicSearch(stringInput(input, "query"), providers.ACADEMIC_SEARCH ?? { searchImpl: crossrefSearch })),
     CONTENT_EXTRACTION: handler((input) => contentExtraction(stringInput(input, "source"), providers.CONTENT_EXTRACTION)),
     CONTENT_VERIFICATION: handler((input) => contentVerification(stringInput(input, "content"), providers.CONTENT_VERIFICATION)),
     TEXT_AUTHENTICITY_CHECK: handler((input) => checkTextAuthenticity(stringInput(input, "text"), providers.TEXT_AUTHENTICITY_CHECK)),
