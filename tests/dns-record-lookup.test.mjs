@@ -41,3 +41,18 @@ test("DNS lookup rejects unsupported record types", async () => {
   assert.equal(result.verdict, "rejected");
   assert.equal(result.uncertainty[0]?.code, "unsupported_record_type");
 });
+
+
+test("DNS lookup rejects malformed hostnames before resolver access", async () => {
+  let called = false;
+  const result = await lookupDnsRecord("bad..example.com", "A", {
+    resolveImpl: async () => {
+      called = true;
+      return [];
+    }
+  });
+
+  assert.equal(result.verdict, "rejected");
+  assert.equal(result.uncertainty[0]?.code, "invalid_hostname");
+  assert.equal(called, false);
+});
