@@ -1,10 +1,11 @@
 import { createServer } from "node:http";
 import { createIntentRouter, readJsonBody, requestToIntentRequest, sendJson } from "./api.js";
 import { VERITY_INTENTS } from "./intents/catalogue.js";
+import { INTENT_HANDLERS } from "./intent-handlers.js";
 
 const port = Number(process.env.PORT ?? 3000);
 
-const router = createIntentRouter({});
+const router = createIntentRouter(INTENT_HANDLERS);
 
 const server = createServer(async (request, response) => {
   const url = new URL(request.url ?? "/", `http://${request.headers.host ?? "localhost"}`);
