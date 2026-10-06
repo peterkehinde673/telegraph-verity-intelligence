@@ -59,3 +59,29 @@ test("URL scan follows an HTTP redirect under the configured limit", async () =>
   assert.equal(result.answer.redirect_count, 1);
   assert.equal(result.answer.final_url, "https://example.com/final");
 });
+
+
+test("URL scan rejects invalid network limits before access", async () => {
+  let called = false;
+  const result = await scanUrl("https://example.com", {
+    timeoutMs: 0,
+    fetchImpl: async () => {
+      called = true;
+      throw new Error("network should not be called");
+    },
+    lookupImpl: async () => [{ address: "93.184.216.34", family: 4 }]
+  });
+
+  assert.equal(result.verdict, "rejected");
+  assert.equal(result.uncertainty[0]?.code, "invalid_timeout");
+  assert.equal(called, false);
+});
+
+test("URL scan rejects an excessive redirect limit", async () => {
+  const result = await scanUrl("https://example.com", {
+    maxRedirects: 21
+  });
+
+  assert.equal(result.verdict, "rejected");
+  assert.equal(result.uncertainty[0]?.code, "invalid_redirect_limit");
+});
