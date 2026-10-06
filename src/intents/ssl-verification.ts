@@ -16,6 +16,7 @@ export async function verifySsl(hostname: string, port = 443, options: SslVerifi
   const retrievedAt = options.now?.() ?? new Date().toISOString();
   const timeoutMs = options.timeoutMs ?? 10_000;
   if (!normalizedHost) return { intent: "SSL_VERIFICATION", verdict: "rejected", confidence: 1, answer: { hostname: normalizedHost, port, authorized: false }, evidence: [], uncertainty: [{ code: "invalid_hostname", message: "A hostname is required." }], retrieved_at: retrievedAt };
+  if (!Number.isInteger(timeoutMs) || timeoutMs < 1) return { intent: "SSL_VERIFICATION", verdict: "rejected", confidence: 1, answer: { hostname: normalizedHost, port, authorized: false }, evidence: [], uncertainty: [{ code: "invalid_timeout", message: "The timeout must be a positive integer." }], retrieved_at: retrievedAt };
   if (!Number.isInteger(port) || port < 1 || port > 65535) return { intent: "SSL_VERIFICATION", verdict: "rejected", confidence: 1, answer: { hostname: normalizedHost, port, authorized: false }, evidence: [], uncertainty: [{ code: "invalid_port", message: "The port must be an integer between 1 and 65535." }], retrieved_at: retrievedAt };
 
   const connect = options.connectImpl ?? tls.connect;
