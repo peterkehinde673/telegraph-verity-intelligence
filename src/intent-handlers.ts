@@ -21,6 +21,7 @@ import { lookupCve, type CveLookupOptions } from "./intents/cve-lookup.js";
 import { verifySsl, type SslVerificationOptions } from "./intents/ssl-verification.js";
 import { lookupDnsRecord, type DnsLookupOptions } from "./intents/dns-record-lookup.js";
 import { wikipediaSearch, crossrefSearch, googleNewsRss } from "./providers/public-sources.js";
+import { malwareBazaarLookup } from "./providers/malware-bazaar.js";
 
 export interface IntentProviderDependencies {
   FACT_CHECK?: FactCheckOptions;
@@ -91,7 +92,7 @@ export function createIntentHandlers(
     CONTENT_MODERATION: handler((input) => moderateContent(stringInput(input, "text"), providers.CONTENT_MODERATION)),
     URL_SCAN: handler((input) => scanUrl(stringInput(input, "url"), providers.URL_SCAN)),
     EMAIL_SECURITY: handler((input) => checkEmailSecurity(stringInput(input, "domain"), providers.EMAIL_SECURITY)),
-    MALWARE_DETECTION: handler((input) => detectMalware(stringInput(input, "indicator"), providers.MALWARE_DETECTION)),
+    MALWARE_DETECTION: handler((input) => detectMalware(stringInput(input, "indicator"), providers.MALWARE_DETECTION ?? (process.env.MALWAREBAZAAR_AUTH_KEY ? { lookupImpl: (indicator, type) => malwareBazaarLookup(indicator, process.env.MALWAREBAZAAR_AUTH_KEY!) } : undefined))),
     CVE_LOOKUP: handler((input) => lookupCve(stringInput(input, "cve_id"), providers.CVE_LOOKUP)),
     SSL_VERIFICATION: handler((input) => {
       const value = objectInput(input);
