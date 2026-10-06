@@ -22,6 +22,7 @@ import { verifySsl, type SslVerificationOptions } from "./intents/ssl-verificati
 import { lookupDnsRecord, type DnsLookupOptions } from "./intents/dns-record-lookup.js";
 import { wikipediaSearch, crossrefSearch, googleNewsRss } from "./providers/public-sources.js";
 import { malwareBazaarLookup } from "./providers/malware-bazaar.js";
+import { googleFactCheck } from "./providers/google-fact-check.js";
 
 export interface IntentProviderDependencies {
   FACT_CHECK?: FactCheckOptions;
@@ -69,7 +70,7 @@ export function createIntentHandlers(
   providers: IntentProviderDependencies = {}
 ): Partial<Record<VerityIntent, IntentHandler>> {
   return {
-    FACT_CHECK: handler((input) => factCheck(stringInput(input, "claim"), providers.FACT_CHECK)),
+    FACT_CHECK: handler((input) => factCheck(stringInput(input, "claim"), providers.FACT_CHECK ?? (process.env.GOOGLE_FACT_CHECK_API_KEY ? { checkImpl: async (claim) => { const results = await googleFactCheck(claim, process.env.GOOGLE_FACT_CHECK_API_KEY!); const reviews = results.flatMap((item) => item.claimReview ?? []); const evidence = reviews.filter((review) => review.url).map((review) => ({ source_id: `google-fact-check:${review.url}`, source_type: "google-fact-check", title: review.title ?? "Fact-check review", url: review.url, excerpt: review.textualRating ?? null, published_at: review.reviewDate ?? null })); const ratings = reviews.map((review) => (review.textualRating ?? "").toLowerCase()); const falseLike = ratings.some((r) => /false|incorrect|misleading|pants on fire/.test(r)); const trueLike = ratings.some((r) => /true|correct|accurate/.test(r)); const verdict = falseLike && trueLike ? "mixed" : falseLike ? "false" : trueLike ? "true" : "unverified"; return { verdict, explanation: reviews[0]?.textualRating ? `Published fact-check rating: ${reviews[0].textualRating}.` : "No matching published rating was returned.", evidence }; } } : undefined))),
     RESEARCH_QUERY: handler((input) => researchQuery(stringInput(input, "query"), providers.RESEARCH_QUERY ?? { searchImpl: wikipediaSearch })),
     RESEARCH_SYNTHESIS: handler((input) => {
       const value = objectInput(input);
