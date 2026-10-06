@@ -1,9 +1,10 @@
 import { createServer } from "node:http";
 import { createIntentRouter, readJsonBody, requestToIntentRequest, sendJson } from "./api.js";
+import { loadConfig } from "./config.js";
 import { VERITY_INTENTS } from "./intents/catalogue.js";
 import { INTENT_HANDLERS } from "./intent-handlers.js";
 
-const port = Number(process.env.PORT ?? 3000);
+const config = loadConfig();
 
 const router = createIntentRouter(INTENT_HANDLERS);
 
@@ -28,7 +29,7 @@ const server = createServer(async (request, response) => {
 
   if (request.method === "POST" && url.pathname === "/v1/intent") {
     try {
-      const body = await readJsonBody(request);
+      const body = await readJsonBody(request, config.maxBodyBytes);
       const intentRequest = requestToIntentRequest(body);
 
       if (!intentRequest) {
