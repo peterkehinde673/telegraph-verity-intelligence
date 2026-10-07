@@ -9,7 +9,8 @@
     "start": "node dist/server.js",
     "test": "node --test",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "verify:telegraph": "npm run build && node scripts/verify-telegraph-registration.mjs"
+    "verify:telegraph": "npm run build && node scripts/verify-telegraph-registration.mjs",
+    "validate:miner": "node scripts/validate-miner-yaml.mjs"
   },
   "engines": {
     "node": ">=20"
