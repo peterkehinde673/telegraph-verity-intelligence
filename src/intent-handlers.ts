@@ -83,7 +83,7 @@ export function createIntentHandlers(
     }),
     NEWS_HEADLINES: handler((input) => newsHeadlines(stringInput(input, "topic"), providers.NEWS_HEADLINES ?? { fetchImpl: googleNewsRss })),
     ACADEMIC_SEARCH: handler((input) => academicSearch(stringInput(input, "query"), providers.ACADEMIC_SEARCH ?? { searchImpl: crossrefSearch })),
-    CONTENT_EXTRACTION: handler((input) => contentExtraction(stringInput(input, "source"), providers.CONTENT_EXTRACTION ?? (process.env.JINA_API_KEY || true ? { extractImpl: (source) => readUrl(source, process.env.JINA_API_KEY) } : undefined))),
+    CONTENT_EXTRACTION: handler((input) => contentExtraction(stringInput(input, "source"), providers.CONTENT_EXTRACTION ?? { extractImpl: (source) => readUrl(source, process.env.JINA_API_KEY) })),
     CONTENT_VERIFICATION: handler((input) => contentVerification(stringInput(input, "content"), providers.CONTENT_VERIFICATION)),
     TEXT_AUTHENTICITY_CHECK: handler((input) => checkTextAuthenticity(stringInput(input, "text"), providers.TEXT_AUTHENTICITY_CHECK)),
     AI_TEXT_DETECTION: handler((input) => detectAiText(stringInput(input, "text"), providers.AI_TEXT_DETECTION)),
