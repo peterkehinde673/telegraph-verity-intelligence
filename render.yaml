@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: telegraph-verity-intelligence
+    runtime: node
+    plan: free
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: GOOGLE_FACT_CHECK_API_KEY
+        sync: false
+      - key: MALWAREBAZAAR_AUTH_KEY
+        sync: false
+      - key: JINA_API_KEY
+        sync: false
