@@ -1,0 +1,76 @@
+version: "1"
+kind: miner
+id: 0
+slug: telegraph-verity-intelligence
+name: Telegraph Verity Intelligence
+description: Evidence-grounded intelligence provider for research, content verification, media authenticity, and cybersecurity analysis.
+base_url: https://telegraph-verity-intelligence-api.onrender.com
+
+auth:
+  type: none
+
+endpoints:
+  - path: /v1/intent
+    external_path: /v1/intent
+    method: POST
+    description: Execute a Verity Intelligence Intent using a structured intent name and Intent-specific input object.
+    intents:
+      - FACT_CHECK
+      - RESEARCH_QUERY
+      - RESEARCH_SYNTHESIS
+      - NEWS_HEADLINES
+      - ACADEMIC_SEARCH
+      - CONTENT_EXTRACTION
+      - CONTENT_VERIFICATION
+      - TEXT_AUTHENTICITY_CHECK
+      - AI_TEXT_DETECTION
+      - DEEPFAKE_DETECTION
+      - MEDIA_AUTHENTICITY_CHECK
+      - IMAGE_VERIFICATION
+      - VIDEO_VERIFICATION
+      - CONTENT_MODERATION
+      - URL_SCAN
+      - EMAIL_SECURITY
+      - MALWARE_DETECTION
+      - CVE_LOOKUP
+      - SSL_VERIFICATION
+      - DNS_RECORD_LOOKUP
+    content_type: application/json
+    params:
+      body:
+        required:
+          - name: intent
+            type: string
+            intents: ["*"]
+            description: Canonical Telegraph Intent name to execute.
+          - name: input
+            type: object
+            intents: ["*"]
+            description: Intent-specific structured input object validated by Verity.
+
+semantics:
+  signal_mapping:
+    confidence_field: confidence
+    label_field: verdict
+    reason_field: explanation
+  supported_intents:
+    - FACT_CHECK
+    - RESEARCH_QUERY
+    - RESEARCH_SYNTHESIS
+    - NEWS_HEADLINES
+    - ACADEMIC_SEARCH
+    - CONTENT_EXTRACTION
+    - CONTENT_VERIFICATION
+    - TEXT_AUTHENTICITY_CHECK
+    - AI_TEXT_DETECTION
+    - DEEPFAKE_DETECTION
+    - MEDIA_AUTHENTICITY_CHECK
+    - IMAGE_VERIFICATION
+    - VIDEO_VERIFICATION
+    - CONTENT_MODERATION
+    - URL_SCAN
+    - EMAIL_SECURITY
+    - MALWARE_DETECTION
+    - CVE_LOOKUP
+    - SSL_VERIFICATION
+    - DNS_RECORD_LOOKUP
