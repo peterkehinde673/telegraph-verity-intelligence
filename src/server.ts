@@ -3,6 +3,7 @@ import { createIntentRouter, readJsonBody, requestToIntentRequest, sendJson } fr
 import { loadConfig } from "./config.js";
 import { VERITY_INTENTS } from "./intents/catalogue.js";
 import { INTENT_HANDLERS } from "./intent-handlers.js";
+import { validateVerityResponse } from "./contracts/verity-response.js";
 
 const config = loadConfig();
 
@@ -55,6 +56,17 @@ const server = createServer(async (request, response) => {
           error: "intent_not_implemented",
           intent: intentRequest.intent,
           message: "The Intent is in the Verity scope but has no production handler yet."
+        });
+        return;
+      }
+
+      const responseErrors = validateVerityResponse(result);
+      if (responseErrors.length > 0) {
+        sendJson(response, 502, {
+          error: "invalid_intent_response",
+          intent: intentRequest.intent,
+          message: "The Intent handler returned a response that violates the Verity response contract.",
+          details: responseErrors
         });
         return;
       }
