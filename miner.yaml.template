@@ -1,6 +1,7 @@
 version: "1"
 kind: miner
-id: 0
+# Replace this placeholder only after verifying an unused Miner ID against Telegraph's live registry.
+id: "REPLACE_WITH_VERIFIED_UNUSED_MINER_ID"
 slug: telegraph-verity-intelligence
 name: Telegraph Verity Intelligence
 description: Evidence-grounded intelligence provider for research, content verification, media authenticity, and cybersecurity analysis.
@@ -49,10 +50,6 @@ endpoints:
             description: Intent-specific structured input object validated by Verity.
 
 semantics:
-  signal_mapping:
-    confidence_field: confidence
-    label_field: verdict
-    reason_field: explanation
   supported_intents:
     - FACT_CHECK
     - RESEARCH_QUERY
