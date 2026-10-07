@@ -68,7 +68,7 @@ export async function crossrefSearch(query: string) {
       url: item.URL ?? (item.DOI ? `https://doi.org/${item.DOI}` : ""),
       source_id: item.DOI ? `doi:${item.DOI}` : `crossref:${item.URL ?? "unknown"}`,
       authors: (item.author ?? []).map((author) => [author.given, author.family].filter(Boolean).join(" ")),
-      published_at: typeof year === "number" && Number.isInteger(year)
+      published_at: typeof year === "number" && Number.isInteger(year) && year >= 1000 && year <= 9999
         ? new Date(Date.UTC(year, month - 1, day)).toISOString()
         : null,
       abstract: clean(item.abstract),
