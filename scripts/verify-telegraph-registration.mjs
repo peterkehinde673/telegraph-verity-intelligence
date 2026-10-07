@@ -11,10 +11,17 @@ async function fetchJson(url) {
 }
 
 const canonical = await fetchJson(INTENTS_URL);
+const canonicalEntries =
+  Array.isArray(canonical) ? canonical :
+  Array.isArray(canonical?.intents) ? canonical.intents :
+  Array.isArray(canonical?.data) ? canonical.data :
+  Array.isArray(canonical?.items) ? canonical.items :
+  [];
+
 const canonicalNames = new Set(
-  Array.isArray(canonical)
-    ? canonical.map((item) => typeof item === "string" ? item : item?.name).filter(Boolean)
-    : []
+  canonicalEntries
+    .map((item) => typeof item === "string" ? item : item?.name ?? item?.intent ?? item?.intent_name)
+    .filter((name) => typeof name === "string")
 );
 
 const missing = VERITY_INTENTS.filter((intent) => !canonicalNames.has(intent));
