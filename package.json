@@ -8,7 +8,8 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/server.js",
     "test": "node --test",
-    "typecheck": "tsc --noEmit -p tsconfig.json"
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "verify:telegraph": "npm run build && node scripts/verify-telegraph-registration.mjs"
   },
   "engines": {
     "node": ">=20"
