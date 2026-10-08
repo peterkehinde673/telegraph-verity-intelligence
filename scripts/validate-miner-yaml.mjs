@@ -3,6 +3,16 @@ import { readFile } from "node:fs/promises";
 
 const file = process.argv[2] ?? "miner.yaml";
 const apiKey = process.env.TELEGRAPH_VALIDATION_API_KEY;
+const allowTemplate = process.env.TELEGRAPH_ALLOW_TEMPLATE === "1";
+
+if (file.endsWith(".template")) {
+  if (!allowTemplate) {
+    throw new Error(
+      "Refusing to submit a template to Telegraph validation. Set TELEGRAPH_ALLOW_TEMPLATE=1 only for an explicit template validation attempt."
+    );
+  }
+  console.warn("Validating a template explicitly; this is not a registration-ready Miner YAML.");
+}
 const minerAddress = process.env.TELEGRAPH_MINER_ADDRESS;
 
 const yaml = await readFile(file, "utf8");
