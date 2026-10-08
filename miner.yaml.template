@@ -75,27 +75,483 @@ endpoints:
   - path: /v1/intent
     external_path: /v1/intent
     method: POST
-    description: Execute a Verity Intelligence Intent using a structured intent name and Intent-specific input object.
+    description: Check a factual claim against published fact-check evidence. The request body uses intent and an input object containing claim.
     intents:
       - FACT_CHECK
+    content_type: application/json
+    params:
+      body:
+        required:
+          - name: intent
+            type: string
+            intents:
+              - FACT_CHECK
+            description: Canonical Intent name; must be FACT_CHECK.
+            accepted_fields:
+              - value: FACT_CHECK
+                intents:
+                  - FACT_CHECK
+                description: Select the FACT_CHECK capability.
+          - name: input
+            type: object
+            intents:
+              - FACT_CHECK
+            description: Intent-specific input object. Required field: claim.
+  - path: /v1/intent
+    external_path: /v1/intent
+    method: POST
+    description: Research a question and return evidence-grounded findings. The request body uses intent and an input object containing query.
+    intents:
       - RESEARCH_QUERY
+    content_type: application/json
+    params:
+      body:
+        required:
+          - name: intent
+            type: string
+            intents:
+              - RESEARCH_QUERY
+            description: Canonical Intent name; must be RESEARCH_QUERY.
+            accepted_fields:
+              - value: RESEARCH_QUERY
+                intents:
+                  - RESEARCH_QUERY
+                description: Select the RESEARCH_QUERY capability.
+          - name: input
+            type: object
+            intents:
+              - RESEARCH_QUERY
+            description: Intent-specific input object. Required field: query.
+  - path: /v1/intent
+    external_path: /v1/intent
+    method: POST
+    description: Synthesize supplied evidence to answer a research question. The request body uses intent and an input object containing question.
+    intents:
       - RESEARCH_SYNTHESIS
+    content_type: application/json
+    params:
+      body:
+        required:
+          - name: intent
+            type: string
+            intents:
+              - RESEARCH_SYNTHESIS
+            description: Canonical Intent name; must be RESEARCH_SYNTHESIS.
+            accepted_fields:
+              - value: RESEARCH_SYNTHESIS
+                intents:
+                  - RESEARCH_SYNTHESIS
+                description: Select the RESEARCH_SYNTHESIS capability.
+          - name: input
+            type: object
+            intents:
+              - RESEARCH_SYNTHESIS
+            description: Intent-specific input object. Required field: question.
+  - path: /v1/intent
+    external_path: /v1/intent
+    method: POST
+    description: Retrieve recent headlines for a topic. The request body uses intent and an input object containing topic.
+    intents:
       - NEWS_HEADLINES
+    content_type: application/json
+    params:
+      body:
+        required:
+          - name: intent
+            type: string
+            intents:
+              - NEWS_HEADLINES
+            description: Canonical Intent name; must be NEWS_HEADLINES.
+            accepted_fields:
+              - value: NEWS_HEADLINES
+                intents:
+                  - NEWS_HEADLINES
+                description: Select the NEWS_HEADLINES capability.
+          - name: input
+            type: object
+            intents:
+              - NEWS_HEADLINES
+            description: Intent-specific input object. Required field: topic.
+  - path: /v1/intent
+    external_path: /v1/intent
+    method: POST
+    description: Search academic literature for a research query. The request body uses intent and an input object containing query.
+    intents:
       - ACADEMIC_SEARCH
+    content_type: application/json
+    params:
+      body:
+        required:
+          - name: intent
+            type: string
+            intents:
+              - ACADEMIC_SEARCH
+            description: Canonical Intent name; must be ACADEMIC_SEARCH.
+            accepted_fields:
+              - value: ACADEMIC_SEARCH
+                intents:
+                  - ACADEMIC_SEARCH
+                description: Select the ACADEMIC_SEARCH capability.
+          - name: input
+            type: object
+            intents:
+              - ACADEMIC_SEARCH
+            description: Intent-specific input object. Required field: query.
+  - path: /v1/intent
+    external_path: /v1/intent
+    method: POST
+    description: Extract readable content from a source URL. The request body uses intent and an input object containing source.
+    intents:
       - CONTENT_EXTRACTION
+    content_type: application/json
+    params:
+      body:
+        required:
+          - name: intent
+            type: string
+            intents:
+              - CONTENT_EXTRACTION
+            description: Canonical Intent name; must be CONTENT_EXTRACTION.
+            accepted_fields:
+              - value: CONTENT_EXTRACTION
+                intents:
+                  - CONTENT_EXTRACTION
+                description: Select the CONTENT_EXTRACTION capability.
+          - name: input
+            type: object
+            intents:
+              - CONTENT_EXTRACTION
+            description: Intent-specific input object. Required field: source.
+  - path: /v1/intent
+    external_path: /v1/intent
+    method: POST
+    description: Verify supplied content against available evidence. The request body uses intent and an input object containing content.
+    intents:
       - CONTENT_VERIFICATION
+    content_type: application/json
+    params:
+      body:
+        required:
+          - name: intent
+            type: string
+            intents:
+              - CONTENT_VERIFICATION
+            description: Canonical Intent name; must be CONTENT_VERIFICATION.
+            accepted_fields:
+              - value: CONTENT_VERIFICATION
+                intents:
+                  - CONTENT_VERIFICATION
+                description: Select the CONTENT_VERIFICATION capability.
+          - name: input
+            type: object
+            intents:
+              - CONTENT_VERIFICATION
+            description: Intent-specific input object. Required field: content.
+  - path: /v1/intent
+    external_path: /v1/intent
+    method: POST
+    description: Assess the authenticity characteristics of supplied text. The request body uses intent and an input object containing text.
+    intents:
       - TEXT_AUTHENTICITY_CHECK
+    content_type: application/json
+    params:
+      body:
+        required:
+          - name: intent
+            type: string
+            intents:
+              - TEXT_AUTHENTICITY_CHECK
+            description: Canonical Intent name; must be TEXT_AUTHENTICITY_CHECK.
+            accepted_fields:
+              - value: TEXT_AUTHENTICITY_CHECK
+                intents:
+                  - TEXT_AUTHENTICITY_CHECK
+                description: Select the TEXT_AUTHENTICITY_CHECK capability.
+          - name: input
+            type: object
+            intents:
+              - TEXT_AUTHENTICITY_CHECK
+            description: Intent-specific input object. Required field: text.
+  - path: /v1/intent
+    external_path: /v1/intent
+    method: POST
+    description: Assess whether supplied text shows signals of AI generation. The request body uses intent and an input object containing text.
+    intents:
       - AI_TEXT_DETECTION
+    content_type: application/json
+    params:
+      body:
+        required:
+          - name: intent
+            type: string
+            intents:
+              - AI_TEXT_DETECTION
+            description: Canonical Intent name; must be AI_TEXT_DETECTION.
+            accepted_fields:
+              - value: AI_TEXT_DETECTION
+                intents:
+                  - AI_TEXT_DETECTION
+                description: Select the AI_TEXT_DETECTION capability.
+          - name: input
+            type: object
+            intents:
+              - AI_TEXT_DETECTION
+            description: Intent-specific input object. Required field: text.
+  - path: /v1/intent
+    external_path: /v1/intent
+    method: POST
+    description: Assess supplied media input for deepfake indicators. The request body uses intent and an input object containing input.
+    intents:
       - DEEPFAKE_DETECTION
+    content_type: application/json
+    params:
+      body:
+        required:
+          - name: intent
+            type: string
+            intents:
+              - DEEPFAKE_DETECTION
+            description: Canonical Intent name; must be DEEPFAKE_DETECTION.
+            accepted_fields:
+              - value: DEEPFAKE_DETECTION
+                intents:
+                  - DEEPFAKE_DETECTION
+                description: Select the DEEPFAKE_DETECTION capability.
+          - name: input
+            type: object
+            intents:
+              - DEEPFAKE_DETECTION
+            description: Intent-specific input object. Required field: input.
+  - path: /v1/intent
+    external_path: /v1/intent
+    method: POST
+    description: Assess the authenticity of supplied media input. The request body uses intent and an input object containing input.
+    intents:
       - MEDIA_AUTHENTICITY_CHECK
+    content_type: application/json
+    params:
+      body:
+        required:
+          - name: intent
+            type: string
+            intents:
+              - MEDIA_AUTHENTICITY_CHECK
+            description: Canonical Intent name; must be MEDIA_AUTHENTICITY_CHECK.
+            accepted_fields:
+              - value: MEDIA_AUTHENTICITY_CHECK
+                intents:
+                  - MEDIA_AUTHENTICITY_CHECK
+                description: Select the MEDIA_AUTHENTICITY_CHECK capability.
+          - name: input
+            type: object
+            intents:
+              - MEDIA_AUTHENTICITY_CHECK
+            description: Intent-specific input object. Required field: input.
+  - path: /v1/intent
+    external_path: /v1/intent
+    method: POST
+    description: Verify an image input using available authenticity evidence. The request body uses intent and an input object containing input.
+    intents:
       - IMAGE_VERIFICATION
+    content_type: application/json
+    params:
+      body:
+        required:
+          - name: intent
+            type: string
+            intents:
+              - IMAGE_VERIFICATION
+            description: Canonical Intent name; must be IMAGE_VERIFICATION.
+            accepted_fields:
+              - value: IMAGE_VERIFICATION
+                intents:
+                  - IMAGE_VERIFICATION
+                description: Select the IMAGE_VERIFICATION capability.
+          - name: input
+            type: object
+            intents:
+              - IMAGE_VERIFICATION
+            description: Intent-specific input object. Required field: input.
+  - path: /v1/intent
+    external_path: /v1/intent
+    method: POST
+    description: Verify a video input using available authenticity evidence. The request body uses intent and an input object containing input.
+    intents:
       - VIDEO_VERIFICATION
+    content_type: application/json
+    params:
+      body:
+        required:
+          - name: intent
+            type: string
+            intents:
+              - VIDEO_VERIFICATION
+            description: Canonical Intent name; must be VIDEO_VERIFICATION.
+            accepted_fields:
+              - value: VIDEO_VERIFICATION
+                intents:
+                  - VIDEO_VERIFICATION
+                description: Select the VIDEO_VERIFICATION capability.
+          - name: input
+            type: object
+            intents:
+              - VIDEO_VERIFICATION
+            description: Intent-specific input object. Required field: input.
+  - path: /v1/intent
+    external_path: /v1/intent
+    method: POST
+    description: Classify supplied text for content-moderation concerns. The request body uses intent and an input object containing text.
+    intents:
       - CONTENT_MODERATION
+    content_type: application/json
+    params:
+      body:
+        required:
+          - name: intent
+            type: string
+            intents:
+              - CONTENT_MODERATION
+            description: Canonical Intent name; must be CONTENT_MODERATION.
+            accepted_fields:
+              - value: CONTENT_MODERATION
+                intents:
+                  - CONTENT_MODERATION
+                description: Select the CONTENT_MODERATION capability.
+          - name: input
+            type: object
+            intents:
+              - CONTENT_MODERATION
+            description: Intent-specific input object. Required field: text.
+  - path: /v1/intent
+    external_path: /v1/intent
+    method: POST
+    description: Scan a URL for security and reputation indicators. The request body uses intent and an input object containing url.
+    intents:
       - URL_SCAN
+    content_type: application/json
+    params:
+      body:
+        required:
+          - name: intent
+            type: string
+            intents:
+              - URL_SCAN
+            description: Canonical Intent name; must be URL_SCAN.
+            accepted_fields:
+              - value: URL_SCAN
+                intents:
+                  - URL_SCAN
+                description: Select the URL_SCAN capability.
+          - name: input
+            type: object
+            intents:
+              - URL_SCAN
+            description: Intent-specific input object. Required field: url.
+  - path: /v1/intent
+    external_path: /v1/intent
+    method: POST
+    description: Assess an email domain for security indicators. The request body uses intent and an input object containing domain.
+    intents:
       - EMAIL_SECURITY
+    content_type: application/json
+    params:
+      body:
+        required:
+          - name: intent
+            type: string
+            intents:
+              - EMAIL_SECURITY
+            description: Canonical Intent name; must be EMAIL_SECURITY.
+            accepted_fields:
+              - value: EMAIL_SECURITY
+                intents:
+                  - EMAIL_SECURITY
+                description: Select the EMAIL_SECURITY capability.
+          - name: input
+            type: object
+            intents:
+              - EMAIL_SECURITY
+            description: Intent-specific input object. Required field: domain.
+  - path: /v1/intent
+    external_path: /v1/intent
+    method: POST
+    description: Check a malware indicator against malware intelligence. The request body uses intent and an input object containing indicator.
+    intents:
       - MALWARE_DETECTION
+    content_type: application/json
+    params:
+      body:
+        required:
+          - name: intent
+            type: string
+            intents:
+              - MALWARE_DETECTION
+            description: Canonical Intent name; must be MALWARE_DETECTION.
+            accepted_fields:
+              - value: MALWARE_DETECTION
+                intents:
+                  - MALWARE_DETECTION
+                description: Select the MALWARE_DETECTION capability.
+          - name: input
+            type: object
+            intents:
+              - MALWARE_DETECTION
+            description: Intent-specific input object. Required field: indicator.
+  - path: /v1/intent
+    external_path: /v1/intent
+    method: POST
+    description: Look up a CVE identifier and return vulnerability intelligence. The request body uses intent and an input object containing cve_id.
+    intents:
       - CVE_LOOKUP
+    content_type: application/json
+    params:
+      body:
+        required:
+          - name: intent
+            type: string
+            intents:
+              - CVE_LOOKUP
+            description: Canonical Intent name; must be CVE_LOOKUP.
+            accepted_fields:
+              - value: CVE_LOOKUP
+                intents:
+                  - CVE_LOOKUP
+                description: Select the CVE_LOOKUP capability.
+          - name: input
+            type: object
+            intents:
+              - CVE_LOOKUP
+            description: Intent-specific input object. Required field: cve_id.
+  - path: /v1/intent
+    external_path: /v1/intent
+    method: POST
+    description: Verify the TLS certificate and connection for a hostname. The request body uses intent and an input object containing hostname.
+    intents:
       - SSL_VERIFICATION
+    content_type: application/json
+    params:
+      body:
+        required:
+          - name: intent
+            type: string
+            intents:
+              - SSL_VERIFICATION
+            description: Canonical Intent name; must be SSL_VERIFICATION.
+            accepted_fields:
+              - value: SSL_VERIFICATION
+                intents:
+                  - SSL_VERIFICATION
+                description: Select the SSL_VERIFICATION capability.
+          - name: input
+            type: object
+            intents:
+              - SSL_VERIFICATION
+            description: Intent-specific input object. Required field: hostname.
+  - path: /v1/intent
+    external_path: /v1/intent
+    method: POST
+    description: Look up DNS records for a hostname. The request body uses intent and an input object containing hostname.
+    intents:
       - DNS_RECORD_LOOKUP
     content_type: application/json
     params:
@@ -103,13 +559,19 @@ endpoints:
         required:
           - name: intent
             type: string
-            intents: ["*"]
-            description: Canonical Telegraph Intent name to execute.
+            intents:
+              - DNS_RECORD_LOOKUP
+            description: Canonical Intent name; must be DNS_RECORD_LOOKUP.
+            accepted_fields:
+              - value: DNS_RECORD_LOOKUP
+                intents:
+                  - DNS_RECORD_LOOKUP
+                description: Select the DNS_RECORD_LOOKUP capability.
           - name: input
             type: object
-            intents: ["*"]
-            description: Intent-specific structured input object validated by Verity.
-
+            intents:
+              - DNS_RECORD_LOOKUP
+            description: Intent-specific input object. Required field: hostname.
 semantics:
   supported_intents:
     - FACT_CHECK
