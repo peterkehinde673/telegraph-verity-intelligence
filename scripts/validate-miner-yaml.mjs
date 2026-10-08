@@ -27,7 +27,13 @@ if (!response.ok || result.valid !== true) {
 }
 
 const failed = Array.isArray(result.results)
-  ? result.results.filter((entry) => entry.success === false)
+  ? result.results.filter((entry) => entry.success !== true || (typeof entry.status === "number" && (entry.status < 200 || entry.status >= 300)))
   : [];
 
-if (failed.length > 0) process.exit(1);
+if (failed.length > 0) {
+  console.error("One or more miner endpoints did not return a 2xx validation response.");
+  for (const entry of failed) console.error(JSON.stringify(entry));
+  process.exit(1);
+}
+
+console.log("Telegraph miner validation passed with all declared endpoints returning 2xx.");
