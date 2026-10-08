@@ -7,6 +7,67 @@ name: Telegraph Verity Intelligence
 description: Evidence-grounded intelligence provider for research, content verification, media authenticity, and cybersecurity analysis.
 base_url: https://telegraph-verity-intelligence-api.onrender.com
 
+input_schema:
+  type: object
+  required:
+    - intent
+    - input
+  properties:
+    intent:
+      type: string
+      description: Canonical Telegraph Intent name.
+      enum:
+        - FACT_CHECK
+        - RESEARCH_QUERY
+        - RESEARCH_SYNTHESIS
+        - NEWS_HEADLINES
+        - ACADEMIC_SEARCH
+        - CONTENT_EXTRACTION
+        - CONTENT_VERIFICATION
+        - TEXT_AUTHENTICITY_CHECK
+        - AI_TEXT_DETECTION
+        - DEEPFAKE_DETECTION
+        - MEDIA_AUTHENTICITY_CHECK
+        - IMAGE_VERIFICATION
+        - VIDEO_VERIFICATION
+        - CONTENT_MODERATION
+        - URL_SCAN
+        - EMAIL_SECURITY
+        - MALWARE_DETECTION
+        - CVE_LOOKUP
+        - SSL_VERIFICATION
+        - DNS_RECORD_LOOKUP
+    input:
+      type: object
+      description: Intent-specific structured input. The required fields depend on the selected intent.
+
+output_schema:
+  type: object
+  required:
+    - intent
+    - verdict
+    - confidence
+    - answer
+    - evidence
+    - uncertainty
+    - retrieved_at
+  properties:
+    intent:
+      type: string
+    verdict:
+      type: string
+    confidence:
+      type: number
+      description: Confidence score from 0 to 1.
+    answer:
+      type: object
+    evidence:
+      type: array
+    uncertainty:
+      type: array
+    retrieved_at:
+      type: string
+
 auth:
   type: none
 
