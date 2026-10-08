@@ -10,7 +10,9 @@
     "test": "node --test",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "verify:telegraph": "npm run build && node scripts/verify-telegraph-registration.mjs",
-    "validate:miner": "node scripts/validate-miner-yaml.mjs"
+    "validate:miner": "node scripts/validate-miner-yaml.mjs",
+    "preflight:miner": "node scripts/preflight-miner-template.mjs",
+    "preflight:registration": "npm run verify:telegraph && npm run preflight:miner"
   },
   "engines": {
     "node": ">=20"
