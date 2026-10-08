@@ -26,11 +26,6 @@ endpoints:
             intents:
               - FACT_CHECK
             description: Canonical Intent name; must be FACT_CHECK.
-            accepted_fields:
-              - value: FACT_CHECK
-                intents:
-                  - FACT_CHECK
-                description: Select the FACT_CHECK capability.
           - name: input
             type: object
             intents:
@@ -51,11 +46,6 @@ endpoints:
             intents:
               - RESEARCH_QUERY
             description: Canonical Intent name; must be RESEARCH_QUERY.
-            accepted_fields:
-              - value: RESEARCH_QUERY
-                intents:
-                  - RESEARCH_QUERY
-                description: Select the RESEARCH_QUERY capability.
           - name: input
             type: object
             intents:
@@ -76,11 +66,6 @@ endpoints:
             intents:
               - RESEARCH_SYNTHESIS
             description: Canonical Intent name; must be RESEARCH_SYNTHESIS.
-            accepted_fields:
-              - value: RESEARCH_SYNTHESIS
-                intents:
-                  - RESEARCH_SYNTHESIS
-                description: Select the RESEARCH_SYNTHESIS capability.
           - name: input
             type: object
             intents:
@@ -101,11 +86,6 @@ endpoints:
             intents:
               - NEWS_HEADLINES
             description: Canonical Intent name; must be NEWS_HEADLINES.
-            accepted_fields:
-              - value: NEWS_HEADLINES
-                intents:
-                  - NEWS_HEADLINES
-                description: Select the NEWS_HEADLINES capability.
           - name: input
             type: object
             intents:
@@ -126,11 +106,6 @@ endpoints:
             intents:
               - ACADEMIC_SEARCH
             description: Canonical Intent name; must be ACADEMIC_SEARCH.
-            accepted_fields:
-              - value: ACADEMIC_SEARCH
-                intents:
-                  - ACADEMIC_SEARCH
-                description: Select the ACADEMIC_SEARCH capability.
           - name: input
             type: object
             intents:
@@ -151,11 +126,6 @@ endpoints:
             intents:
               - CONTENT_EXTRACTION
             description: Canonical Intent name; must be CONTENT_EXTRACTION.
-            accepted_fields:
-              - value: CONTENT_EXTRACTION
-                intents:
-                  - CONTENT_EXTRACTION
-                description: Select the CONTENT_EXTRACTION capability.
           - name: input
             type: object
             intents:
@@ -176,11 +146,6 @@ endpoints:
             intents:
               - CONTENT_VERIFICATION
             description: Canonical Intent name; must be CONTENT_VERIFICATION.
-            accepted_fields:
-              - value: CONTENT_VERIFICATION
-                intents:
-                  - CONTENT_VERIFICATION
-                description: Select the CONTENT_VERIFICATION capability.
           - name: input
             type: object
             intents:
@@ -201,11 +166,6 @@ endpoints:
             intents:
               - TEXT_AUTHENTICITY_CHECK
             description: Canonical Intent name; must be TEXT_AUTHENTICITY_CHECK.
-            accepted_fields:
-              - value: TEXT_AUTHENTICITY_CHECK
-                intents:
-                  - TEXT_AUTHENTICITY_CHECK
-                description: Select the TEXT_AUTHENTICITY_CHECK capability.
           - name: input
             type: object
             intents:
@@ -226,11 +186,6 @@ endpoints:
             intents:
               - AI_TEXT_DETECTION
             description: Canonical Intent name; must be AI_TEXT_DETECTION.
-            accepted_fields:
-              - value: AI_TEXT_DETECTION
-                intents:
-                  - AI_TEXT_DETECTION
-                description: Select the AI_TEXT_DETECTION capability.
           - name: input
             type: object
             intents:
@@ -251,11 +206,6 @@ endpoints:
             intents:
               - DEEPFAKE_DETECTION
             description: Canonical Intent name; must be DEEPFAKE_DETECTION.
-            accepted_fields:
-              - value: DEEPFAKE_DETECTION
-                intents:
-                  - DEEPFAKE_DETECTION
-                description: Select the DEEPFAKE_DETECTION capability.
           - name: input
             type: object
             intents:
@@ -276,11 +226,6 @@ endpoints:
             intents:
               - MEDIA_AUTHENTICITY_CHECK
             description: Canonical Intent name; must be MEDIA_AUTHENTICITY_CHECK.
-            accepted_fields:
-              - value: MEDIA_AUTHENTICITY_CHECK
-                intents:
-                  - MEDIA_AUTHENTICITY_CHECK
-                description: Select the MEDIA_AUTHENTICITY_CHECK capability.
           - name: input
             type: object
             intents:
@@ -301,11 +246,6 @@ endpoints:
             intents:
               - IMAGE_VERIFICATION
             description: Canonical Intent name; must be IMAGE_VERIFICATION.
-            accepted_fields:
-              - value: IMAGE_VERIFICATION
-                intents:
-                  - IMAGE_VERIFICATION
-                description: Select the IMAGE_VERIFICATION capability.
           - name: input
             type: object
             intents:
@@ -326,11 +266,6 @@ endpoints:
             intents:
               - VIDEO_VERIFICATION
             description: Canonical Intent name; must be VIDEO_VERIFICATION.
-            accepted_fields:
-              - value: VIDEO_VERIFICATION
-                intents:
-                  - VIDEO_VERIFICATION
-                description: Select the VIDEO_VERIFICATION capability.
           - name: input
             type: object
             intents:
@@ -351,11 +286,6 @@ endpoints:
             intents:
               - CONTENT_MODERATION
             description: Canonical Intent name; must be CONTENT_MODERATION.
-            accepted_fields:
-              - value: CONTENT_MODERATION
-                intents:
-                  - CONTENT_MODERATION
-                description: Select the CONTENT_MODERATION capability.
           - name: input
             type: object
             intents:
@@ -376,11 +306,6 @@ endpoints:
             intents:
               - URL_SCAN
             description: Canonical Intent name; must be URL_SCAN.
-            accepted_fields:
-              - value: URL_SCAN
-                intents:
-                  - URL_SCAN
-                description: Select the URL_SCAN capability.
           - name: input
             type: object
             intents:
@@ -401,11 +326,6 @@ endpoints:
             intents:
               - EMAIL_SECURITY
             description: Canonical Intent name; must be EMAIL_SECURITY.
-            accepted_fields:
-              - value: EMAIL_SECURITY
-                intents:
-                  - EMAIL_SECURITY
-                description: Select the EMAIL_SECURITY capability.
           - name: input
             type: object
             intents:
@@ -426,11 +346,6 @@ endpoints:
             intents:
               - MALWARE_DETECTION
             description: Canonical Intent name; must be MALWARE_DETECTION.
-            accepted_fields:
-              - value: MALWARE_DETECTION
-                intents:
-                  - MALWARE_DETECTION
-                description: Select the MALWARE_DETECTION capability.
           - name: input
             type: object
             intents:
@@ -451,11 +366,6 @@ endpoints:
             intents:
               - CVE_LOOKUP
             description: Canonical Intent name; must be CVE_LOOKUP.
-            accepted_fields:
-              - value: CVE_LOOKUP
-                intents:
-                  - CVE_LOOKUP
-                description: Select the CVE_LOOKUP capability.
           - name: input
             type: object
             intents:
@@ -476,11 +386,6 @@ endpoints:
             intents:
               - SSL_VERIFICATION
             description: Canonical Intent name; must be SSL_VERIFICATION.
-            accepted_fields:
-              - value: SSL_VERIFICATION
-                intents:
-                  - SSL_VERIFICATION
-                description: Select the SSL_VERIFICATION capability.
           - name: input
             type: object
             intents:
@@ -501,11 +406,6 @@ endpoints:
             intents:
               - DNS_RECORD_LOOKUP
             description: Canonical Intent name; must be DNS_RECORD_LOOKUP.
-            accepted_fields:
-              - value: DNS_RECORD_LOOKUP
-                intents:
-                  - DNS_RECORD_LOOKUP
-                description: Select the DNS_RECORD_LOOKUP capability.
           - name: input
             type: object
             intents:
