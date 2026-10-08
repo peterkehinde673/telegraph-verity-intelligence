@@ -12,7 +12,9 @@
     "verify:telegraph": "npm run build && node scripts/verify-telegraph-registration.mjs",
     "validate:miner": "node scripts/validate-miner-yaml.mjs",
     "preflight:miner": "node scripts/preflight-miner-template.mjs",
-    "preflight:registration": "npm run verify:telegraph && npm run preflight:miner"
+    "preflight:registration": "npm run verify:telegraph && npm run preflight:miner",
+    "smoke:render": "node scripts/smoke-render-api.mjs",
+    "preflight:deployment": "npm run build && npm run smoke:render"
   },
   "engines": {
     "node": ">=20"
