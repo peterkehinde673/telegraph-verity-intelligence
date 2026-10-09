@@ -1,0 +1,54 @@
+name: Verity WASM scorer
+
+on:
+  push:
+    branches:
+      - "foundation/**"
+    paths:
+      - "wasm/verity-fact-check-scorer/**"
+      - ".github/workflows/wasm-scorer.yml"
+  pull_request:
+    branches:
+      - "foundation/**"
+    paths:
+      - "wasm/verity-fact-check-scorer/**"
+      - ".github/workflows/wasm-scorer.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install Rust stable and WASM target
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Run scorer unit tests
+        run: cargo test --manifest-path wasm/verity-fact-check-scorer/Cargo.toml
+
+      - name: Build standalone WASM
+        run: cargo build --manifest-path wasm/verity-fact-check-scorer/Cargo.toml --release --target wasm32-unknown-unknown
+
+      - name: Verify WASM artifact exists and is under 32 MB
+        shell: bash
+        run: |
+          file="wasm/verity-fact-check-scorer/target/wasm32-unknown-unknown/release/verity_fact_check_scorer.wasm"
+          test -s "$file"
+          size="$(wc -c < "$file")"
+          test "$size" -le 33554432
+          echo "WASM artifact size: $size bytes"
+
+      - name: Upload WASM artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: verity-fact-check-scorer-wasm
+          path: wasm/verity-fact-check-scorer/target/wasm32-unknown-unknown/release/verity_fact_check_scorer.wasm
+          if-no-files-found: error
+          retention-days: 14
