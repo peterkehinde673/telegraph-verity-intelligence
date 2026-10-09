@@ -16,7 +16,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   test-and-build:
@@ -36,19 +36,68 @@ jobs:
       - name: Build standalone WASM
         run: cargo build --manifest-path wasm/verity-fact-check-scorer/Cargo.toml --release --target wasm32-unknown-unknown
 
-      - name: Verify WASM artifact exists and is under 32 MB
+      - name: Install wasm-tools
+        run: cargo install wasm-tools --locked
+
+      - name: Validate WASM module and Telegraph ABI
         shell: bash
         run: |
+          set -euo pipefail
           file="wasm/verity-fact-check-scorer/target/wasm32-unknown-unknown/release/verity_fact_check_scorer.wasm"
           test -s "$file"
           size="$(wc -c < "$file")"
           test "$size" -le 33554432
-          echo "WASM artifact size: $size bytes"
+          wasm-tools validate "$file"
+          wasm-tools print "$file" > /tmp/verity-scorer.wat
+          if grep -q '(import ' /tmp/verity-scorer.wat; then
+            echo "ERROR: Telegraph WASM must not import host/WASI functions."
+            grep '(import ' /tmp/verity-scorer.wat
+            exit 1
+          fi
+          for export in alloc dealloc rank_answer; do
+            if ! grep -q "(export \"$export\"" /tmp/verity-scorer.wat; then
+              echo "ERROR: required export $export is missing."
+              exit 1
+            fi
+          done
+          echo "Validated WASM size: $size bytes; no imports; required exports present."
+
+      - name: Calculate Keccak-256 for exact WASM bytes
+        shell: bash
+        run: |
+          python -m pip install --quiet pycryptodome
+          python - <<'PY'
+          from Crypto.Hash import keccak
+          from pathlib import Path
+          path = Path("wasm/verity-fact-check-scorer/target/wasm32-unknown-unknown/release/verity_fact_check_scorer.wasm")
+          digest = keccak.new(digest_bits=256)
+          digest.update(path.read_bytes())
+          print("WASM_KECCAK256=0x" + digest.hexdigest())
+          Path("wasm/verity-fact-check-scorer/target/wasm32-unknown-unknown/release/verity_fact_check_scorer.keccak256.txt").write_text("0x" + digest.hexdigest() + "\\n")
+          PY
 
       - name: Upload WASM artifact
         uses: actions/upload-artifact@v6
         with:
           name: verity-fact-check-scorer-wasm
-          path: wasm/verity-fact-check-scorer/target/wasm32-unknown-unknown/release/verity_fact_check_scorer.wasm
+          path: |
+            wasm/verity-fact-check-scorer/target/wasm32-unknown-unknown/release/verity_fact_check_scorer.wasm
+            wasm/verity-fact-check-scorer/target/wasm32-unknown-unknown/release/verity_fact_check_scorer.keccak256.txt
           if-no-files-found: error
           retention-days: 14
+
+      - name: Publish versioned prototype release
+        if: github.event_name != 'pull_request'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: verity-fact-check-scorer-${{ github.sha }}
+          name: Verity FACT_CHECK WASM prototype (${{ github.sha }})
+          body: |
+            Automated build of the Verity FACT_CHECK scoring-module prototype.
+
+            This is a lexical-overlap baseline for evaluation, not a production-approved scorer.
+            Do not register it on-chain until it passes Telegraph's live structural checks and active-champion benchmark.
+          files: |
+            wasm/verity-fact-check-scorer/target/wasm32-unknown-unknown/release/verity_fact_check_scorer.wasm
+            wasm/verity-fact-check-scorer/target/wasm32-unknown-unknown/release/verity_fact_check_scorer.keccak256.txt
+          fail_on_unmatched_files: true
