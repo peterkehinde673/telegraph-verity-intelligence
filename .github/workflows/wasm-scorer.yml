@@ -73,7 +73,7 @@ jobs:
           digest = keccak.new(digest_bits=256)
           digest.update(path.read_bytes())
           print("WASM_KECCAK256=0x" + digest.hexdigest())
-          Path("wasm/verity-fact-check-scorer/target/wasm32-unknown-unknown/release/verity_fact_check_scorer.keccak256.txt").write_text("0x" + digest.hexdigest() + "\\n")
+          Path("wasm/verity-fact-check-scorer/target/wasm32-unknown-unknown/release/verity_fact_check_scorer.keccak256.txt").write_text("0x" + digest.hexdigest() + "\n")
           PY
 
       - name: Upload WASM artifact
