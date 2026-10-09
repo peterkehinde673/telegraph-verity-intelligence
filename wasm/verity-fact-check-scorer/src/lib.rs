@@ -1,5 +1,10 @@
 #![cfg_attr(not(test), no_std)]
 
+//! Deterministic lexical-overlap baseline for Telegraph's FACT_CHECK scorer.
+//! This is a prototype scorer, not a fact-checking engine. It compares the
+//! candidate answer with the supplied ground truth and never uses the network.
+
+
 #[cfg(not(test))]
 use core::panic::PanicInfo;
 
@@ -10,10 +15,6 @@ use core::panic::PanicInfo;
 fn panic(_info: &PanicInfo) -> ! {
     core::arch::wasm32::unreachable()
 }
-
-//! Deterministic lexical-overlap baseline for Telegraph's FACT_CHECK scorer.
-//! This is a prototype scorer, not a fact-checking engine. It compares the
-//! candidate answer with the supplied ground truth and never uses the network.
 
 const HEAP_SIZE: usize = 2 * 1024 * 1024;
 static mut HEAP: [u8; HEAP_SIZE] = [0; HEAP_SIZE];
