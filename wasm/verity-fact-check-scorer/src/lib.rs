@@ -86,83 +86,87 @@ fn token_equal(left: &[u8], right: &[u8]) -> bool {
         && left.iter().zip(right.iter()).all(|(a, b)| lower_ascii(*a) == lower_ascii(*b))
 }
 
-fn count_occurrences(bytes: &[u8], token: &[u8]) -> usize {
-    let mut count = 0;
-    let mut cursor = 0;
-    while let Some((start, end, next)) = next_token(bytes, cursor) {
-        if token_equal(&bytes[start..end], token) {
-            count += 1;
-        }
-        cursor = next;
-    }
-    count
+const TOKEN_TABLE_SIZE: usize = 16_384;
+
+#[derive(Clone, Copy)]
+struct TokenSlot {
+    hash: u64,
+    count: u32,
 }
 
-fn token_seen_before(bytes: &[u8], token_start: usize, token: &[u8]) -> bool {
-    let mut cursor = 0;
-    while let Some((start, end, next)) = next_token(bytes, cursor) {
-        if start >= token_start {
-            return false;
-        }
-        if token_equal(&bytes[start..end], token) {
-            return true;
-        }
-        cursor = next;
+const EMPTY_SLOT: TokenSlot = TokenSlot { hash: 0, count: 0 };
+
+fn token_hash(token: &[u8]) -> u64 {
+    let mut hash = 0xcbf29ce484222325u64;
+    for byte in token {
+        hash ^= lower_ascii(*byte) as u64;
+        hash = hash.wrapping_mul(0x100000001b3);
     }
-    false
+    // Zero marks an unused slot.
+    if hash == 0 { 1 } else { hash }
 }
 
-fn token_count(bytes: &[u8]) -> usize {
-    let mut count = 0;
-    let mut cursor = 0;
-    while let Some((_start, _end, next)) = next_token(bytes, cursor) {
-        count += 1;
-        cursor = next;
-    }
-    count
-}
-
-fn matched_token_count(answer: &[u8], truth: &[u8]) -> usize {
-    let mut matched = 0;
-    let mut cursor = 0;
-    while let Some((start, end, next)) = next_token(answer, cursor) {
-        let token = &answer[start..end];
-        if !token_seen_before(answer, start, token) {
-            let answer_occurrences = count_occurrences(answer, token);
-            let truth_occurrences = count_occurrences(truth, token);
-            matched += core::cmp::min(answer_occurrences, truth_occurrences);
+fn find_slot(table: &[TokenSlot], hash: u64) -> Option<usize> {
+    let mut index = (hash as usize) & (table.len() - 1);
+    for _ in 0..table.len() {
+        let slot = table[index];
+        if slot.hash == 0 || slot.hash == hash {
+            return Some(index);
         }
-        cursor = next;
+        index = (index + 1) & (table.len() - 1);
     }
-    matched
+    None
 }
 
 fn score_bytes(question: &[u8], truth: &[u8], answer: &[u8]) -> f32 {
     let _ = question; // Available for future intent-specific scoring features.
 
-    if answer.iter().all(|b| b.is_ascii_whitespace()) || truth.iter().all(|b| b.is_ascii_whitespace()) {
+    if answer.iter().all(|b| b.is_ascii_whitespace())
+        || truth.iter().all(|b| b.is_ascii_whitespace())
+    {
         return 0.0;
     }
 
-    let answer_tokens = token_count(answer);
-    let truth_tokens = token_count(truth);
-    if answer_tokens == 0 || truth_tokens == 0 {
+    // Count ground-truth token frequencies in a bounded hash table. This keeps
+    // long-input scoring near-linear instead of repeatedly rescanning strings.
+    let mut table = [EMPTY_SLOT; TOKEN_TABLE_SIZE];
+    let mut truth_tokens = 0usize;
+    let mut cursor = 0usize;
+    while let Some((start, end, next)) = next_token(truth, cursor) {
+        let hash = token_hash(&truth[start..end]);
+        let index = match find_slot(&table, hash) {
+            Some(index) => index,
+            None => return 0.0,
+        };
+        if table[index].hash == 0 {
+            table[index].hash = hash;
+        }
+        table[index].count = table[index].count.saturating_add(1);
+        truth_tokens += 1;
+        cursor = next;
+    }
+
+    let mut answer_tokens = 0usize;
+    let mut matched = 0usize;
+    cursor = 0;
+    while let Some((start, end, next)) = next_token(answer, cursor) {
+        let hash = token_hash(&answer[start..end]);
+        if let Some(index) = find_slot(&table, hash) {
+            if table[index].hash == hash && table[index].count > 0 {
+                table[index].count -= 1;
+                matched += 1;
+            }
+        }
+        answer_tokens += 1;
+        cursor = next;
+    }
+
+    if answer_tokens == 0 || truth_tokens == 0 || matched == 0 {
         return 0.0;
     }
 
-    let matched = matched_token_count(answer, truth);
-    if matched == 0 {
-        return 0.0;
-    }
-
-    let precision = matched as f32 / answer_tokens as f32;
-    let recall = matched as f32 / truth_tokens as f32;
-    let denominator = precision + recall;
-    if denominator <= 0.0 {
-        0.0
-    } else {
-        (2.0 * precision * recall / denominator).clamp(0.0, 1.0)
-    }
+    let denominator = answer_tokens + truth_tokens;
+    ((2.0 * matched as f32) / denominator as f32).clamp(0.0, 1.0)
 }
 
 unsafe fn input_slice<'a>(ptr: i32, len: i32) -> &'a [u8] {
