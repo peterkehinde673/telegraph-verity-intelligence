@@ -1,15 +1,13 @@
 #![cfg_attr(not(test), no_std)]
 
-//! Deterministic lexical-overlap baseline for Telegraph's FACT_CHECK scorer.
-//! This is a prototype scorer, not a fact-checking engine. It compares the
-//! candidate answer with the supplied ground truth and never uses the network.
-
+//! Deterministic, content-weighted lexical scorer for Telegraph FACT_CHECK.
+//! This is still a lexical baseline, not a semantic fact-checking engine.
+//! It compares the candidate answer to the supplied reference and performs no
+//! network access. Common function words receive less weight than factual terms.
 
 #[cfg(not(test))]
 use core::panic::PanicInfo;
 
-// A no_std cdylib has no standard-library panic handler. Trap immediately if
-// an internal panic occurs so the host cannot continue with corrupted state.
 #[cfg(not(test))]
 #[panic_handler]
 fn panic(_info: &PanicInfo) -> ! {
@@ -20,80 +18,51 @@ const HEAP_SIZE: usize = 2 * 1024 * 1024;
 static mut HEAP: [u8; HEAP_SIZE] = [0; HEAP_SIZE];
 static mut HEAP_OFFSET: usize = 0;
 
-/// Allocate memory for the host to write UTF-8 input bytes into.
 #[no_mangle]
 pub extern "C" fn alloc(size: i32) -> i32 {
     if size <= 0 || size as usize > HEAP_SIZE {
         return 0;
     }
-
     unsafe {
         let aligned = (HEAP_OFFSET + 7) & !7;
         if aligned.saturating_add(size as usize) > HEAP_SIZE {
-            // A single invocation should fit in this bounded heap. Resetting
-            // here avoids out-of-bounds access; the host must allocate inputs
-            // within one call's capacity.
             HEAP_OFFSET = 0;
         } else {
             HEAP_OFFSET = aligned;
         }
-
         let ptr = core::ptr::addr_of_mut!(HEAP).cast::<u8>().add(HEAP_OFFSET);
         HEAP_OFFSET = HEAP_OFFSET.saturating_add(size as usize);
         ptr as i32
     }
 }
 
-/// This module uses a bump allocator; memory is reclaimed between invocations.
 #[no_mangle]
 pub extern "C" fn dealloc(_ptr: i32, _size: i32) {}
 
 #[inline]
 fn lower_ascii(byte: u8) -> u8 {
-    if byte >= b'A' && byte <= b'Z' {
-        byte + (b'a' - b'A')
-    } else {
-        byte
-    }
+    if byte >= b'A' && byte <= b'Z' { byte + (b'a' - b'A') } else { byte }
 }
 
 #[inline]
 fn is_word_byte(byte: u8) -> bool {
-    byte >= 0x80
-        || (byte >= b'a' && byte <= b'z')
-        || (byte >= b'A' && byte <= b'Z')
-        || (byte >= b'0' && byte <= b'9')
+    byte >= 0x80 || (byte >= b'a' && byte <= b'z')
+        || (byte >= b'A' && byte <= b'Z') || (byte >= b'0' && byte <= b'9')
 }
 
 fn next_token(bytes: &[u8], from: usize) -> Option<(usize, usize, usize)> {
     let mut start = from;
-    while start < bytes.len() && !is_word_byte(bytes[start]) {
-        start += 1;
-    }
-    if start == bytes.len() {
-        return None;
-    }
-
+    while start < bytes.len() && !is_word_byte(bytes[start]) { start += 1; }
+    if start == bytes.len() { return None; }
     let mut end = start;
-    while end < bytes.len() && is_word_byte(bytes[end]) {
-        end += 1;
-    }
+    while end < bytes.len() && is_word_byte(bytes[end]) { end += 1; }
     Some((start, end, end))
-}
-
-fn token_equal(left: &[u8], right: &[u8]) -> bool {
-    left.len() == right.len()
-        && left.iter().zip(right.iter()).all(|(a, b)| lower_ascii(*a) == lower_ascii(*b))
 }
 
 const TOKEN_TABLE_SIZE: usize = 16_384;
 
 #[derive(Clone, Copy)]
-struct TokenSlot {
-    hash: u64,
-    count: u32,
-}
-
+struct TokenSlot { hash: u64, count: u32 }
 const EMPTY_SLOT: TokenSlot = TokenSlot { hash: 0, count: 0 };
 
 fn token_hash(token: &[u8]) -> u64 {
@@ -102,7 +71,6 @@ fn token_hash(token: &[u8]) -> u64 {
         hash ^= lower_ascii(*byte) as u64;
         hash = hash.wrapping_mul(0x100000001b3);
     }
-    // Zero marks an unused slot.
     if hash == 0 { 1 } else { hash }
 }
 
@@ -110,89 +78,83 @@ fn find_slot(table: &[TokenSlot], hash: u64) -> Option<usize> {
     let mut index = (hash as usize) & (table.len() - 1);
     for _ in 0..table.len() {
         let slot = table[index];
-        if slot.hash == 0 || slot.hash == hash {
-            return Some(index);
-        }
+        if slot.hash == 0 || slot.hash == hash { return Some(index); }
         index = (index + 1) & (table.len() - 1);
     }
     None
 }
 
-fn score_bytes(question: &[u8], truth: &[u8], answer: &[u8]) -> f32 {
-    let _ = question; // Available for future intent-specific scoring features.
+// Function words carry less evidential value in a fact-check than names,
+// dates, quantities, and other content words. Keep this deliberately small,
+// deterministic, and language-agnostic beyond common English function words.
+fn token_weight(token: &[u8]) -> f32 {
+    let mut lower = [0u8; 16];
+    if token.len() > lower.len() { return 1.0; }
+    for (i, b) in token.iter().enumerate() { lower[i] = lower_ascii(*b); }
+    let word = &lower[..token.len()];
+    const COMMON: [&[u8]; 45] = [
+        b"a", b"an", b"the", b"and", b"or", b"but", b"if", b"then", b"of",
+        b"to", b"in", b"on", b"at", b"by", b"for", b"from", b"with", b"as",
+        b"is", b"are", b"was", b"were", b"be", b"been", b"being", b"it",
+        b"its", b"this", b"that", b"these", b"those", b"he", b"she", b"they",
+        b"we", b"you", b"i", b"me", b"my", b"our", b"your", b"their", b"not",
+        b"do", b"does",
+    ];
+    if COMMON.iter().any(|candidate| *candidate == word) { 0.2 } else { 1.0 }
+}
 
+fn score_bytes(_question: &[u8], truth: &[u8], answer: &[u8]) -> f32 {
     if answer.iter().all(|b| b.is_ascii_whitespace())
-        || truth.iter().all(|b| b.is_ascii_whitespace())
-    {
-        return 0.0;
-    }
+        || truth.iter().all(|b| b.is_ascii_whitespace()) { return 0.0; }
 
-    // Count ground-truth token frequencies in a bounded hash table. This keeps
-    // long-input scoring near-linear instead of repeatedly rescanning strings.
     let mut table = [EMPTY_SLOT; TOKEN_TABLE_SIZE];
-    let mut truth_tokens = 0usize;
+    let mut truth_weight = 0.0f32;
     let mut cursor = 0usize;
     while let Some((start, end, next)) = next_token(truth, cursor) {
-        let hash = token_hash(&truth[start..end]);
-        let index = match find_slot(&table, hash) {
-            Some(index) => index,
-            None => return 0.0,
-        };
-        if table[index].hash == 0 {
-            table[index].hash = hash;
-        }
+        let token = &truth[start..end];
+        let hash = token_hash(token);
+        let index = match find_slot(&table, hash) { Some(i) => i, None => return 0.0 };
+        if table[index].hash == 0 { table[index].hash = hash; }
         table[index].count = table[index].count.saturating_add(1);
-        truth_tokens += 1;
+        truth_weight += token_weight(token);
         cursor = next;
     }
 
-    let mut answer_tokens = 0usize;
-    let mut matched = 0usize;
+    let mut answer_weight = 0.0f32;
+    let mut matched_weight = 0.0f32;
     cursor = 0;
     while let Some((start, end, next)) = next_token(answer, cursor) {
-        let hash = token_hash(&answer[start..end]);
+        let token = &answer[start..end];
+        let weight = token_weight(token);
+        answer_weight += weight;
+        let hash = token_hash(token);
         if let Some(index) = find_slot(&table, hash) {
             if table[index].hash == hash && table[index].count > 0 {
                 table[index].count -= 1;
-                matched += 1;
+                matched_weight += weight;
             }
         }
-        answer_tokens += 1;
         cursor = next;
     }
 
-    if answer_tokens == 0 || truth_tokens == 0 || matched == 0 {
-        return 0.0;
-    }
-
-    let denominator = answer_tokens + truth_tokens;
-    ((2.0 * matched as f32) / denominator as f32).clamp(0.0, 1.0)
+    if answer_weight <= 0.0 || truth_weight <= 0.0 || matched_weight <= 0.0 { return 0.0; }
+    // Weighted F1 balances missing reference facts against unsupported extra
+    // content. It avoids letting shared filler words dominate the score.
+    (2.0 * matched_weight / (answer_weight + truth_weight)).clamp(0.0, 1.0)
 }
 
 unsafe fn input_slice<'a>(ptr: i32, len: i32) -> &'a [u8] {
-    if len <= 0 || ptr == 0 {
-        return &[];
-    }
+    if len <= 0 || ptr == 0 { return &[]; }
     core::slice::from_raw_parts(ptr as *const u8, len as usize)
 }
 
-/// Returns a deterministic score in [0, 1] for the candidate answer.
-///
 /// ABI: rank_answer(question_ptr, question_len, ground_truth_ptr,
 /// ground_truth_len, miner_answer_ptr, miner_answer_len) -> f32.
 #[no_mangle]
 pub unsafe extern "C" fn rank_answer(
-    q_ptr: i32,
-    q_len: i32,
-    gt_ptr: i32,
-    gt_len: i32,
-    ma_ptr: i32,
-    ma_len: i32,
+    q_ptr: i32, q_len: i32, gt_ptr: i32, gt_len: i32, ma_ptr: i32, ma_len: i32,
 ) -> f32 {
-    let question = input_slice(q_ptr, q_len);
-    let ground_truth = input_slice(gt_ptr, gt_len);
-    let miner_answer = input_slice(ma_ptr, ma_len);
-    score_bytes(question, ground_truth, miner_answer)
+    score_bytes(input_slice(q_ptr, q_len), input_slice(gt_ptr, gt_len), input_slice(ma_ptr, ma_len))
 }
 
 #[cfg(test)]
@@ -201,46 +163,36 @@ mod tests {
 
     #[test]
     fn exact_answer_scores_one() {
-        assert_eq!(
-            score_bytes(b"capital?", b"Paris is the capital of France.", b"Paris is the capital of France."),
-            1.0
-        );
+        assert_eq!(score_bytes(b"capital?", b"Paris is the capital of France.", b"Paris is the capital of France."), 1.0);
     }
-
     #[test]
     fn punctuation_and_case_do_not_change_match() {
-        assert_eq!(
-            score_bytes(b"q", b"Paris is the capital.", b"PARIS, is the capital!"),
-            1.0
-        );
+        assert_eq!(score_bytes(b"q", b"Paris is the capital.", b"PARIS, is the capital!"), 1.0);
     }
-
     #[test]
     fn unrelated_answer_scores_zero() {
-        assert_eq!(
-            score_bytes(b"q", b"Paris is the capital of France.", b"Quantum mechanics explains particles."),
-            0.0
-        );
+        assert_eq!(score_bytes(b"q", b"Paris is the capital of France.", b"Quantum mechanics explains particles."), 0.0);
     }
-
     #[test]
     fn blank_answer_scores_zero() {
         assert_eq!(score_bytes(b"q", b"known answer", b"  \n\t "), 0.0);
     }
-
     #[test]
     fn partial_answer_scores_below_exact_answer() {
         let partial = score_bytes(b"q", b"Paris is the capital of France", b"Paris is the capital");
         let exact = score_bytes(b"q", b"Paris is the capital of France", b"Paris is the capital of France");
         assert!(partial > 0.0 && partial < exact);
     }
-
+    #[test]
+    fn unrelated_extra_claims_are_penalized() {
+        let concise = score_bytes(b"q", b"Paris is the capital of France", b"Paris is the capital of France");
+        let padded = score_bytes(b"q", b"Paris is the capital of France", b"Paris is the capital of France and Jupiter has rings");
+        assert!(padded < concise);
+    }
     #[test]
     fn unicode_input_does_not_panic() {
-        let score = score_bytes("q".as_bytes(), "東京 is a city 🗼".as_bytes(), "東京 is a city 🗼".as_bytes());
-        assert_eq!(score, 1.0);
+        assert_eq!(score_bytes("q".as_bytes(), "東京 is a city 🗼".as_bytes(), "東京 is a city 🗼".as_bytes()), 1.0);
     }
-
     #[test]
     fn long_inputs_do_not_panic() {
         let truth = "correct answer ".repeat(5000);
