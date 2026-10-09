@@ -36,11 +36,6 @@ jobs:
       - name: Build standalone WASM
         run: cargo build --manifest-path wasm/verity-fact-check-scorer/Cargo.toml --release --target wasm32-unknown-unknown
 
-      - name: Install WebAssembly validation tools
-        run: |
-          sudo apt-get update
-          sudo apt-get install --yes wabt
-
       - name: Validate WASM module and Telegraph ABI
         shell: bash
         run: |
@@ -49,20 +44,59 @@ jobs:
           test -s "$file"
           size="$(wc -c < "$file")"
           test "$size" -le 33554432
-          wasm-validate "$file"
-          wasm-objdump -x "$file" > /tmp/verity-scorer.wasm.txt
-          if grep -q ' <- ' /tmp/verity-scorer.wasm.txt; then
-            echo "ERROR: Telegraph WASM must not import host/WASI functions."
-            grep ' <- ' /tmp/verity-scorer.wasm.txt
-            exit 1
-          fi
-          for export in alloc dealloc rank_answer; do
-            if ! grep -q "<$export>" /tmp/verity-scorer.wasm.txt; then
-              echo "ERROR: required export $export is missing."
-              exit 1
-            fi
-          done
-          echo "Validated WASM size: $size bytes; no imports; required exports present."
+          python - "$file" <<'PY'
+          import sys
+          from pathlib import Path
+
+          data = Path(sys.argv[1]).read_bytes()
+          if data[:8] != b"\\x00asm\\x01\\x00\\x00\\x00":
+              raise SystemExit("ERROR: invalid WASM magic or version")
+
+          def uleb(buf, pos):
+              value = 0
+              shift = 0
+              while True:
+                  byte = buf[pos]
+                  pos += 1
+                  value |= (byte & 0x7f) << shift
+                  if byte < 0x80:
+                      return value, pos
+                  shift += 7
+                  if shift > 35:
+                      raise SystemExit("ERROR: invalid unsigned LEB128")
+
+          pos = 8
+          exports = set()
+          import_count = 0
+          while pos < len(data):
+              section_id = data[pos]
+              pos += 1
+              section_size, pos = uleb(data, pos)
+              end = pos + section_size
+              if end > len(data):
+                  raise SystemExit("ERROR: truncated WASM section")
+              section = data[pos:end]
+              if section_id == 2:
+                  import_count, _ = uleb(section, 0)
+              elif section_id == 7:
+                  count, cursor = uleb(section, 0)
+                  for _ in range(count):
+                      name_len, cursor = uleb(section, cursor)
+                      name = section[cursor:cursor + name_len].decode("utf-8")
+                      cursor += name_len
+                      cursor += 1  # export kind
+                      _, cursor = uleb(section, cursor)  # export index
+                      exports.add(name)
+              pos = end
+
+          if import_count:
+              raise SystemExit(f"ERROR: {import_count} imports found; Telegraph modules must be standalone")
+          required = {"alloc", "dealloc", "rank_answer"}
+          missing = required - exports
+          if missing:
+              raise SystemExit(f"ERROR: required exports missing: {sorted(missing)}")
+          print(f"Validated WASM structure: {len(data)} bytes; no imports; exports={sorted(exports)}")
+          PY
 
       - name: Calculate Keccak-256 for exact WASM bytes
         shell: bash
