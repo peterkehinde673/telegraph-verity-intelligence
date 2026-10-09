@@ -1,5 +1,16 @@
 #![cfg_attr(not(test), no_std)]
 
+#[cfg(not(test))]
+use core::panic::PanicInfo;
+
+// A no_std cdylib has no standard-library panic handler. Trap immediately if
+// an internal panic occurs so the host cannot continue with corrupted state.
+#[cfg(not(test))]
+#[panic_handler]
+fn panic(_info: &PanicInfo) -> ! {
+    core::arch::wasm32::unreachable()
+}
+
 //! Deterministic lexical-overlap baseline for Telegraph's FACT_CHECK scorer.
 //! This is a prototype scorer, not a fact-checking engine. It compares the
 //! candidate answer with the supplied ground truth and never uses the network.
