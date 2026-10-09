@@ -4,73 +4,145 @@ id: 5530
 slug: telegraph-verity-intelligence
 protocol: generic
 name: Telegraph Verity Intelligence
-description: Evidence-grounded intelligence provider for research, content verification, media authenticity, and cybersecurity analysis.
+description: >
+  Evidence-grounded intelligence provider for research, content verification, media authenticity, and cybersecurity analysis.
+
 base_url: https://telegraph-verity-intelligence-api.onrender.com
 
-input_schema:
-  type: object
-  required: [intent, input]
-  properties:
-    intent:
-      type: string
-      enum: [FACT_CHECK, RESEARCH_QUERY, RESEARCH_SYNTHESIS, NEWS_HEADLINES, ACADEMIC_SEARCH, CONTENT_EXTRACTION, CONTENT_VERIFICATION, TEXT_AUTHENTICITY_CHECK, AI_TEXT_DETECTION, DEEPFAKE_DETECTION, MEDIA_AUTHENTICITY_CHECK, IMAGE_VERIFICATION, VIDEO_VERIFICATION, CONTENT_MODERATION, URL_SCAN, EMAIL_SECURITY, MALWARE_DETECTION, CVE_LOOKUP, SSL_VERIFICATION, DNS_RECORD_LOOKUP]
-      description: Canonical Telegraph Intent name.
-    input:
-      type: object
-      description: Intent-specific structured input.
-
-output_schema:
-  type: object
-  required: [intent, verdict, confidence, answer, evidence, uncertainty, retrieved_at]
-  properties:
-    intent:
-      type: string
-      description: Canonical intent handled by the response.
-    verdict:
-      type: string
-      description: Primary decision or classification.
-    confidence:
-      type: number
-      minimum: 0
-      maximum: 1
-      description: Confidence score from 0 to 1.
-    answer:
-      description: Intent-specific normalized answer payload.
-      type: [object, array, string, number, boolean, "null"]
-    evidence:
-      type: array
-      description: Evidence supporting the response.
-    uncertainty:
-      type: array
-      description: Known uncertainty or limitations.
-    retrieved_at:
-      type: string
-      description: Timestamp when information was retrieved or generated.
+docs:
+  website: https://github.com/peterkehinde673/telegraph-verity-intelligence
+  documentation: https://github.com/peterkehinde673/telegraph-verity-intelligence/blob/foundation/verity-20-intents/README.md
+  repository: https://github.com/peterkehinde673/telegraph-verity-intelligence
+  twitter: https://x.com/kennyB260
+  discord: https://discord.com/channels/1438396125609463881/1498654113376899112
 
 auth:
   type: none
+
+rate_limit_per_sec: 5
+cache_ttl_sec: 0
+circuit_threshold: 5
+circuit_cooldown_seconds: 30
 
 endpoints:
   - path: /v1/intent
     external_path: /v1/intent
     method: POST
-    description: Handles Verity Intelligence research, fact-checking, content and media authenticity, moderation, and cybersecurity intents through a unified JSON request endpoint. The body requires a canonical intent and an intent-specific input object.
+    description: >
+      Handles all 20 Verity Intelligence intents through a unified JSON request endpoint and returns an evidence-grounded normalized response with verdict, confidence, answer, evidence, uncertainty, and retrieval timestamp.
     intents: [FACT_CHECK, RESEARCH_QUERY, RESEARCH_SYNTHESIS, NEWS_HEADLINES, ACADEMIC_SEARCH, CONTENT_EXTRACTION, CONTENT_VERIFICATION, TEXT_AUTHENTICITY_CHECK, AI_TEXT_DETECTION, DEEPFAKE_DETECTION, MEDIA_AUTHENTICITY_CHECK, IMAGE_VERIFICATION, VIDEO_VERIFICATION, CONTENT_MODERATION, URL_SCAN, EMAIL_SECURITY, MALWARE_DETECTION, CVE_LOOKUP, SSL_VERIFICATION, DNS_RECORD_LOOKUP]
     content_type: application/json
     params:
       body:
         required:
-          - name: intent
-            type: string
-            intents: ["*"]
-            description: Exact canonical Telegraph Intent name from the supported intent list.
-          - name: input
-            type: object
-            intents: ["*"]
-            description: Intent-specific input object; required fields depend on the selected intent.
+            - name: intent
+              type: string
+              intents:
+                      - "*"
+              description: Canonical Telegraph Intent name.
+            - name: input
+              type: object
+              intents:
+                      - "*"
+              description: Intent-specific structured input.
+
+input_schema:
+  type: object
+  required:
+    - intent
+    - input
+  properties:
+    intent:
+        type: string
+        enum:
+              - FACT_CHECK
+              - RESEARCH_QUERY
+              - RESEARCH_SYNTHESIS
+              - NEWS_HEADLINES
+              - ACADEMIC_SEARCH
+              - CONTENT_EXTRACTION
+              - CONTENT_VERIFICATION
+              - TEXT_AUTHENTICITY_CHECK
+              - AI_TEXT_DETECTION
+              - DEEPFAKE_DETECTION
+              - MEDIA_AUTHENTICITY_CHECK
+              - IMAGE_VERIFICATION
+              - VIDEO_VERIFICATION
+              - CONTENT_MODERATION
+              - URL_SCAN
+              - EMAIL_SECURITY
+              - MALWARE_DETECTION
+              - CVE_LOOKUP
+              - SSL_VERIFICATION
+              - DNS_RECORD_LOOKUP
+        description: Canonical Telegraph Intent name.
+    input:
+        description: Intent-specific structured input.
+        type: object
+
+output_schema:
+  type: object
+  required:
+    - intent
+    - verdict
+    - confidence
+    - answer
+    - evidence
+    - uncertainty
+    - retrieved_at
+  properties:
+    intent:
+        type: string
+        description: The canonical Telegraph Intent handled by the response.
+    verdict:
+        type: string
+        description: Primary decision or classification produced by the Verity Intelligence handler.
+    confidence:
+        type: number
+        minimum: 0
+        maximum: 1
+        description: Confidence score from 0 to 1.
+    answer:
+        description: Intent-specific normalized answer payload.
+        type:
+              - object
+              - array
+              - string
+              - number
+              - boolean
+              - "null"
+    evidence:
+        type: array
+        description: Evidence supporting the response.
+    uncertainty:
+        type: array
+        description: Known uncertainty or limitations associated with the response.
+    retrieved_at:
+        type: string
+        description: Timestamp indicating when the information was retrieved or generated.
 
 semantics:
   signal_mapping:
     confidence_field: confidence
     label_field: verdict
-  supported_intents: [FACT_CHECK, RESEARCH_QUERY, RESEARCH_SYNTHESIS, NEWS_HEADLINES, ACADEMIC_SEARCH, CONTENT_EXTRACTION, CONTENT_VERIFICATION, TEXT_AUTHENTICITY_CHECK, AI_TEXT_DETECTION, DEEPFAKE_DETECTION, MEDIA_AUTHENTICITY_CHECK, IMAGE_VERIFICATION, VIDEO_VERIFICATION, CONTENT_MODERATION, URL_SCAN, EMAIL_SECURITY, MALWARE_DETECTION, CVE_LOOKUP, SSL_VERIFICATION, DNS_RECORD_LOOKUP]
+  supported_intents:
+    - FACT_CHECK
+    - RESEARCH_QUERY
+    - RESEARCH_SYNTHESIS
+    - NEWS_HEADLINES
+    - ACADEMIC_SEARCH
+    - CONTENT_EXTRACTION
+    - CONTENT_VERIFICATION
+    - TEXT_AUTHENTICITY_CHECK
+    - AI_TEXT_DETECTION
+    - DEEPFAKE_DETECTION
+    - MEDIA_AUTHENTICITY_CHECK
+    - IMAGE_VERIFICATION
+    - VIDEO_VERIFICATION
+    - CONTENT_MODERATION
+    - URL_SCAN
+    - EMAIL_SECURITY
+    - MALWARE_DETECTION
+    - CVE_LOOKUP
+    - SSL_VERIFICATION
+    - DNS_RECORD_LOOKUP
