@@ -50,7 +50,13 @@ Verity will target these 20 Telegraph Intents:
 
 ## Project Status
 
-Foundation only. No Miner registration, Intent implementation, custom Evaluator, or production deployment has been added yet.
+- **Miner registration:** Registered on Telegraph as `telegraph-verity-intelligence`, Miner ID `5530`.
+- **Public explorer:** https://explorer.telegraphprotocol.com/miners/telegraph-verity-intelligence
+- **Production API:** https://telegraph-verity-intelligence-api.onrender.com
+- **API status endpoints:** `GET /health` and `GET /intents`.
+- **Intent implementation:** The 20-intent catalogue and common response contract exist, but each intent still needs a real, evidence-backed handler. An intent listed by the API must not be described as production-capable until its handler and tests are complete.
+- **Scoring module (WASM):** Not yet built or registered. Telegraph scoring modules are separate from Miner APIs and score one canonical Intent at a time; see the official [Build a Scoring Module guide](https://docs.telegraphprotocol.com/docs/scoring/build-a-scoring-module).
+- **CI/deployment:** GitHub Actions verifies typecheck, build, tests, and Telegraph tooling. Render is the production hosting target.
 
 ## Source of Intent Selection
 
