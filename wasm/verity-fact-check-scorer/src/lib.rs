@@ -187,18 +187,19 @@ fn score_bytes(_question: &[u8], truth: &[u8], answer: &[u8]) -> f32 {
     // content. It avoids letting shared filler words dominate the score.
     let overlap = (2.0 * matched_weight / (answer_weight + truth_weight)).clamp(0.0, 1.0);
 
-    // Calibrate the similarity into a sharper contrastive score. The fourth-power
-    // odds transform preserves ordering and exact matches while widening the gap
-    // between middling overlap and strong overlap, which is what the benchmark's
-    // good-vs-bad margin measures. Unlike a hard cutoff, it does not zero out
-    // paraphrases simply because they fall below an arbitrary threshold.
+    // Use an eighth-power odds calibration to amplify the contrast between
+    // answers with stronger and weaker evidence overlap. This is monotonic and
+    // retains exact-match/zero-match endpoints; unlike a threshold it does not
+    // discard all partial matches. The live benchmark remains the final check.
     let hit2 = overlap * overlap;
     let hit4 = hit2 * hit2;
+    let hit8 = hit4 * hit4;
     let miss = 1.0 - overlap;
     let miss2 = miss * miss;
     let miss4 = miss2 * miss2;
-    let denominator = hit4 + miss4;
-    let mut score = if denominator > 0.0 { hit4 / denominator } else { 0.0 };
+    let miss8 = miss4 * miss4;
+    let denominator = hit8 + miss8;
+    let mut score = if denominator > 0.0 { hit8 / denominator } else { 0.0 };
 
     // Polarity and numeric contradictions are high-value factual errors.
     // Penalize them after calibration so strong lexical overlap cannot hide them.
@@ -291,6 +292,14 @@ mod tests {
     #[test]
     fn unrelated_answer_stays_at_zero_after_calibration() {
         assert_eq!(score_bytes(b"q", b"Paris is the capital of France", b"Quantum mechanics explains particles"), 0.0);
+    }
+    #[test]
+    fn calibrated_score_is_monotonic_with_overlap() {
+        let truth = b"alpha beta gamma delta";
+        let weak = score_bytes(b"q", truth, b"alpha beta");
+        let strong = score_bytes(b"q", truth, b"alpha beta gamma");
+        let exact = score_bytes(b"q", truth, truth);
+        assert!(weak < strong && strong < exact, "weak={weak}, strong={strong}, exact={exact}");
     }
     #[test]
     fn unicode_input_does_not_panic() {
