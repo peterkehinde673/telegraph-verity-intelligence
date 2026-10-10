@@ -2,9 +2,9 @@
 
 //! Deterministic, content-weighted lexical scorer for Telegraph FACT_CHECK.
 //! This is still a lexical baseline, not a semantic fact-checking engine.
-//! V12 tests sharper calibration on top of V11's content-word weighting.
-//! Release note: twelve-power odds calibration is an experiment; only protocol scoring can confirm promotion.
-//! Release note: V12 twelfth-power odds calibration; promotion remains unverified.
+//! V13 supplements content-weighted token overlap with an order-sensitive bigram signal.
+//! Release note: combines unigram and bigram overlap; protocol scoring must confirm promotion.
+//! Keeps V12's twelfth-power odds calibration and existing contradiction guards.
 //! Keeps V11 content-word weighting and existing contradiction guards.
 //! Release build note: eighth-power odds plus precision and contradiction penalties.
 //! It compares the candidate answer to the supplied reference and performs no
@@ -115,6 +115,65 @@ fn token_weight(token: &[u8]) -> f32 {
     if COMMON.iter().any(|candidate| *candidate == word) { 0.05 } else { 1.0 }
 }
 
+#[inline]
+fn bigram_hash(left: u64, right: u64) -> u64 {
+    let combined = left.rotate_left(17) ^ right.wrapping_mul(0x9e3779b97f4a7c15);
+    if combined == 0 { 1 } else { combined }
+}
+
+// Order-sensitive evidence supplements unigram overlap. It helps distinguish
+// answers that repeat the same words but change their relationships.
+fn bigram_overlap(truth: &[u8], answer: &[u8]) -> f32 {
+    let mut table = [EMPTY_SLOT; TOKEN_TABLE_SIZE];
+    let mut truth_weight = 0.0f32;
+    let mut cursor = 0usize;
+    let mut previous_hash = None;
+    let mut previous_weight = 0.0f32;
+    while let Some((start, end, next)) = next_token(truth, cursor) {
+        let token = &truth[start..end];
+        let hash = token_hash(token);
+        let weight = token_weight(token);
+        if let Some(left) = previous_hash {
+            let hash = bigram_hash(left, hash);
+            let index = match find_slot(&table, hash) { Some(i) => i, None => return 0.0 };
+            if table[index].hash == 0 { table[index].hash = hash; }
+            table[index].count = table[index].count.saturating_add(1);
+            truth_weight += (previous_weight + weight) * 0.5;
+        }
+        previous_hash = Some(hash);
+        previous_weight = weight;
+        cursor = next;
+    }
+
+    let mut answer_weight = 0.0f32;
+    let mut matched_weight = 0.0f32;
+    cursor = 0;
+    previous_hash = None;
+    previous_weight = 0.0;
+    while let Some((start, end, next)) = next_token(answer, cursor) {
+        let token = &answer[start..end];
+        let hash = token_hash(token);
+        let weight = token_weight(token);
+        if let Some(left) = previous_hash {
+            let pair_hash = bigram_hash(left, hash);
+            let pair_weight = (previous_weight + weight) * 0.5;
+            answer_weight += pair_weight;
+            if let Some(index) = find_slot(&table, pair_hash) {
+                if table[index].hash == pair_hash && table[index].count > 0 {
+                    table[index].count -= 1;
+                    matched_weight += pair_weight;
+                }
+            }
+        }
+        previous_hash = Some(hash);
+        previous_weight = weight;
+        cursor = next;
+    }
+    if answer_weight <= 0.0 || truth_weight <= 0.0 { return 0.0; }
+    (2.0 * matched_weight / (answer_weight + truth_weight)).clamp(0.0, 1.0)
+}
+
+
 // A lightweight polarity guard: lexical overlap alone can reward answers that
 // copy the reference while reversing its meaning. This is intentionally
 // conservative and deterministic; it is not full natural-language inference.
@@ -211,12 +270,15 @@ fn score_bytes(_question: &[u8], truth: &[u8], answer: &[u8]) -> f32 {
     if answer_weight <= 0.0 || truth_weight <= 0.0 || matched_weight <= 0.0 { return 0.0; }
     // Weighted F1 balances missing reference facts against unsupported extra
     // content. It avoids letting shared filler words dominate the score.
-    let overlap = (2.0 * matched_weight / (answer_weight + truth_weight)).clamp(0.0, 1.0);
+    let unigram_overlap = (2.0 * matched_weight / (answer_weight + truth_weight)).clamp(0.0, 1.0);
+    let phrase_overlap = bigram_overlap(truth, answer);
+    // Keep lexical coverage dominant to preserve paraphrase tolerance, while
+    // using local word order as an additional signal for relational accuracy.
+    let overlap = (0.85 * unigram_overlap + 0.15 * phrase_overlap).clamp(0.0, 1.0);
 
-    // V12 keeps V11's improved content-word weighting and tests a sharper
-    // twelfth-power odds curve. V11 improved margin to 0.3217, but still
-    // trails the 0.4667 champion. This is a calibration experiment, not a
-    // claim that the protocol benchmark will promote it.
+    // V13 adds a modest order-sensitive bigram signal to V11's content-word
+    // weighting and V12 calibration. It is a benchmark hypothesis, not a
+    // claim that the protocol evaluator will promote this candidate.
     let hit2 = overlap * overlap;
     let hit4 = hit2 * hit2;
     let hit8 = hit4 * hit4;
