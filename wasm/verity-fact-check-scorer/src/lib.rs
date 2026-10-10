@@ -3,6 +3,7 @@
 //! Deterministic, content-weighted lexical scorer for Telegraph FACT_CHECK.
 //! This is still a lexical baseline, not a semantic fact-checking engine.
 //! V13 supplements content-weighted token overlap with an order-sensitive bigram signal.
+//! Release note: V13 keeps unigram evidence dominant and adds a 15% phrase-order component.
 //! Release note: combines unigram and bigram overlap; protocol scoring must confirm promotion.
 //! Keeps V12's twelfth-power odds calibration and existing contradiction guards.
 //! Keeps V11 content-word weighting and existing contradiction guards.
