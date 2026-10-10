@@ -96,7 +96,7 @@ fn token_weight(token: &[u8]) -> f32 {
     if token.len() > lower.len() { return 1.0; }
     for (i, b) in token.iter().enumerate() { lower[i] = lower_ascii(*b); }
     let word = &lower[..token.len()];
-    const COMMON: [&[u8]; 100] = [
+    const COMMON: [&[u8]; 99] = [
         b"a", b"an", b"the", b"and", b"or", b"but", b"if", b"then", b"of",
         b"to", b"in", b"on", b"at", b"by", b"for", b"from", b"with", b"as",
         b"is", b"are", b"was", b"were", b"be", b"been", b"being", b"it",
