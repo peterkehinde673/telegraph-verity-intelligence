@@ -235,9 +235,8 @@ fn score_bytes(_question: &[u8], truth: &[u8], answer: &[u8]) -> f32 {
     let miss4 = miss2 * miss2;
     let miss8 = miss4 * miss4;
     let miss10 = miss8 * miss2;
-    let miss12 = miss10 * miss2;
-    let denominator = hit12 + miss12;
-    let mut score = if denominator > 0.0 { hit12 / denominator } else { 0.0 };
+    let denominator = hit10 + miss10;
+    let mut score = if denominator > 0.0 { hit10 / denominator } else { 0.0 };
 
     // Contradictions must remain low even when most of the reference is copied.
     // Apply strong post-calibration penalties to polarity and numeric conflicts.
