@@ -205,6 +205,7 @@ fn score_bytes(_question: &[u8], truth: &[u8], answer: &[u8]) -> f32 {
     // V7 uses cubic calibration to increase separation between partial and strong
     // matches while preserving ordering and exact-match scores. The protocol
     // benchmark, not unit tests, must determine whether this beats the champion.
+    // Release build verified after merging V7.
     let mut score = overlap * overlap * overlap;
 
     // Polarity and numeric contradictions are high-value factual errors.
