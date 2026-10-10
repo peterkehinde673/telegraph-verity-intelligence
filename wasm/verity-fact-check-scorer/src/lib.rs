@@ -3,6 +3,7 @@
 //! Deterministic, content-weighted lexical scorer for Telegraph FACT_CHECK.
 //! This is still a lexical baseline, not a semantic fact-checking engine.
 //! V9 adds an answer-precision gate to the strongest measured calibration.
+//! Release note: weighted answer precision penalizes unsupported extra content.
 //! Release build note: eighth-power odds plus precision and contradiction penalties.
 //! It compares the candidate answer to the supplied reference and performs no
 //! network access. Common function words receive less weight than factual terms.
