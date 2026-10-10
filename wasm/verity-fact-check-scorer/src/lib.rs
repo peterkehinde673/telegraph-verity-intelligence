@@ -3,6 +3,7 @@
 //! Deterministic, content-weighted lexical scorer for Telegraph FACT_CHECK.
 //! This is still a lexical baseline, not a semantic fact-checking engine.
 //! V12 tests sharper calibration on top of V11's content-word weighting.
+//! Release note: twelve-power odds calibration is an experiment; only protocol scoring can confirm promotion.
 //! Release note: V12 twelfth-power odds calibration; promotion remains unverified.
 //! Keeps V11 content-word weighting and existing contradiction guards.
 //! Release build note: eighth-power odds plus precision and contradiction penalties.
