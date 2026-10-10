@@ -202,11 +202,10 @@ fn score_bytes(_question: &[u8], truth: &[u8], answer: &[u8]) -> f32 {
     // content. It avoids letting shared filler words dominate the score.
     let overlap = (2.0 * matched_weight / (answer_weight + truth_weight)).clamp(0.0, 1.0);
 
-    // V6 uses a convex calibration rather than compressing most overlaps
-    // into a narrow low-score band. Squaring preserves order while widening the
-    // gap between weak/partial matches and answers that cover most reference facts.
-    // Unlike steep odds transforms, it does not saturate moderate overlap near 1.
-    let mut score = overlap * overlap;
+    // V7 uses cubic calibration to increase separation between partial and strong
+    // matches while preserving ordering and exact-match scores. The protocol
+    // benchmark, not unit tests, must determine whether this beats the champion.
+    let mut score = overlap * overlap * overlap;
 
     // Polarity and numeric contradictions are high-value factual errors.
     // Penalize them after calibration so strong lexical overlap cannot hide them.
@@ -301,11 +300,11 @@ mod tests {
         assert_eq!(score_bytes(b"q", b"Paris is the capital of France", b"Quantum mechanics explains particles"), 0.0);
     }
     #[test]
-    fn squared_calibration_separates_partial_from_strong_overlap() {
+    fn cubic_calibration_separates_partial_from_strong_overlap() {
         let truth = b"alpha beta gamma delta";
         let weak = score_bytes(b"q", truth, b"alpha beta");
         let strong = score_bytes(b"q", truth, b"alpha beta gamma");
-        assert!(strong - weak > 0.20, "weak={weak}, strong={strong}");
+        assert!(strong - weak > 0.25, "weak={weak}, strong={strong}");
     }
 
     fn calibrated_score_is_monotonic_with_overlap() {
