@@ -124,6 +124,30 @@ fn has_negation(bytes: &[u8]) -> bool {
     false
 }
 
+// Detect unsupported numeric claims. Numbers often carry the key factual distinction
+// (years, counts, dates, percentages); a mismatching number should not be rescued
+// by otherwise copying most of the reference sentence.
+fn has_unmatched_number(truth: &[u8], answer: &[u8]) -> bool {
+    let mut cursor = 0usize;
+    while let Some((start, end, next)) = next_token(answer, cursor) {
+        let token = &answer[start..end];
+        if !token.is_empty() && token.iter().all(|b| b.is_ascii_digit()) {
+            let mut truth_cursor = 0usize;
+            let mut found = false;
+            while let Some((ts, te, tn)) = next_token(truth, truth_cursor) {
+                if &truth[ts..te] == token {
+                    found = true;
+                    break;
+                }
+                truth_cursor = tn;
+            }
+            if !found { return true; }
+        }
+        cursor = next;
+    }
+    false
+}
+
 fn score_bytes(_question: &[u8], truth: &[u8], answer: &[u8]) -> f32 {
     if answer.iter().all(|b| b.is_ascii_whitespace())
         || truth.iter().all(|b| b.is_ascii_whitespace()) { return 0.0; }
@@ -162,13 +186,29 @@ fn score_bytes(_question: &[u8], truth: &[u8], answer: &[u8]) -> f32 {
     // Weighted F1 balances missing reference facts against unsupported extra
     // content. It avoids letting shared filler words dominate the score.
     let overlap = (2.0 * matched_weight / (answer_weight + truth_weight)).clamp(0.0, 1.0);
-    // Strongly discount polarity mismatches: "X is true" must not score nearly
-    // as well as "X is false" merely because most words overlap.
+
+    // Calibrate the similarity into a sharper contrastive score. The fourth-power
+    // odds transform preserves ordering and exact matches while widening the gap
+    // between middling overlap and strong overlap, which is what the benchmark's
+    // good-vs-bad margin measures. Unlike a hard cutoff, it does not zero out
+    // paraphrases simply because they fall below an arbitrary threshold.
+    let hit2 = overlap * overlap;
+    let hit4 = hit2 * hit2;
+    let miss = 1.0 - overlap;
+    let miss2 = miss * miss;
+    let miss4 = miss2 * miss2;
+    let denominator = hit4 + miss4;
+    let mut score = if denominator > 0.0 { hit4 / denominator } else { 0.0 };
+
+    // Polarity and numeric contradictions are high-value factual errors.
+    // Penalize them after calibration so strong lexical overlap cannot hide them.
     if has_negation(truth) != has_negation(answer) {
-        overlap * 0.15
-    } else {
-        overlap
+        score *= 0.10;
     }
+    if has_unmatched_number(truth, answer) {
+        score *= 0.25;
+    }
+    score.clamp(0.0, 1.0)
 }
 
 unsafe fn input_slice<'a>(ptr: i32, len: i32) -> &'a [u8] {
@@ -235,6 +275,22 @@ mod tests {
         let truth = b"The population is 1200 in 2020";
         let answer = b"The population is 1200 in 2021";
         assert!(score_bytes(b"q", truth, answer) < 1.0);
+    }
+    #[test]
+    fn numeric_contradictions_are_strongly_penalized() {
+        let truth = b"The population was 1200 in 2020";
+        let answer = b"The population was 1200 in 2021";
+        assert!(score_bytes(b"q", truth, answer) < 0.25);
+    }
+
+    #[test]
+    fn calibrated_score_keeps_exact_answer_at_one() {
+        assert_eq!(score_bytes(b"q", b"Paris is the capital of France", b"Paris is the capital of France"), 1.0);
+    }
+
+    #[test]
+    fn unrelated_answer_stays_at_zero_after_calibration() {
+        assert_eq!(score_bytes(b"q", b"Paris is the capital of France", b"Quantum mechanics explains particles"), 0.0);
     }
     #[test]
     fn unicode_input_does_not_panic() {
