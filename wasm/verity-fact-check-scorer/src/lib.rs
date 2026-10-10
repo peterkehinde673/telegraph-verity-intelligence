@@ -3,6 +3,7 @@
 //! Deterministic, content-weighted lexical scorer for Telegraph FACT_CHECK.
 //! This is still a lexical baseline, not a semantic fact-checking engine.
 //! V8 restores the strongest measured calibration and strengthens contradiction penalties.
+//! Release build note: V8 restores eighth-power odds and strengthens contradiction penalties.
 //! It compares the candidate answer to the supplied reference and performs no
 //! network access. Common function words receive less weight than factual terms.
 
