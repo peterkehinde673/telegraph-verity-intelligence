@@ -2,8 +2,8 @@
 
 //! Deterministic, content-weighted lexical scorer for Telegraph FACT_CHECK.
 //! This is still a lexical baseline, not a semantic fact-checking engine.
-//! V8 restores the strongest measured calibration and strengthens contradiction penalties.
-//! Release build note: V8 restores eighth-power odds and strengthens contradiction penalties.
+//! V9 adds an answer-precision gate to the strongest measured calibration.
+//! Release build note: eighth-power odds plus precision and contradiction penalties.
 //! It compares the candidate answer to the supplied reference and performs no
 //! network access. Common function words receive less weight than factual terms.
 
@@ -216,8 +216,15 @@ fn score_bytes(_question: &[u8], truth: &[u8], answer: &[u8]) -> f32 {
     let denominator = hit8 + miss8;
     let mut score = if denominator > 0.0 { hit8 / denominator } else { 0.0 };
 
+    // V9 adds a precision gate: answers containing substantial unsupported
+    // content should score below concise answers that are fully grounded in
+    // the reference. Weighted F1 already penalizes extras; this second factor
+    // makes that penalty explicit without changing exact-match behavior.
+    let precision = (matched_weight / answer_weight).clamp(0.0, 1.0);
+    score *= precision;
+
     // Contradictions must remain low even when most of the reference is copied.
-    // Use stronger post-calibration penalties than V4/V7 for polarity and digits.
+    // Apply strong post-calibration penalties to polarity and numeric conflicts.
     if has_negation(truth) != has_negation(answer) {
         score *= 0.02;
     }
