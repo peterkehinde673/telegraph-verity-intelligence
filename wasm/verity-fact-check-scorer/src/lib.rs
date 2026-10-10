@@ -2,12 +2,12 @@
 
 //! Deterministic, content-weighted lexical scorer for Telegraph FACT_CHECK.
 //! This is still a lexical baseline, not a semantic fact-checking engine.
-//! V14 restores the best measured unigram calibration and increases numeric-token weight.
-//! Release note: numeric terms are weighted more heavily; protocol promotion remains unverified.
-//! Uses tenth-power calibration based on V11's strongest measured margin.
+//! V15 adds conservative inflection normalization to improve paraphrase matching.
+//! Release note: inflection normalization is a hypothesis; protocol promotion remains unverified.
+//! Retains tenth-power calibration and numeric-token weighting.
 //! Keeps existing polarity and numeric contradiction guards.
 //! Keeps V11 content-word weighting and existing contradiction guards.
-//! V14 uses weighted unigram overlap with stronger numeric-token evidence.
+//! V15 uses weighted unigram overlap, numeric evidence, and conservative inflection normalization.
 //! It compares the candidate answer to the supplied reference and performs no
 //! network access. Common function words receive less weight than factual terms.
 
@@ -71,10 +71,35 @@ const TOKEN_TABLE_SIZE: usize = 16_384;
 struct TokenSlot { hash: u64, count: u32 }
 const EMPTY_SLOT: TokenSlot = TokenSlot { hash: 0, count: 0 };
 
+// Conservative English morphology normalization makes common inflections
+// (for example, "cities"/"city" and "reported"/"report") less likely to be
+// treated as entirely different facts. It deliberately avoids broad stemming.
+fn normalized_token(token: &[u8], out: &mut [u8; 64]) -> usize {
+    let mut len = token.len().min(out.len());
+    for i in 0..len { out[i] = lower_ascii(token[i]); }
+    if len > 4 && &out[len - 3..len] == b"ies" {
+        out[len - 3] = b'y';
+        len -= 2;
+    } else if len > 5 && &out[len - 3..len] == b"ing" {
+        len -= 3;
+        if len > 2 && out[len - 1] == out[len - 2] { len -= 1; }
+    } else if len > 4 && &out[len - 2..len] == b"ed" {
+        len -= 2;
+        if len > 2 && out[len - 1] == out[len - 2] { len -= 1; }
+    } else if len > 4 && &out[len - 2..len] == b"es" {
+        len -= 2;
+    } else if len > 3 && out[len - 1] == b's' {
+        len -= 1;
+    }
+    len
+}
+
 fn token_hash(token: &[u8]) -> u64 {
+    let mut normalized = [0u8; 64];
+    let len = normalized_token(token, &mut normalized);
     let mut hash = 0xcbf29ce484222325u64;
-    for byte in token {
-        hash ^= lower_ascii(*byte) as u64;
+    for byte in &normalized[..len] {
+        hash ^= *byte as u64;
         hash = hash.wrapping_mul(0x100000001b3);
     }
     if hash == 0 { 1 } else { hash }
