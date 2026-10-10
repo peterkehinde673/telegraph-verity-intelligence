@@ -201,21 +201,17 @@ fn score_bytes(_question: &[u8], truth: &[u8], answer: &[u8]) -> f32 {
     // content. It avoids letting shared filler words dominate the score.
     let overlap = (2.0 * matched_weight / (answer_weight + truth_weight)).clamp(0.0, 1.0);
 
-    // Sixteenth-power odds calibration sharpens separation around the
-    // midpoint while retaining exact-match and zero-overlap endpoints. This
-    // is an experiment after v3/v4 improved head-to-head wins but missed the
-    // champion's margin; the live benchmark determines whether it helps.
-    let hit2 = overlap * overlap;
-    let hit4 = hit2 * hit2;
-    let hit8 = hit4 * hit4;
-    let hit16 = hit8 * hit8;
-    let miss = 1.0 - overlap;
-    let miss2 = miss * miss;
-    let miss4 = miss2 * miss2;
-    let miss8 = miss4 * miss4;
-    let miss16 = miss8 * miss8;
-    let denominator = hit16 + miss16;
-    let mut score = if denominator > 0.0 { hit16 / denominator } else { 0.0 };
+    // Use a thresholded piecewise calibration. The previous odds transforms
+    // saturated middling overlaps near 1.0, allowing partly copied wrong answers
+    // to score almost perfectly. Keep the mapping monotonic, but compress scores
+    // below 0.65 and reserve the upper range for strong reference overlap.
+    // Exact matches stay at 1.0 and no overlap stays at 0.0.
+    let mut score = if overlap <= 0.65 {
+        0.20 * (overlap / 0.65)
+    } else {
+        let high = (overlap - 0.65) / 0.35;
+        0.20 + 0.80 * high * high
+    };
 
     // Polarity and numeric contradictions are high-value factual errors.
     // Penalize them after calibration so strong lexical overlap cannot hide them.
