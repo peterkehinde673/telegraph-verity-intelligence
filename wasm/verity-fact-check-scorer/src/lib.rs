@@ -202,17 +202,11 @@ fn score_bytes(_question: &[u8], truth: &[u8], answer: &[u8]) -> f32 {
     // content. It avoids letting shared filler words dominate the score.
     let overlap = (2.0 * matched_weight / (answer_weight + truth_weight)).clamp(0.0, 1.0);
 
-    // Use a thresholded piecewise calibration. The previous odds transforms
-    // saturated middling overlaps near 1.0, allowing partly copied wrong answers
-    // to score almost perfectly. Keep the mapping monotonic, but compress scores
-    // below 0.65 and reserve the upper range for strong reference overlap.
-    // Exact matches stay at 1.0 and no overlap stays at 0.0.
-    let mut score = if overlap <= 0.65 {
-        0.20 * (overlap / 0.65)
-    } else {
-        let high = (overlap - 0.65) / 0.35;
-        0.20 + 0.80 * high * high
-    };
+    // V6 uses a convex calibration rather than compressing most overlaps
+    // into a narrow low-score band. Squaring preserves order while widening the
+    // gap between weak/partial matches and answers that cover most reference facts.
+    // Unlike steep odds transforms, it does not saturate moderate overlap near 1.
+    let mut score = overlap * overlap;
 
     // Polarity and numeric contradictions are high-value factual errors.
     // Penalize them after calibration so strong lexical overlap cannot hide them.
@@ -307,6 +301,13 @@ mod tests {
         assert_eq!(score_bytes(b"q", b"Paris is the capital of France", b"Quantum mechanics explains particles"), 0.0);
     }
     #[test]
+    fn squared_calibration_separates_partial_from_strong_overlap() {
+        let truth = b"alpha beta gamma delta";
+        let weak = score_bytes(b"q", truth, b"alpha beta");
+        let strong = score_bytes(b"q", truth, b"alpha beta gamma");
+        assert!(strong - weak > 0.20, "weak={weak}, strong={strong}");
+    }
+
     fn calibrated_score_is_monotonic_with_overlap() {
         let truth = b"alpha beta gamma delta";
         let weak = score_bytes(b"q", truth, b"alpha beta");
