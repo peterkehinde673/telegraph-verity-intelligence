@@ -2,12 +2,12 @@
 
 //! Deterministic, content-weighted lexical scorer for Telegraph FACT_CHECK.
 //! This is still a lexical baseline, not a semantic fact-checking engine.
-//! V13 supplements content-weighted token overlap with an order-sensitive bigram signal.
-//! Release note: V13 keeps unigram evidence dominant and adds a 15% phrase-order component.
-//! Release note: combines unigram and bigram overlap; protocol scoring must confirm promotion.
-//! Keeps V12's twelfth-power odds calibration and existing contradiction guards.
+//! V14 restores the best measured unigram calibration and increases numeric-token weight.
+//! Release note: numeric terms are weighted more heavily; protocol promotion remains unverified.
+//! Uses tenth-power calibration based on V11's strongest measured margin.
+//! Keeps existing polarity and numeric contradiction guards.
 //! Keeps V11 content-word weighting and existing contradiction guards.
-//! Release build note: eighth-power odds plus precision and contradiction penalties.
+//! V14 uses weighted unigram overlap with stronger numeric-token evidence.
 //! It compares the candidate answer to the supplied reference and performs no
 //! network access. Common function words receive less weight than factual terms.
 
@@ -94,6 +94,8 @@ fn find_slot(table: &[TokenSlot], hash: u64) -> Option<usize> {
 // dates, quantities, and other content words. Keep this deliberately small,
 // deterministic, and language-agnostic beyond common English function words.
 fn token_weight(token: &[u8]) -> f32 {
+    // Numeric tokens carry unusually high factual value in fact-checking.
+    if !token.is_empty() && token.iter().all(|b| b.is_ascii_digit()) { return 2.5; }
     let mut lower = [0u8; 16];
     if token.len() > lower.len() { return 1.0; }
     for (i, b) in token.iter().enumerate() { lower[i] = lower_ascii(*b); }
@@ -121,59 +123,6 @@ fn bigram_hash(left: u64, right: u64) -> u64 {
     let combined = left.rotate_left(17) ^ right.wrapping_mul(0x9e3779b97f4a7c15);
     if combined == 0 { 1 } else { combined }
 }
-
-// Order-sensitive evidence supplements unigram overlap. It helps distinguish
-// answers that repeat the same words but change their relationships.
-fn bigram_overlap(truth: &[u8], answer: &[u8]) -> f32 {
-    let mut table = [EMPTY_SLOT; TOKEN_TABLE_SIZE];
-    let mut truth_weight = 0.0f32;
-    let mut cursor = 0usize;
-    let mut previous_hash = None;
-    let mut previous_weight = 0.0f32;
-    while let Some((start, end, next)) = next_token(truth, cursor) {
-        let token = &truth[start..end];
-        let hash = token_hash(token);
-        let weight = token_weight(token);
-        if let Some(left) = previous_hash {
-            let hash = bigram_hash(left, hash);
-            let index = match find_slot(&table, hash) { Some(i) => i, None => return 0.0 };
-            if table[index].hash == 0 { table[index].hash = hash; }
-            table[index].count = table[index].count.saturating_add(1);
-            truth_weight += (previous_weight + weight) * 0.5;
-        }
-        previous_hash = Some(hash);
-        previous_weight = weight;
-        cursor = next;
-    }
-
-    let mut answer_weight = 0.0f32;
-    let mut matched_weight = 0.0f32;
-    cursor = 0;
-    previous_hash = None;
-    previous_weight = 0.0;
-    while let Some((start, end, next)) = next_token(answer, cursor) {
-        let token = &answer[start..end];
-        let hash = token_hash(token);
-        let weight = token_weight(token);
-        if let Some(left) = previous_hash {
-            let pair_hash = bigram_hash(left, hash);
-            let pair_weight = (previous_weight + weight) * 0.5;
-            answer_weight += pair_weight;
-            if let Some(index) = find_slot(&table, pair_hash) {
-                if table[index].hash == pair_hash && table[index].count > 0 {
-                    table[index].count -= 1;
-                    matched_weight += pair_weight;
-                }
-            }
-        }
-        previous_hash = Some(hash);
-        previous_weight = weight;
-        cursor = next;
-    }
-    if answer_weight <= 0.0 || truth_weight <= 0.0 { return 0.0; }
-    (2.0 * matched_weight / (answer_weight + truth_weight)).clamp(0.0, 1.0)
-}
-
 
 // A lightweight polarity guard: lexical overlap alone can reward answers that
 // copy the reference while reversing its meaning. This is intentionally
@@ -270,21 +219,17 @@ fn score_bytes(_question: &[u8], truth: &[u8], answer: &[u8]) -> f32 {
 
     if answer_weight <= 0.0 || truth_weight <= 0.0 || matched_weight <= 0.0 { return 0.0; }
     // Weighted F1 balances missing reference facts against unsupported extra
-    // content. It avoids letting shared filler words dominate the score.
-    let unigram_overlap = (2.0 * matched_weight / (answer_weight + truth_weight)).clamp(0.0, 1.0);
-    let phrase_overlap = bigram_overlap(truth, answer);
-    // Keep lexical coverage dominant to preserve paraphrase tolerance, while
-    // using local word order as an additional signal for relational accuracy.
-    let overlap = (0.85 * unigram_overlap + 0.15 * phrase_overlap).clamp(0.0, 1.0);
+    // content. Numeric tokens receive extra weight because exact quantities,
+    // years, and counts are often decisive in factual claims.
+    let overlap = (2.0 * matched_weight / (answer_weight + truth_weight)).clamp(0.0, 1.0);
 
-    // V13 adds a modest order-sensitive bigram signal to V11's content-word
-    // weighting and V12 calibration. It is a benchmark hypothesis, not a
-    // claim that the protocol evaluator will promote this candidate.
+    // V14 returns to the strongest measured calibration (V11, margin 0.3217)
+    // after the V13 order signal reduced margin to 0.2818. Numeric-token
+    // weighting is a targeted factual-evidence experiment.
     let hit2 = overlap * overlap;
     let hit4 = hit2 * hit2;
     let hit8 = hit4 * hit4;
     let hit10 = hit8 * hit2;
-    let hit12 = hit10 * hit2;
     let miss = 1.0 - overlap;
     let miss2 = miss * miss;
     let miss4 = miss2 * miss2;
