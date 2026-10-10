@@ -2,12 +2,12 @@
 
 //! Deterministic, content-weighted lexical scorer for Telegraph FACT_CHECK.
 //! This is still a lexical baseline, not a semantic fact-checking engine.
-//! V15 adds conservative inflection normalization to improve paraphrase matching.
-//! Release note: inflection normalization is a hypothesis; protocol promotion remains unverified.
-//! Retains tenth-power calibration and numeric-token weighting.
+//! V16 treats numeric omissions and polarity markers as high-value factual evidence.
+//! Release note: symmetric numeric checks and polarity weighting are benchmark hypotheses.
+//! Retains tenth-power calibration and inflection normalization.
 //! Keeps existing polarity and numeric contradiction guards.
 //! Keeps V11 content-word weighting and existing contradiction guards.
-//! V15 uses weighted unigram overlap, numeric evidence, and conservative inflection normalization.
+//! V16 uses weighted unigram overlap, inflection normalization, and stronger contradiction checks.
 //! It compares the candidate answer to the supplied reference and performs no
 //! network access. Common function words receive less weight than factual terms.
 
@@ -125,6 +125,11 @@ fn token_weight(token: &[u8]) -> f32 {
     if token.len() > lower.len() { return 1.0; }
     for (i, b) in token.iter().enumerate() { lower[i] = lower_ascii(*b); }
     let word = &lower[..token.len()];
+    // Polarity markers are tiny words but carry decisive factual meaning.
+    if [b"not".as_slice(), b"no", b"never", b"nor", b"without", b"neither",
+        b"cannot", b"cant", b"none", b"nothing", b"nobody"].iter().any(|w| *w == word) {
+        return 2.0;
+    }
     const COMMON: [&[u8]; 99] = [
         b"a", b"an", b"the", b"and", b"or", b"but", b"if", b"then", b"of",
         b"to", b"in", b"on", b"at", b"by", b"for", b"from", b"with", b"as",
@@ -187,25 +192,31 @@ fn has_negation(bytes: &[u8]) -> bool {
 // Detect unsupported numeric claims. Numbers often carry the key factual distinction
 // (years, counts, dates, percentages); a mismatching number should not be rescued
 // by otherwise copying most of the reference sentence.
-fn has_unmatched_number(truth: &[u8], answer: &[u8]) -> bool {
+fn has_unmatched_number_in(source: &[u8], other: &[u8]) -> bool {
     let mut cursor = 0usize;
-    while let Some((start, end, next)) = next_token(answer, cursor) {
-        let token = &answer[start..end];
+    while let Some((start, end, next)) = next_token(source, cursor) {
+        let token = &source[start..end];
         if !token.is_empty() && token.iter().all(|b| b.is_ascii_digit()) {
-            let mut truth_cursor = 0usize;
+            let mut other_cursor = 0usize;
             let mut found = false;
-            while let Some((ts, te, tn)) = next_token(truth, truth_cursor) {
-                if &truth[ts..te] == token {
+            while let Some((ts, te, tn)) = next_token(other, other_cursor) {
+                if &other[ts..te] == token {
                     found = true;
                     break;
                 }
-                truth_cursor = tn;
+                other_cursor = tn;
             }
             if !found { return true; }
         }
         cursor = next;
     }
     false
+}
+
+fn has_numeric_mismatch(truth: &[u8], answer: &[u8]) -> bool {
+    // Both unsupported added numbers and omitted reference numbers can change
+    // a factual claim, so check the numeric evidence symmetrically.
+    has_unmatched_number_in(answer, truth) || has_unmatched_number_in(truth, answer)
 }
 
 fn score_bytes(_question: &[u8], truth: &[u8], answer: &[u8]) -> f32 {
@@ -268,7 +279,7 @@ fn score_bytes(_question: &[u8], truth: &[u8], answer: &[u8]) -> f32 {
     if has_negation(truth) != has_negation(answer) {
         score *= 0.02;
     }
-    if has_unmatched_number(truth, answer) {
+    if has_numeric_mismatch(truth, answer) {
         score *= 0.05;
     }
     score.clamp(0.0, 1.0)
