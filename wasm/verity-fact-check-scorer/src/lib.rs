@@ -2,9 +2,9 @@
 
 //! Deterministic, content-weighted lexical scorer for Telegraph FACT_CHECK.
 //! This is still a lexical baseline, not a semantic fact-checking engine.
-//! V11 emphasizes factual/content words by downweighting a broader English function-word list.
-//! Release note: V11 changes lexical feature weighting; benchmark promotion remains unverified.
-//! Keeps the V8 contradiction guards and V10 odds calibration.
+//! V12 tests sharper calibration on top of V11's content-word weighting.
+//! Release note: V12 twelfth-power odds calibration; promotion remains unverified.
+//! Keeps V11 content-word weighting and existing contradiction guards.
 //! Release build note: eighth-power odds plus precision and contradiction penalties.
 //! It compares the candidate answer to the supplied reference and performs no
 //! network access. Common function words receive less weight than factual terms.
@@ -212,20 +212,23 @@ fn score_bytes(_question: &[u8], truth: &[u8], answer: &[u8]) -> f32 {
     // content. It avoids letting shared filler words dominate the score.
     let overlap = (2.0 * matched_weight / (answer_weight + truth_weight)).clamp(0.0, 1.0);
 
-    // V10 builds on V8, the strongest measured version (0.2892 margin),
-    // with a tenth-power odds curve to test a modestly stronger separation.
-    // V9's extra precision multiplier reduced the measured margin, so omit it.
+    // V12 keeps V11's improved content-word weighting and tests a sharper
+    // twelfth-power odds curve. V11 improved margin to 0.3217, but still
+    // trails the 0.4667 champion. This is a calibration experiment, not a
+    // claim that the protocol benchmark will promote it.
     let hit2 = overlap * overlap;
     let hit4 = hit2 * hit2;
     let hit8 = hit4 * hit4;
     let hit10 = hit8 * hit2;
+    let hit12 = hit10 * hit2;
     let miss = 1.0 - overlap;
     let miss2 = miss * miss;
     let miss4 = miss2 * miss2;
     let miss8 = miss4 * miss4;
     let miss10 = miss8 * miss2;
-    let denominator = hit10 + miss10;
-    let mut score = if denominator > 0.0 { hit10 / denominator } else { 0.0 };
+    let miss12 = miss10 * miss2;
+    let denominator = hit12 + miss12;
+    let mut score = if denominator > 0.0 { hit12 / denominator } else { 0.0 };
 
     // Contradictions must remain low even when most of the reference is copied.
     // Apply strong post-calibration penalties to polarity and numeric conflicts.
