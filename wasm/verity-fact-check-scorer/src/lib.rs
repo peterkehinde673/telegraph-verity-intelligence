@@ -103,6 +103,27 @@ fn token_weight(token: &[u8]) -> f32 {
     if COMMON.iter().any(|candidate| *candidate == word) { 0.2 } else { 1.0 }
 }
 
+// A lightweight polarity guard: lexical overlap alone can reward answers that
+// copy the reference while reversing its meaning. This is intentionally
+// conservative and deterministic; it is not full natural-language inference.
+fn has_negation(bytes: &[u8]) -> bool {
+    let mut cursor = 0usize;
+    while let Some((start, end, next)) = next_token(bytes, cursor) {
+        let token = &bytes[start..end];
+        let mut lower = [0u8; 16];
+        if token.len() <= lower.len() {
+            for (i, b) in token.iter().enumerate() { lower[i] = lower_ascii(*b); }
+            let word = &lower[..token.len()];
+            if [b"not".as_slice(), b"never", b"no", b"without", b"neither", b"nor", b"false", b"incorrect"]
+                .iter().any(|candidate| *candidate == word) {
+                return true;
+            }
+        }
+        cursor = next;
+    }
+    false
+}
+
 fn score_bytes(_question: &[u8], truth: &[u8], answer: &[u8]) -> f32 {
     if answer.iter().all(|b| b.is_ascii_whitespace())
         || truth.iter().all(|b| b.is_ascii_whitespace()) { return 0.0; }
@@ -140,7 +161,14 @@ fn score_bytes(_question: &[u8], truth: &[u8], answer: &[u8]) -> f32 {
     if answer_weight <= 0.0 || truth_weight <= 0.0 || matched_weight <= 0.0 { return 0.0; }
     // Weighted F1 balances missing reference facts against unsupported extra
     // content. It avoids letting shared filler words dominate the score.
-    (2.0 * matched_weight / (answer_weight + truth_weight)).clamp(0.0, 1.0)
+    let overlap = (2.0 * matched_weight / (answer_weight + truth_weight)).clamp(0.0, 1.0);
+    // Strongly discount polarity mismatches: "X is true" must not score nearly
+    // as well as "X is false" merely because most words overlap.
+    if has_negation(truth) != has_negation(answer) {
+        overlap * 0.15
+    } else {
+        overlap
+    }
 }
 
 unsafe fn input_slice<'a>(ptr: i32, len: i32) -> &'a [u8] {
@@ -188,6 +216,25 @@ mod tests {
         let concise = score_bytes(b"q", b"Paris is the capital of France", b"Paris is the capital of France");
         let padded = score_bytes(b"q", b"Paris is the capital of France", b"Paris is the capital of France and Jupiter has rings");
         assert!(padded < concise);
+    }
+    #[test]
+    fn polarity_reversal_is_heavily_penalized() {
+        let truth = b"Paris is the capital of France";
+        let reversed = b"Paris is not the capital of France";
+        let score = score_bytes(b"q", truth, reversed);
+        assert!(score < 0.15, "polarity reversal scored {score}");
+    }
+    #[test]
+    fn matching_negation_is_not_penalized() {
+        let truth = b"Paris is not the capital of Germany";
+        let answer = b"Paris is not the capital of Germany";
+        assert_eq!(score_bytes(b"q", truth, answer), 1.0);
+    }
+    #[test]
+    fn numeric_differences_reduce_score() {
+        let truth = b"The population is 1200 in 2020";
+        let answer = b"The population is 1200 in 2021";
+        assert!(score_bytes(b"q", truth, answer) < 1.0);
     }
     #[test]
     fn unicode_input_does_not_panic() {
