@@ -129,7 +129,7 @@ fn has_negation(bytes: &[u8]) -> bool {
     let mut i = 0usize;
     while i + 2 < bytes.len() {
         if lower_ascii(bytes[i]) == b'n'
-            && bytes[i + 1] == b'\\''
+            && bytes[i + 1] == 39
             && lower_ascii(bytes[i + 2]) == b't' {
             return true;
         }
