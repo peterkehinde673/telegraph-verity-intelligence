@@ -2,9 +2,9 @@
 
 //! Deterministic, content-weighted lexical scorer for Telegraph FACT_CHECK.
 //! This is still a lexical baseline, not a semantic fact-checking engine.
-//! V10 tests a modestly sharper tenth-power odds calibration after V8 outperformed V9.
-//! Release note: V10 calibration experiment; protocol benchmark still determines promotion.
-//! Release note: retains V8 contradiction guards and omits V9 precision multiplier.
+//! V11 emphasizes factual/content words by downweighting a broader English function-word list.
+//! Release note: V11 changes lexical feature weighting; benchmark promotion remains unverified.
+//! Keeps the V8 contradiction guards and V10 odds calibration.
 //! Release build note: eighth-power odds plus precision and contradiction penalties.
 //! It compares the candidate answer to the supplied reference and performs no
 //! network access. Common function words receive less weight than factual terms.
@@ -96,15 +96,22 @@ fn token_weight(token: &[u8]) -> f32 {
     if token.len() > lower.len() { return 1.0; }
     for (i, b) in token.iter().enumerate() { lower[i] = lower_ascii(*b); }
     let word = &lower[..token.len()];
-    const COMMON: [&[u8]; 45] = [
+    const COMMON: [&[u8]; 99] = [
         b"a", b"an", b"the", b"and", b"or", b"but", b"if", b"then", b"of",
         b"to", b"in", b"on", b"at", b"by", b"for", b"from", b"with", b"as",
         b"is", b"are", b"was", b"were", b"be", b"been", b"being", b"it",
         b"its", b"this", b"that", b"these", b"those", b"he", b"she", b"they",
         b"we", b"you", b"i", b"me", b"my", b"our", b"your", b"their", b"not",
-        b"do", b"does",
+        b"do", b"does", b"did", b"done", b"have", b"has", b"had", b"having",
+        b"can", b"could", b"will", b"would", b"shall", b"should", b"may",
+        b"might", b"must", b"who", b"whom", b"whose", b"what", b"which",
+        b"when", b"where", b"why", b"how", b"all", b"any", b"both", b"each",
+        b"few", b"more", b"most", b"other", b"some", b"such", b"no", b"nor",
+        b"only", b"own", b"same", b"so", b"than", b"too", b"very", b"here",
+        b"there", b"again", b"also", b"just", b"about", b"into", b"over",
+        b"after", b"before", b"between",
     ];
-    if COMMON.iter().any(|candidate| *candidate == word) { 0.2 } else { 1.0 }
+    if COMMON.iter().any(|candidate| *candidate == word) { 0.05 } else { 1.0 }
 }
 
 // A lightweight polarity guard: lexical overlap alone can reward answers that
