@@ -114,12 +114,26 @@ fn has_negation(bytes: &[u8]) -> bool {
         if token.len() <= lower.len() {
             for (i, b) in token.iter().enumerate() { lower[i] = lower_ascii(*b); }
             let word = &lower[..token.len()];
-            if [b"not".as_slice(), b"never", b"no", b"without", b"neither", b"nor", b"false", b"incorrect"]
-                .iter().any(|candidate| *candidate == word) {
+            if [
+                b"not".as_slice(), b"never", b"no", b"without", b"neither",
+                b"nor", b"false", b"incorrect", b"wrong", b"cannot", b"cant",
+                b"none", b"nobody", b"nothing", b"lacks", b"lack",
+            ].iter().any(|candidate| *candidate == word) {
                 return true;
             }
         }
         cursor = next;
+    }
+    // The tokenizer splits contractions at apostrophes, so detect "n't"
+    // directly to catch isn't, wasn't, can't, won't, and similar forms.
+    let mut i = 0usize;
+    while i + 2 < bytes.len() {
+        if lower_ascii(bytes[i]) == b'n'
+            && bytes[i + 1] == 39
+            && lower_ascii(bytes[i + 2]) == b't' {
+            return true;
+        }
+        i += 1;
     }
     false
 }
@@ -187,19 +201,17 @@ fn score_bytes(_question: &[u8], truth: &[u8], answer: &[u8]) -> f32 {
     // content. It avoids letting shared filler words dominate the score.
     let overlap = (2.0 * matched_weight / (answer_weight + truth_weight)).clamp(0.0, 1.0);
 
-    // Use an eighth-power odds calibration to amplify the contrast between
-    // answers with stronger and weaker evidence overlap. This is monotonic and
-    // retains exact-match/zero-match endpoints; unlike a threshold it does not
-    // discard all partial matches. The live benchmark remains the final check.
-    let hit2 = overlap * overlap;
-    let hit4 = hit2 * hit2;
-    let hit8 = hit4 * hit4;
-    let miss = 1.0 - overlap;
-    let miss2 = miss * miss;
-    let miss4 = miss2 * miss2;
-    let miss8 = miss4 * miss4;
-    let denominator = hit8 + miss8;
-    let mut score = if denominator > 0.0 { hit8 / denominator } else { 0.0 };
+    // Use a thresholded piecewise calibration. The previous odds transforms
+    // saturated middling overlaps near 1.0, allowing partly copied wrong answers
+    // to score almost perfectly. Keep the mapping monotonic, but compress scores
+    // below 0.65 and reserve the upper range for strong reference overlap.
+    // Exact matches stay at 1.0 and no overlap stays at 0.0.
+    let mut score = if overlap <= 0.65 {
+        0.20 * (overlap / 0.65)
+    } else {
+        let high = (overlap - 0.65) / 0.35;
+        0.20 + 0.80 * high * high
+    };
 
     // Polarity and numeric contradictions are high-value factual errors.
     // Penalize them after calibration so strong lexical overlap cannot hide them.
@@ -300,6 +312,17 @@ mod tests {
         let strong = score_bytes(b"q", truth, b"alpha beta gamma");
         let exact = score_bytes(b"q", truth, truth);
         assert!(weak < strong && strong < exact, "weak={weak}, strong={strong}, exact={exact}");
+    }
+    #[test]
+    fn contractions_with_negation_are_detected() {
+        let truth = b"The result is correct";
+        let answer = b"The result isn't correct";
+        assert!(score_bytes(b"q", truth, answer) < 0.15);
+    }
+
+    #[test]
+    fn stronger_calibration_preserves_exact_matches() {
+        assert_eq!(score_bytes(b"q", b"the answer is forty two", b"the answer is forty two"), 1.0);
     }
     #[test]
     fn unicode_input_does_not_panic() {
