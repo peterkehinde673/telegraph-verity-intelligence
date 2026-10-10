@@ -2,8 +2,8 @@
 
 //! Deterministic, content-weighted lexical scorer for Telegraph FACT_CHECK.
 //! This is still a lexical baseline, not a semantic fact-checking engine.
-//! V9 adds an answer-precision gate to the strongest measured calibration.
-//! Release note: weighted answer precision penalizes unsupported extra content.
+//! V10 tests a modestly sharper tenth-power odds calibration after V8 outperformed V9.
+//! Release note: retains V8 contradiction guards and omits V9 precision multiplier.
 //! Release build note: eighth-power odds plus precision and contradiction penalties.
 //! It compares the candidate answer to the supplied reference and performs no
 //! network access. Common function words receive less weight than factual terms.
@@ -204,25 +204,20 @@ fn score_bytes(_question: &[u8], truth: &[u8], answer: &[u8]) -> f32 {
     // content. It avoids letting shared filler words dominate the score.
     let overlap = (2.0 * matched_weight / (answer_weight + truth_weight)).clamp(0.0, 1.0);
 
-    // V8 restores the best-performing measured calibration so far (V4's
-    // eighth-power odds curve), which achieved a 0.3014 benchmark margin.
-    // Strong overlap maps high and weak overlap maps low without a hard cutoff.
+    // V10 builds on V8, the strongest measured version (0.2892 margin),
+    // with a tenth-power odds curve to test a modestly stronger separation.
+    // V9's extra precision multiplier reduced the measured margin, so omit it.
     let hit2 = overlap * overlap;
     let hit4 = hit2 * hit2;
     let hit8 = hit4 * hit4;
+    let hit10 = hit8 * hit2;
     let miss = 1.0 - overlap;
     let miss2 = miss * miss;
     let miss4 = miss2 * miss2;
     let miss8 = miss4 * miss4;
-    let denominator = hit8 + miss8;
-    let mut score = if denominator > 0.0 { hit8 / denominator } else { 0.0 };
-
-    // V9 adds a precision gate: answers containing substantial unsupported
-    // content should score below concise answers that are fully grounded in
-    // the reference. Weighted F1 already penalizes extras; this second factor
-    // makes that penalty explicit without changing exact-match behavior.
-    let precision = (matched_weight / answer_weight).clamp(0.0, 1.0);
-    score *= precision;
+    let miss10 = miss8 * miss2;
+    let denominator = hit10 + miss10;
+    let mut score = if denominator > 0.0 { hit10 / denominator } else { 0.0 };
 
     // Contradictions must remain low even when most of the reference is copied.
     // Apply strong post-calibration penalties to polarity and numeric conflicts.
