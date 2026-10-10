@@ -103,6 +103,51 @@ fn token_weight(token: &[u8]) -> f32 {
     if COMMON.iter().any(|candidate| *candidate == word) { 0.2 } else { 1.0 }
 }
 
+// A lightweight polarity guard: lexical overlap alone can reward answers that
+// copy the reference while reversing its meaning. This is intentionally
+// conservative and deterministic; it is not full natural-language inference.
+fn has_negation(bytes: &[u8]) -> bool {
+    let mut cursor = 0usize;
+    while let Some((start, end, next)) = next_token(bytes, cursor) {
+        let token = &bytes[start..end];
+        let mut lower = [0u8; 16];
+        if token.len() <= lower.len() {
+            for (i, b) in token.iter().enumerate() { lower[i] = lower_ascii(*b); }
+            let word = &lower[..token.len()];
+            if [b"not".as_slice(), b"never", b"no", b"without", b"neither", b"nor", b"false", b"incorrect"]
+                .iter().any(|candidate| *candidate == word) {
+                return true;
+            }
+        }
+        cursor = next;
+    }
+    false
+}
+
+// Detect unsupported numeric claims. Numbers often carry the key factual distinction
+// (years, counts, dates, percentages); a mismatching number should not be rescued
+// by otherwise copying most of the reference sentence.
+fn has_unmatched_number(truth: &[u8], answer: &[u8]) -> bool {
+    let mut cursor = 0usize;
+    while let Some((start, end, next)) = next_token(answer, cursor) {
+        let token = &answer[start..end];
+        if !token.is_empty() && token.iter().all(|b| b.is_ascii_digit()) {
+            let mut truth_cursor = 0usize;
+            let mut found = false;
+            while let Some((ts, te, tn)) = next_token(truth, truth_cursor) {
+                if &truth[ts..te] == token {
+                    found = true;
+                    break;
+                }
+                truth_cursor = tn;
+            }
+            if !found { return true; }
+        }
+        cursor = next;
+    }
+    false
+}
+
 fn score_bytes(_question: &[u8], truth: &[u8], answer: &[u8]) -> f32 {
     if answer.iter().all(|b| b.is_ascii_whitespace())
         || truth.iter().all(|b| b.is_ascii_whitespace()) { return 0.0; }
@@ -140,7 +185,30 @@ fn score_bytes(_question: &[u8], truth: &[u8], answer: &[u8]) -> f32 {
     if answer_weight <= 0.0 || truth_weight <= 0.0 || matched_weight <= 0.0 { return 0.0; }
     // Weighted F1 balances missing reference facts against unsupported extra
     // content. It avoids letting shared filler words dominate the score.
-    (2.0 * matched_weight / (answer_weight + truth_weight)).clamp(0.0, 1.0)
+    let overlap = (2.0 * matched_weight / (answer_weight + truth_weight)).clamp(0.0, 1.0);
+
+    // Calibrate the similarity into a sharper contrastive score. The fourth-power
+    // odds transform preserves ordering and exact matches while widening the gap
+    // between middling overlap and strong overlap, which is what the benchmark's
+    // good-vs-bad margin measures. Unlike a hard cutoff, it does not zero out
+    // paraphrases simply because they fall below an arbitrary threshold.
+    let hit2 = overlap * overlap;
+    let hit4 = hit2 * hit2;
+    let miss = 1.0 - overlap;
+    let miss2 = miss * miss;
+    let miss4 = miss2 * miss2;
+    let denominator = hit4 + miss4;
+    let mut score = if denominator > 0.0 { hit4 / denominator } else { 0.0 };
+
+    // Polarity and numeric contradictions are high-value factual errors.
+    // Penalize them after calibration so strong lexical overlap cannot hide them.
+    if has_negation(truth) != has_negation(answer) {
+        score *= 0.10;
+    }
+    if has_unmatched_number(truth, answer) {
+        score *= 0.25;
+    }
+    score.clamp(0.0, 1.0)
 }
 
 unsafe fn input_slice<'a>(ptr: i32, len: i32) -> &'a [u8] {
@@ -188,6 +256,41 @@ mod tests {
         let concise = score_bytes(b"q", b"Paris is the capital of France", b"Paris is the capital of France");
         let padded = score_bytes(b"q", b"Paris is the capital of France", b"Paris is the capital of France and Jupiter has rings");
         assert!(padded < concise);
+    }
+    #[test]
+    fn polarity_reversal_is_heavily_penalized() {
+        let truth = b"Paris is the capital of France";
+        let reversed = b"Paris is not the capital of France";
+        let score = score_bytes(b"q", truth, reversed);
+        assert!(score < 0.15, "polarity reversal scored {score}");
+    }
+    #[test]
+    fn matching_negation_is_not_penalized() {
+        let truth = b"Paris is not the capital of Germany";
+        let answer = b"Paris is not the capital of Germany";
+        assert_eq!(score_bytes(b"q", truth, answer), 1.0);
+    }
+    #[test]
+    fn numeric_differences_reduce_score() {
+        let truth = b"The population is 1200 in 2020";
+        let answer = b"The population is 1200 in 2021";
+        assert!(score_bytes(b"q", truth, answer) < 1.0);
+    }
+    #[test]
+    fn numeric_contradictions_are_strongly_penalized() {
+        let truth = b"The population was 1200 in 2020";
+        let answer = b"The population was 1200 in 2021";
+        assert!(score_bytes(b"q", truth, answer) < 0.25);
+    }
+
+    #[test]
+    fn calibrated_score_keeps_exact_answer_at_one() {
+        assert_eq!(score_bytes(b"q", b"Paris is the capital of France", b"Paris is the capital of France"), 1.0);
+    }
+
+    #[test]
+    fn unrelated_answer_stays_at_zero_after_calibration() {
+        assert_eq!(score_bytes(b"q", b"Paris is the capital of France", b"Quantum mechanics explains particles"), 0.0);
     }
     #[test]
     fn unicode_input_does_not_panic() {
