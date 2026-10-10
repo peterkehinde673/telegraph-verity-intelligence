@@ -2,7 +2,7 @@
 
 //! Deterministic, content-weighted lexical scorer for Telegraph FACT_CHECK.
 //! This is still a lexical baseline, not a semantic fact-checking engine.
-//! V5 calibration uses a piecewise overlap mapping and expanded negation detection.
+//! V6 calibration uses squared weighted overlap and expanded negation detection.
 //! It compares the candidate answer to the supplied reference and performs no
 //! network access. Common function words receive less weight than factual terms.
 
