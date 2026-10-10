@@ -3,6 +3,7 @@
 //! Deterministic, content-weighted lexical scorer for Telegraph FACT_CHECK.
 //! This is still a lexical baseline, not a semantic fact-checking engine.
 //! V10 tests a modestly sharper tenth-power odds calibration after V8 outperformed V9.
+//! Release note: V10 calibration experiment; protocol benchmark still determines promotion.
 //! Release note: retains V8 contradiction guards and omits V9 precision multiplier.
 //! Release build note: eighth-power odds plus precision and contradiction penalties.
 //! It compares the candidate answer to the supplied reference and performs no
