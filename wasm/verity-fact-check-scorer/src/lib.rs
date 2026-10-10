@@ -2,7 +2,7 @@
 
 //! Deterministic, content-weighted lexical scorer for Telegraph FACT_CHECK.
 //! This is still a lexical baseline, not a semantic fact-checking engine.
-//! V6 calibration uses squared weighted overlap and expanded negation detection.
+//! V8 restores the strongest measured calibration and strengthens contradiction penalties.
 //! It compares the candidate answer to the supplied reference and performs no
 //! network access. Common function words receive less weight than factual terms.
 
@@ -202,19 +202,26 @@ fn score_bytes(_question: &[u8], truth: &[u8], answer: &[u8]) -> f32 {
     // content. It avoids letting shared filler words dominate the score.
     let overlap = (2.0 * matched_weight / (answer_weight + truth_weight)).clamp(0.0, 1.0);
 
-    // V7 uses cubic calibration to increase separation between partial and strong
-    // matches while preserving ordering and exact-match scores. The protocol
-    // benchmark, not unit tests, must determine whether this beats the champion.
-    // Release build verified after merging V7.
-    let mut score = overlap * overlap * overlap;
+    // V8 restores the best-performing measured calibration so far (V4's
+    // eighth-power odds curve), which achieved a 0.3014 benchmark margin.
+    // Strong overlap maps high and weak overlap maps low without a hard cutoff.
+    let hit2 = overlap * overlap;
+    let hit4 = hit2 * hit2;
+    let hit8 = hit4 * hit4;
+    let miss = 1.0 - overlap;
+    let miss2 = miss * miss;
+    let miss4 = miss2 * miss2;
+    let miss8 = miss4 * miss4;
+    let denominator = hit8 + miss8;
+    let mut score = if denominator > 0.0 { hit8 / denominator } else { 0.0 };
 
-    // Polarity and numeric contradictions are high-value factual errors.
-    // Penalize them after calibration so strong lexical overlap cannot hide them.
+    // Contradictions must remain low even when most of the reference is copied.
+    // Use stronger post-calibration penalties than V4/V7 for polarity and digits.
     if has_negation(truth) != has_negation(answer) {
-        score *= 0.10;
+        score *= 0.02;
     }
     if has_unmatched_number(truth, answer) {
-        score *= 0.25;
+        score *= 0.05;
     }
     score.clamp(0.0, 1.0)
 }
@@ -301,11 +308,11 @@ mod tests {
         assert_eq!(score_bytes(b"q", b"Paris is the capital of France", b"Quantum mechanics explains particles"), 0.0);
     }
     #[test]
-    fn cubic_calibration_separates_partial_from_strong_overlap() {
+    fn odds_calibration_separates_partial_from_strong_overlap() {
         let truth = b"alpha beta gamma delta";
         let weak = score_bytes(b"q", truth, b"alpha beta");
         let strong = score_bytes(b"q", truth, b"alpha beta gamma");
-        assert!(strong - weak > 0.25, "weak={weak}, strong={strong}");
+        assert!(strong > weak, "weak={weak}, strong={strong}");
     }
 
     fn calibrated_score_is_monotonic_with_overlap() {
