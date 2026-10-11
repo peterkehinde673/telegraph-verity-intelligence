@@ -109,7 +109,7 @@ fn normalized_token(token: &[u8], out: &mut [u8; 64]) -> usize {
     // that preserve factual polarity. Antonyms are deliberately never merged.
     let word = &out[..len];
     let canonical: Option<&[u8]> = match word {
-        b"fraudulent" | b"fraud" | b"scam" | b"phishing" => Some(b"fraud"),
+        b"fraudulent" | b"fraud" | b"scam" | b"phishing" | b"unsafe" | b"dangerous" | b"malicious" | b"risky" => Some(b"fraud"),
         b"safe" | b"secure" | b"legitimate" | b"genuine" | b"authentic" => Some(b"safe"),
         b"reduce" | b"reduc" | b"reduced" | b"reduces" | b"reducing" | b"lower" | b"lowered" | b"lowers" | b"fell" | b"fall" | b"decrease" | b"decreased" | b"decreases" => Some(b"decrease"),
         b"increase" | b"increas" | b"increased" | b"increases" | b"rises" | b"rose" | b"raise" | b"rais" | b"raised" | b"raises" => Some(b"increase"),
@@ -591,6 +591,24 @@ fn score_bytes(_question: &[u8], truth: &[u8], answer: &[u8]) -> f32 {
             }
         }
     }
+    // Equivalent million/billion expressions can have almost no literal token
+    // overlap ("$3.42 billion" vs "3,420 million"). When the numeric value is
+    // equivalent and the answer still shares contextual evidence, prevent the
+    // lexical calibration from scoring the valid unit conversion below a wrong
+    // entity or wrong quantity. Entity, polarity, and unmatched-number guards
+    // remain authoritative and are checked before applying this floor.
+    if overlap > 0.0
+        && has_equivalent_scaled_financial_quantity(truth, answer)
+        && !opposite_verdict
+        && !has_conflicting_proper_noun(truth, answer)
+        && has_negation(truth) == has_negation(answer)
+        && !has_unmatched_number(truth, answer)
+        && truth.len() <= 512
+        && answer.len() <= 256
+    {
+        score = score.max(0.90);
+    }
+
     score.clamp(0.0, 1.0)
 }
 
@@ -710,6 +728,22 @@ mod tests {
     fn safe_and_scam_are_not_treated_as_synonyms() {
         let truth = b"The URL is a scam.";
         let answer = b"The URL is safe and legitimate.";
+        let score = score_bytes(b"Is this URL safe?", truth, answer);
+        assert!(score < 0.05, "opposite safety verdict scored {score}");
+    }
+
+    #[test]
+    fn unsafe_alias_matches_other_fraud_verdicts() {
+        let truth = b"The URL is unsafe.";
+        let answer = b"The URL appears fraudulent.";
+        let score = score_bytes(b"Is this URL safe?", truth, answer);
+        assert!(score > 0.5, "equivalent unsafe verdict scored {score}");
+    }
+
+    #[test]
+    fn safe_and_unsafe_are_opposite_verdicts() {
+        let truth = b"The URL is safe and legitimate.";
+        let answer = b"The URL is unsafe and malicious.";
         let score = score_bytes(b"Is this URL safe?", truth, answer);
         assert!(score < 0.05, "opposite safety verdict scored {score}");
     }
@@ -843,6 +877,8 @@ mod tests {
         let cross_unit = score_bytes(question, truth, b"Apple's Q3 revenue was 3,420 million dollars.");
         let wrong_company = score_bytes(question, truth, b"Microsoft reported Q3 revenue of $3.42 billion.");
         assert!(cross_unit > wrong_company, "cross-unit {cross_unit} <= wrong company {wrong_company}");
+        assert!(cross_unit >= 0.90, "equivalent quantity paraphrase scored {cross_unit}");
+        assert!(wrong_company < 0.05, "wrong-company answer scored {wrong_company}");
     }
 
     #[test]
