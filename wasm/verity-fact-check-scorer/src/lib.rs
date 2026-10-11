@@ -420,7 +420,11 @@ fn score_bytes(_question: &[u8], truth: &[u8], answer: &[u8]) -> f32 {
         cursor = next;
     }
 
-    if answer_weight <= 0.0 || truth_weight <= 0.0 || matched_weight <= 0.0 { return 0.0; }
+    if answer_weight <= 0.0 || truth_weight <= 0.0 { return 0.0; }
+    // A zero literal overlap is not always a zero-quality answer: a valid
+    // category synonym (e.g. "upbeat" for "bullish") may share no tokens.
+    // Keep the base lexical score at zero, but allow the guarded categorical
+    // fallback below to evaluate it. Contradictions still receive penalties.
     // Weighted F1 balances missing reference facts against unsupported extra
     // content. Numeric tokens receive extra weight because exact quantities,
     // years, and counts are often decisive in factual claims.
@@ -436,7 +440,7 @@ fn score_bytes(_question: &[u8], truth: &[u8], answer: &[u8]) -> f32 {
         miss *= 1.0 - overlap;
     }
     let denominator = hit + miss;
-    let mut score = if denominator > 0.0 { hit / denominator } else { 0.0 };
+    let mut score = if denominator > 0.0 && matched_weight > 0.0 { hit / denominator } else { 0.0 };
 
     // Contradictions must remain low even when most of the reference is copied.
     // Apply strong post-calibration penalties to polarity and numeric conflicts.
@@ -659,6 +663,26 @@ mod tests {
         let truth = format!("bullish {}", "market ".repeat(200));
         let score = score_bytes(b"sentiment?", truth.as_bytes(), b"upbeat");
         assert!(score.is_finite() && (0.0..=1.0).contains(&score));
+    }
+
+    #[test]
+    fn zero_overlap_synonym_uses_guarded_label_fallback() {
+        let score = score_bytes(
+            b"What is the sentiment of this earnings call?",
+            b"bullish",
+            b"upbeat",
+        );
+        assert!(score >= 0.90, "synonym fallback scored {score}");
+    }
+
+    #[test]
+    fn zero_overlap_opposite_label_stays_low() {
+        let score = score_bytes(
+            b"What is the sentiment of this earnings call?",
+            b"bullish",
+            b"bearish",
+        );
+        assert!(score < 0.15, "opposite label scored {score}");
     }
 
     #[test]
