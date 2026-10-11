@@ -485,13 +485,16 @@ fn score_bytes(_question: &[u8], truth: &[u8], answer: &[u8]) -> f32 {
                 // than a bare synonym, but an exact reference always ranks first.
                 if truth != answer {
                     let count = token_count(answer);
-                    if count <= 1 {
-                        score = score.max(0.90).min(0.95);
+                    // Assign explicit tiers: max() would preserve a higher
+                    // lexical score and can leave explanatory answers tied
+                    // with synonyms, defeating the ordering calibration.
+                    score = if count <= 1 {
+                        0.95
                     } else if count <= 4 {
-                        score = score.max(0.97).min(0.97);
+                        0.97
                     } else {
-                        score = score.max(0.98).min(0.98);
-                    }
+                        0.99
+                    };
                 } else {
                     score = score.max(0.90);
                 }
