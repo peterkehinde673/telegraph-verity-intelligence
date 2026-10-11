@@ -91,6 +91,24 @@ fn normalized_token(token: &[u8], out: &mut [u8; 64]) -> usize {
     } else if len > 3 && out[len - 1] == b's' {
         len -= 1;
     }
+    // Conservative synonym canonicalization: merge only close paraphrases
+    // that preserve factual polarity. Antonyms are deliberately never merged.
+    let word = &out[..len];
+    let canonical: Option<&[u8]> = match word {
+        b"fraudulent" | b"fraud" | b"scam" => Some(b"fraud"),
+        b"legitimate" | b"genuine" | b"authentic" => Some(b"legitimate"),
+        b"reduce" | b"reduced" | b"reduces" | b"reducing" | b"lower" | b"lowered" | b"lowers" | b"fell" | b"fall" | b"decrease" | b"decreased" | b"decreases" => Some(b"decrease"),
+        b"increase" | b"increased" | b"increases" | b"rises" | b"rose" | b"raise" | b"raised" | b"raises" => Some(b"increase"),
+        b"benefit" | b"benefits" | b"advantage" | b"advantages" => Some(b"benefit"),
+        b"positive" | b"positively" => Some(b"positive"),
+        b"safe" | b"secure" => Some(b"safe"),
+        b"reported" | b"reports" | b"stated" | b"states" => Some(b"report"),
+        _ => None,
+    };
+    if let Some(value) = canonical {
+        out[..value.len()].copy_from_slice(value);
+        len = value.len();
+    }
     len
 }
 
@@ -222,13 +240,18 @@ fn contains_normalized_token(bytes: &[u8], wanted: &[u8]) -> bool {
 // exclusively and the answer contains the other side exclusively. This avoids
 // false positives when both labels are discussed as context.
 fn has_opposite_verdict(truth: &[u8], answer: &[u8]) -> bool {
-    const PAIRS: [(&[u8], &[u8]); 6] = [
+    const PAIRS: [(&[u8], &[u8]); 11] = [
         (b"true", b"false"),
         (b"correct", b"incorrect"),
         (b"original", b"plagiarised"),
         (b"verified", b"refuted"),
         (b"confirmed", b"denied"),
         (b"approved", b"rejected"),
+        (b"safe", b"scam"),
+        (b"legitimate", b"fraudulent"),
+        (b"reduced", b"increased"),
+        (b"lowered", b"raised"),
+        (b"decreased", b"increased"),
     ];
     for (left, right) in PAIRS {
         let tl = contains_normalized_token(truth, left);
@@ -402,6 +425,30 @@ mod tests {
     fn verdict_guard_does_not_fire_when_reference_mentions_both_labels() {
         let text = b"The report says the essay is plagiarised rather than original.";
         assert_eq!(score_bytes(b"q", text, text), 1.0);
+    }
+
+    #[test]
+    fn synonym_alias_recognizes_scam_and_fraudulent() {
+        let truth = b"The URL is a scam.";
+        let answer = b"The URL appears fraudulent.";
+        let score = score_bytes(b"Is this URL safe?", truth, answer);
+        assert!(score > 0.5, "synonym paraphrase scored {score}");
+    }
+
+    #[test]
+    fn direction_reversal_is_penalized() {
+        let truth = b"The treatment reduced mortality by 30 percent.";
+        let answer = b"The treatment increased mortality by 30 percent.";
+        let score = score_bytes(b"What happened to mortality?", truth, answer);
+        assert!(score < 0.05, "direction reversal scored {score}");
+    }
+
+    #[test]
+    fn safe_and_scam_are_not_treated_as_synonyms() {
+        let truth = b"The URL is a scam.";
+        let answer = b"The URL is safe and legitimate.";
+        let score = score_bytes(b"Is this URL safe?", truth, answer);
+        assert!(score < 0.05, "opposite safety verdict scored {score}");
     }
 
     #[test]
