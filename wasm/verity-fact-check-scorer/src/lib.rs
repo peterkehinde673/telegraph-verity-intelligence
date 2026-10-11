@@ -305,13 +305,12 @@ fn score_bytes(_question: &[u8], truth: &[u8], answer: &[u8]) -> f32 {
     // years, and counts are often decisive in factual claims.
     let overlap = (2.0 * matched_weight / (answer_weight + truth_weight)).clamp(0.0, 1.0);
 
-    // V23 experiment: test a sharper calibration while retaining the
-    // existing numeric, negation, and opposite-verdict guards. The public
-    // proxy favored sharper verdict-aware variants; keep only if the full
-    // same-corpus report beats the reference margin without runtime regressions.
+    // V23 correction: use the established tenth-power calibration because
+    // power 14 collapsed some valid partial answers to zero in unit tests.
+    // Keep the existing numeric, negation, and opposite-verdict guards.
     let mut hit = 1.0f32;
     let mut miss = 1.0f32;
-    for _ in 0..14 {
+    for _ in 0..10 {
         hit *= overlap;
         miss *= 1.0 - overlap;
     }
