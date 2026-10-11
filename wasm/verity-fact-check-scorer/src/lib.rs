@@ -96,7 +96,7 @@ fn normalized_token(token: &[u8], out: &mut [u8; 64]) -> usize {
     let word = &out[..len];
     let canonical: Option<&[u8]> = match word {
         b"fraudulent" | b"fraud" | b"scam" | b"phishing" => Some(b"fraud"),
-        b"legitimate" | b"genuine" | b"authentic" => Some(b"safe"),
+        b"safe" | b"secure" | b"legitimate" | b"genuine" | b"authentic" => Some(b"safe"),
         b"reduce" | b"reduc" | b"reduced" | b"reduces" | b"reducing" | b"lower" | b"lowered" | b"lowers" | b"fell" | b"fall" | b"decrease" | b"decreased" | b"decreases" => Some(b"decrease"),
         b"increase" | b"increas" | b"increased" | b"increases" | b"rises" | b"rose" | b"raise" | b"rais" | b"raised" | b"raises" => Some(b"increase"),
         b"benefit" | b"benefits" | b"advantage" | b"advantages" => Some(b"benefit"),
@@ -247,7 +247,7 @@ fn contains_normalized_token(bytes: &[u8], wanted: &[u8]) -> bool {
 // exclusively and the answer contains the other side exclusively. This avoids
 // false positives when both labels are discussed as context.
 fn has_opposite_verdict(truth: &[u8], answer: &[u8]) -> bool {
-    const PAIRS: [(&[u8], &[u8]); 11] = [
+    const PAIRS: [(&[u8], &[u8]); 12] = [
         (b"true", b"false"),
         (b"correct", b"incorrect"),
         (b"original", b"plagiarised"),
@@ -259,6 +259,7 @@ fn has_opposite_verdict(truth: &[u8], answer: &[u8]) -> bool {
         (b"positive", b"negative"),
         (b"human", b"ai"),
         (b"buy", b"sell"),
+        (b"hawkish", b"dovish"),
     ];
     for (left, right) in PAIRS {
         let tl = contains_normalized_token(truth, left);
@@ -270,6 +271,39 @@ fn has_opposite_verdict(truth: &[u8], answer: &[u8]) -> bool {
         }
     }
     false
+}
+
+// Compact categorical references need different calibration from prose:
+ // a one-word ground truth such as "bullish" should still recognize "upbeat"
+ // without letting this shortcut override an explicit contradiction.
+fn compact_label_category(bytes: &[u8]) -> Option<&'static [u8]> {
+    let mut cursor = 0usize;
+    let mut found: Option<&'static [u8]> = None;
+    let mut content_tokens = 0usize;
+    while let Some((start, end, next)) = next_token(bytes, cursor) {
+        let token = &bytes[start..end];
+        let hash = token_hash(token);
+        let categories: [(&[u8], &[u8]); 12] = [
+            (b"positive", b"positive"), (b"negative", b"negative"),
+            (b"safe", b"safe"), (b"fraud", b"fraud"),
+            (b"human", b"human"), (b"ai", b"ai"),
+            (b"buy", b"buy"), (b"sell", b"sell"),
+            (b"hold", b"hold"), (b"hawkish", b"hawkish"),
+            (b"dovish", b"dovish"), (b"true", b"true"),
+        ];
+        let mut category = None;
+        for (word, label) in categories {
+            if hash == token_hash(word) { category = Some(label); break; }
+        }
+        if category.is_some() {
+            content_tokens += 1;
+            if found.is_none() { found = category; }
+        } else if token_weight(token) >= 1.0 {
+            content_tokens += 1;
+        }
+        cursor = next;
+    }
+    if content_tokens <= 2 { found } else { None }
 }
 
 fn score_bytes(_question: &[u8], truth: &[u8], answer: &[u8]) -> f32 {
@@ -332,8 +366,24 @@ fn score_bytes(_question: &[u8], truth: &[u8], answer: &[u8]) -> f32 {
     if has_unmatched_number(truth, answer) {
         score *= 0.05;
     }
-    if has_opposite_verdict(truth, answer) {
+    let opposite_verdict = has_opposite_verdict(truth, answer);
+    if opposite_verdict {
         score *= 0.005;
+    }
+    // Avoid collapsing short label-only truths (e.g. "bullish") to near zero
+    // merely because a valid synonymous answer uses different surrounding words.
+    // This floor is disabled for explicit polarity/negation/number conflicts.
+    if !opposite_verdict
+        && has_negation(truth) == has_negation(answer)
+        && !has_unmatched_number(truth, answer)
+    {
+        if let (Some(expected), Some(actual)) =
+            (compact_label_category(truth), compact_label_category(answer))
+        {
+            if expected == actual {
+                score = score.max(0.90);
+            }
+        }
     }
     score.clamp(0.0, 1.0)
 }
@@ -480,6 +530,24 @@ mod tests {
         let answer = b"The outlook is bearish.";
         let score = score_bytes(b"What is the outlook?", truth, answer);
         assert!(score < 0.05, "opposite sentiment scored {score}");
+    }
+
+    #[test]
+    fn compact_label_accepts_same_category_synonym() {
+        let score = score_bytes(b"sentiment?", b"bullish", b"upbeat");
+        assert!(score >= 0.90, "compact-label synonym scored {score}");
+    }
+
+    #[test]
+    fn compact_label_rejects_opposite_category() {
+        let score = score_bytes(b"sentiment?", b"bullish", b"bearish");
+        assert!(score < 0.05, "opposite compact label scored {score}");
+    }
+
+    #[test]
+    fn compact_label_does_not_promote_unrelated_prose() {
+        let score = score_bytes(b"sentiment?", b"bullish", b"the weather is sunny");
+        assert!(score < 0.90, "unrelated prose scored {score}");
     }
 
     #[test]
