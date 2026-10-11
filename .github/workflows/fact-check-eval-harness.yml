@@ -227,6 +227,53 @@ jobs:
           Path("eval-artifacts/wasm-manifest.json").write_text(json.dumps(manifest,indent=2))
           PY
 
+      - name: Sweep V15 calibration powers against the same corpus
+        shell: bash
+        run: |
+          set -euo pipefail
+          SRC="/tmp/verity-v15-baseline/wasm/verity-fact-check-scorer/src/lib.rs"
+          ORIGINAL="$RUNNER_TEMP/verity-v15-original.rs"
+          cp "$SRC" "$ORIGINAL"
+          restore_source() { cp "$ORIGINAL" "$SRC"; }
+          trap restore_source EXIT
+          for power in 6 8 10 12 14; do
+            POWER="$power" SRC="$SRC" python - <<'PY'
+          import os
+          from pathlib import Path
+          p=Path(os.environ["SRC"])
+          s=p.read_text()
+          old="""    let hit2 = overlap * overlap;
+              let hit4 = hit2 * hit2;
+              let hit8 = hit4 * hit4;
+              let hit10 = hit8 * hit2;
+              let miss = 1.0 - overlap;
+              let miss2 = miss * miss;
+              let miss4 = miss2 * miss2;
+              let miss8 = miss4 * miss4;
+              let miss10 = miss8 * miss2;
+              let denominator = hit10 + miss10;
+              let mut score = if denominator > 0.0 { hit10 / denominator } else { 0.0 };"""
+          power=int(os.environ["POWER"])
+          new=f"""    let mut hit = 1.0f32;
+              let mut miss = 1.0f32;
+              for _ in 0..{power} {{
+                  hit *= overlap;
+                  miss *= 1.0 - overlap;
+              }}
+              let denominator = hit + miss;
+              let mut score = if denominator > 0.0 {{ hit / denominator }} else {{ 0.0 }};"""
+          if old not in s:
+              raise SystemExit("Could not find exact V15 calibration block; refusing to build an unintended variant")
+          p.write_text(s.replace(old,new,1))
+          PY
+            cargo build --manifest-path /tmp/verity-v15-baseline/wasm/verity-fact-check-scorer/Cargo.toml --release --target wasm32-unknown-unknown
+            cp /tmp/verity-v15-baseline/wasm/verity-fact-check-scorer/target/wasm32-unknown-unknown/release/verity_fact_check_scorer.wasm "eval-artifacts/wasm/verity-v15-p${power}.wasm"
+            cp "$ORIGINAL" "$SRC"
+            echo "Built V15 calibration power ${power}"
+          done
+          restore_source
+          trap - EXIT
+
       - name: Run local promotion-gate proxy on fact-verification examples
         shell: bash
         run: |
@@ -279,6 +326,9 @@ jobs:
           }
           run_proxy v15 eval-artifacts/wasm/verity-v15-baseline.wasm eval-artifacts/proxy-v15
           run_proxy candidate eval-artifacts/wasm/verity-pr-candidate.wasm eval-artifacts/proxy-candidate
+          for power in 6 8 10 12 14; do
+            run_proxy "v15-p${power}" "eval-artifacts/wasm/verity-v15-p${power}.wasm" "eval-artifacts/proxy-v15-p${power}"
+          done
 
       - name: Run same behavioural probes against each available binary
         shell: bash
