@@ -184,6 +184,43 @@ fn has_negation(bytes: &[u8]) -> bool {
     false
 }
 
+// Conservative guard for changed capitalized names/entities. This is a lexical
+// heuristic rather than full named-entity recognition; it targets cases where
+// an answer preserves most wording but substitutes a person/place/organization.
+fn has_unmatched_capitalized_entity(source: &[u8], other: &[u8]) -> bool {
+    let mut cursor = 0usize;
+    let mut first_token = true;
+    while let Some((start, end, next)) = next_token(source, cursor) {
+        let token = &source[start..end];
+        let begins_upper = token.first().map(|b| *b >= b'A' && *b <= b'Z').unwrap_or(false);
+        let mut lower = [0u8; 64];
+        let len = normalized_token(token, &mut lower);
+        let word = &lower[..len];
+        let sentence_opener = [
+            b"the".as_slice(), b"a", b"an", b"this", b"that", b"these", b"those",
+            b"it", b"he", b"she", b"they", b"we", b"i", b"there", b"according",
+            b"in", b"on", b"at", b"by", b"for", b"from", b"with", b"as",
+            b"after", b"before",
+        ].iter().any(|candidate| *candidate == word);
+        if begins_upper && len > 1 && !(first_token && sentence_opener) {
+            let wanted = token_hash(token);
+            let mut other_cursor = 0usize;
+            let mut found = false;
+            while let Some((os, oe, onext)) = next_token(other, other_cursor) {
+                if token_hash(&other[os..oe]) == wanted {
+                    found = true;
+                    break;
+                }
+                other_cursor = onext;
+            }
+            if !found { return true; }
+        }
+        first_token = false;
+        cursor = next;
+    }
+    false
+}
+
 // Detect unsupported numeric claims. Numbers often carry the key factual distinction
 // (years, counts, dates, percentages); a mismatching number should not be rescued
 // by otherwise copying most of the reference sentence.
@@ -271,6 +308,10 @@ fn score_bytes(_question: &[u8], truth: &[u8], answer: &[u8]) -> f32 {
     if has_unmatched_number(truth, answer) {
         score *= 0.05;
     }
+    if has_unmatched_capitalized_entity(truth, answer)
+        || has_unmatched_capitalized_entity(answer, truth) {
+        score *= 0.02;
+    }
     score.clamp(0.0, 1.0)
 }
 
@@ -344,6 +385,26 @@ mod tests {
         let truth = b"The population was 1200 in 2020";
         let answer = b"The population was 1200 in 2021";
         assert!(score_bytes(b"q", truth, answer) < 0.25);
+    }
+
+    #[test]
+    fn conflicting_person_name_is_heavily_penalized() {
+        let score = score_bytes(
+            b"Who won the election?",
+            b"Maria Chen won the election.",
+            b"David Chen won the election.",
+        );
+        assert!(score < 0.05, "entity conflict scored {score}");
+    }
+
+    #[test]
+    fn paraphrase_with_sentence_openers_is_not_penalized() {
+        let score = score_bytes(
+            b"Did the report confirm the result?",
+            b"The report confirmed the result.",
+            b"The result was confirmed by the report.",
+        );
+        assert!(score > 0.8, "paraphrase scored {score}");
     }
 
     #[test]
