@@ -15,6 +15,7 @@ on:
       - ".github/workflows/wasm-scorer.yml"
   workflow_dispatch:
 
+# V24 semantic-label evaluation experiment.
 permissions:
   contents: write
 
