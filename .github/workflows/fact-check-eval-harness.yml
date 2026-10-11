@@ -255,7 +255,7 @@ jobs:
               for row in rows:
                   row["intent"]="FACT_CHECK"
               if isinstance(data,dict): data["intent"]="FACT_CHECK"
-              (out/name).write_text(json.dumps(data,indent=2)+"\\n")
+              (out/name).write_text(json.dumps(data,indent=2)+"\n")
               total+=len(rows)
               print(f"Prepared {name}: {len(rows)} fixtures")
           print(f"Total public synthetic fact-verification fixtures: {total}")
