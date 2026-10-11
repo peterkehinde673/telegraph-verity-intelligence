@@ -474,6 +474,97 @@ jobs:
           restore_source
           trap - EXIT
 
+      - name: Test coverage-aware opposite-verdict guard on V15
+        shell: bash
+        run: |
+          set -euo pipefail
+          SRC="/tmp/verity-v15-baseline/wasm/verity-fact-check-scorer/src/lib.rs"
+          ORIGINAL="$RUNNER_TEMP/verity-v15-original.rs"
+          cp "$SRC" "$ORIGINAL"
+          restore_source() { cp "$ORIGINAL" "$SRC"; }
+          trap restore_source EXIT
+          cp "$ORIGINAL" "$SRC"
+          SRC="$SRC" python - <<'PY'
+          import os
+          from pathlib import Path
+          p=Path(os.environ["SRC"])
+          s=p.read_text()
+          old="""    let hit2 = overlap * overlap;
+              let hit4 = hit2 * hit2;
+              let hit8 = hit4 * hit4;
+              let hit10 = hit8 * hit2;
+              let miss = 1.0 - overlap;
+              let miss2 = miss * miss;
+              let miss4 = miss2 * miss2;
+              let miss8 = miss4 * miss4;
+              let miss10 = miss8 * miss2;
+              let denominator = hit10 + miss10;
+              let mut score = if denominator > 0.0 { hit10 / denominator } else { 0.0 };"""
+          calibration="""    let mut hit = 1.0f32;
+              let mut miss = 1.0f32;
+              for _ in 0..14 {
+                  hit *= overlap;
+                  miss *= 1.0 - overlap;
+              }
+              let denominator = hit + miss;
+              let mut score = if denominator > 0.0 { hit / denominator } else { 0.0 };"""
+          if old not in s: raise SystemExit("V15 calibration block missing")
+          s=s.replace(old,calibration,1)
+          helper="""fn contains_normalized_token(bytes: &[u8], wanted: &[u8]) -> bool {
+              let wanted_hash = token_hash(wanted);
+              let mut cursor = 0usize;
+              while let Some((start, end, next)) = next_token(bytes, cursor) {
+                  if token_hash(&bytes[start..end]) == wanted_hash { return true; }
+                  cursor = next;
+              }
+              false
+          }
+
+          fn has_opposite_verdict(truth: &[u8], answer: &[u8]) -> bool {
+              const PAIRS: [(&[u8], &[u8]); 6] = [
+                  (b"true", b"false"),
+                  (b"correct", b"incorrect"),
+                  (b"original", b"plagiarised"),
+                  (b"verified", b"refuted"),
+                  (b"confirmed", b"denied"),
+                  (b"approved", b"rejected"),
+              ];
+              for (left, right) in PAIRS {
+                  let tl = contains_normalized_token(truth, left);
+                  let tr = contains_normalized_token(truth, right);
+                  let al = contains_normalized_token(answer, left);
+                  let ar = contains_normalized_token(answer, right);
+                  if (tl && !tr && ar && !al) || (tr && !tl && al && !ar) { return true; }
+              }
+              false
+          }
+
+          """
+          insert_at="fn score_bytes(_question: &[u8], truth: &[u8], answer: &[u8]) -> f32 {"
+          if insert_at not in s: raise SystemExit("score_bytes insertion point missing")
+          s=s.replace(insert_at,helper+insert_at,1)
+          old_guard="""    if has_unmatched_number(truth, answer) {
+                  score *= 0.05;
+              }
+              score.clamp(0.0, 1.0)"""
+          new_guard="""    if has_unmatched_number(truth, answer) {
+                  score *= 0.05;
+              }
+              let coverage = (matched_weight / truth_weight).clamp(0.0, 1.0);
+              score *= coverage;
+              if has_opposite_verdict(truth, answer) {
+                  score *= 0.02;
+              }
+              score.clamp(0.0, 1.0)"""
+          if old_guard not in s: raise SystemExit("numeric guard insertion point missing")
+          s=s.replace(old_guard,new_guard,1)
+          p.write_text(s)
+          PY
+          cargo build --manifest-path /tmp/verity-v15-baseline/wasm/verity-fact-check-scorer/Cargo.toml --release --target wasm32-unknown-unknown
+          cp /tmp/verity-v15-baseline/wasm/verity-fact-check-scorer/target/wasm32-unknown-unknown/release/verity_fact_check_scorer.wasm eval-artifacts/wasm/verity-v15-verdict-coverage-p14.wasm
+          restore_source
+          trap - EXIT
+
       - name: Run local promotion-gate proxy on fact-verification examples
         shell: bash
         run: |
@@ -535,6 +626,7 @@ jobs:
           for power in 10 14; do
             run_proxy "v15-verdict-p${power}" "eval-artifacts/wasm/verity-v15-verdict-p${power}.wasm" "eval-artifacts/proxy-v15-verdict-p${power}"
           done
+          run_proxy v15-verdict-coverage-p14 eval-artifacts/wasm/verity-v15-verdict-coverage-p14.wasm eval-artifacts/proxy-v15-verdict-coverage-p14
 
       - name: Run same behavioural probes against each available binary
         shell: bash
