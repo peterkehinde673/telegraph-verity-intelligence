@@ -113,6 +113,44 @@ jobs:
                   print(f"{p.name}: not JSON: {e}")
           PY
 
+      - name: Verify live registration records and active champion
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p eval-artifacts/registration-audit
+          for id in 3229 3230; do
+            url="https://devnode.telegraphprotocol.com/engine/validator/v1/wasm/$id"
+            code="$(curl -sSL --retry 2 -w '%{http_code}' "$url" -o "eval-artifacts/registration-audit/$id.json")"
+            echo "registration $id HTTP $code"
+          done
+          curl -fsSL --retry 2 \
+            "https://devnode.telegraphprotocol.com/engine/v1/intents/FACT_CHECK/wasm" \
+            -o eval-artifacts/registration-audit/intent-wasm.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          for rid in (3229, 3230):
+              p=Path(f"eval-artifacts/registration-audit/{rid}.json")
+              try:
+                  obj=json.loads(p.read_text())
+              except Exception as e:
+                  print(f"Registration {rid}: response not JSON: {e}")
+                  continue
+              row=obj.get("wasm", obj)
+              print(f"REGISTRATION {rid}:")
+              for k in ("RegistrationID","ActivationStatus","IntentID","WasmHash","WasmURL","EvalScore","EvalDetails","RejectionReason","EvalErrorCount","UpdatedAt"):
+                  if k in row: print(f"  {k}: {row[k]}")
+          p=Path("eval-artifacts/registration-audit/intent-wasm.json")
+          obj=json.loads(p.read_text())
+          rows=obj.get("wasm", [])
+          active=[r for r in rows if str(r.get("ActivationStatus","")).lower()=="active"]
+          print("FACT_CHECK active entries:", len(active))
+          for row in active:
+              print("ACTIVE CHAMPION:")
+              for k in ("RegistrationID","ActivationStatus","IntentID","WasmHash","WasmURL","EvalScore","UpdatedAt"):
+                  if k in row: print(f"  {k}: {row[k]}")
+          PY
+
       - name: Download and verify current FACT_CHECK champion WASM
         shell: bash
         run: |
