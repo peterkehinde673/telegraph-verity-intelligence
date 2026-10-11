@@ -20,6 +20,7 @@
 //! V36 assigns explicit score tiers to non-exact categorical matches to prevent lexical-score ties.
 //! V37 recognizes equivalent million/billion quantities for financial fact-checks.
 //! V37 follow-up fixes test-module helper visibility and duplicate test annotation.
+//! V37 cleanup removes duplicate test metadata and restores long-input test execution.
 //! It compares the candidate answer to the supplied reference and performs no
 //! network access. Common function words receive less weight than factual terms.
 
