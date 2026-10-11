@@ -286,13 +286,17 @@ fn compact_label_category(bytes: &[u8]) -> Option<&'static [u8]> {
     let mut found: Option<&'static [u8]> = None;
     while let Some((start, end, next)) = next_token(bytes, cursor) {
         let hash = token_hash(&bytes[start..end]);
-        let categories: [(&[u8], &[u8]); 12] = [
+        let categories: [(&[u8], &[u8]); 20] = [
             (b"positive", b"positive"), (b"negative", b"negative"),
             (b"safe", b"safe"), (b"fraud", b"fraud"),
             (b"human", b"human"), (b"ai", b"ai"),
             (b"buy", b"buy"), (b"sell", b"sell"),
             (b"hold", b"hold"), (b"hawkish", b"hawkish"),
             (b"dovish", b"dovish"), (b"true", b"true"),
+            (b"upbeat", b"positive"), (b"bullish", b"positive"),
+            (b"bearish", b"negative"), (b"downbeat", b"negative"),
+            (b"legitimate", b"safe"), (b"secure", b"safe"),
+            (b"phishing", b"fraud"), (b"scam", b"fraud"),
         ];
         for (word, label) in categories {
             if hash == token_hash(word) {
@@ -449,7 +453,13 @@ fn score_bytes(_question: &[u8], truth: &[u8], answer: &[u8]) -> f32 {
             (compact_label_category(truth), compact_label_category(answer))
         {
             if expected == actual {
-                score = score.max(0.90);
+                // Preserve a strict exact-match advantage while ensuring a
+                // genuine concise paraphrase beats unrelated/contradictory text.
+                if truth != answer {
+                    score = score.clamp(0.90, 0.95);
+                } else {
+                    score = score.max(0.90);
+                }
             }
         }
     }
