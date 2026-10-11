@@ -113,6 +113,41 @@ jobs:
                   print(f"{p.name}: not JSON: {e}")
           PY
 
+      - name: Download and verify current FACT_CHECK champion WASM
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          data=json.loads(Path("eval-artifacts/public-api/wasm.json").read_text())
+          champion=data.get("intents",{}).get("FACT_CHECK",{}).get("champion")
+          if not champion or not champion.get("wasm_url") or not champion.get("wasm_hash"):
+              raise SystemExit("Public API did not expose a FACT_CHECK champion WASM URL/hash")
+          Path("eval-artifacts/champion-manifest.json").write_text(json.dumps(champion,indent=2))
+          print("Champion registration:", champion.get("registration_id"))
+          print("Champion URL:", champion["wasm_url"])
+          print("Champion expected hash:", champion["wasm_hash"])
+          PY
+          CHAMPION_URL="$(python -c 'import json;print(json.load(open("eval-artifacts/champion-manifest.json"))["wasm_url"])')"
+          EXPECTED_CHAMPION_HASH="$(python -c 'import json;print("0x"+json.load(open("eval-artifacts/champion-manifest.json"))["wasm_hash"].removeprefix("0x"))')"
+          curl -fLsS --retry 3 "$CHAMPION_URL" -o eval-artifacts/wasm/verity-current-champion.wasm
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from Crypto.Hash import keccak
+          p=Path("eval-artifacts/wasm/verity-current-champion.wasm")
+          if not p.read_bytes().startswith(b"\\x00asm\\x01\\x00\\x00\\x00"):
+              raise SystemExit("Current champion is not a valid WASM v1 binary")
+          h=keccak.new(digest_bits=256); h.update(p.read_bytes())
+          actual="0x"+h.hexdigest()
+          expected="0x"+json.loads(Path("eval-artifacts/public-api/wasm.json").read_text())["intents"]["FACT_CHECK"]["champion"]["wasm_hash"].removeprefix("0x")
+          print("Current champion bytes:",p.stat().st_size)
+          print("Current champion actual Keccak:",actual)
+          print("Current champion expected Keccak:",expected)
+          if actual.lower()!=expected.lower(): raise SystemExit("Champion WASM hash mismatch")
+          PY
+
       - name: Download V16 and public FACT_CHECK registration data
         shell: bash
         run: |
