@@ -189,6 +189,43 @@ fn has_negation(bytes: &[u8]) -> bool {
     false
 }
 
+// Detect changed capitalized entities (names, places, organizations) in either direction.
+// Sentence-initial function words are ignored so "The report..." does not look like an entity.
+// This is a conservative lexical guard, not full named-entity recognition.
+fn has_unmatched_capitalized_entity(source: &[u8], other: &[u8]) -> bool {
+    let mut cursor = 0usize;
+    let mut first_token = true;
+    while let Some((start, end, next)) = next_token(source, cursor) {
+        let token = &source[start..end];
+        let begins_upper = token.first().map(|b| *b >= b'A' && *b <= b'Z').unwrap_or(false);
+        let mut lower = [0u8; 64];
+        let len = normalized_token(token, &mut lower);
+        let word = &lower[..len];
+        let sentence_opener = [
+            b"the".as_slice(), b"a", b"an", b"this", b"that", b"these", b"those",
+            b"it", b"he", b"she", b"they", b"we", b"i", b"there", b"according",
+            b"in", b"on", b"at", b"by", b"for", b"from", b"with", b"as",
+            b"after", b"before",
+        ].iter().any(|candidate| *candidate == word);
+        if begins_upper && len > 1 && !(first_token && sentence_opener) {
+            let wanted = token_hash(token);
+            let mut other_cursor = 0usize;
+            let mut found = false;
+            while let Some((os, oe, onext)) = next_token(other, other_cursor) {
+                if token_hash(&other[os..oe]) == wanted {
+                    found = true;
+                    break;
+                }
+                other_cursor = onext;
+            }
+            if !found { return true; }
+        }
+        first_token = false;
+        cursor = next;
+    }
+    false
+}
+
 // Detect unsupported numeric claims. Numbers often carry the key factual distinction
 // (years, counts, dates, percentages); a mismatching number should not be rescued
 // by otherwise copying most of the reference sentence.
@@ -282,6 +319,11 @@ fn score_bytes(_question: &[u8], truth: &[u8], answer: &[u8]) -> f32 {
     if has_numeric_mismatch(truth, answer) {
         score *= 0.05;
     }
+    // A changed capitalized name/entity is strong evidence of a factual mismatch.
+    if has_unmatched_capitalized_entity(truth, answer)
+        || has_unmatched_capitalized_entity(answer, truth) {
+        score *= 0.02;
+    }
     score.clamp(0.0, 1.0)
 }
 
@@ -355,6 +397,22 @@ mod tests {
         let truth = b"The population was 1200 in 2020";
         let answer = b"The population was 1200 in 2021";
         assert!(score_bytes(b"q", truth, answer) < 0.25);
+    }
+
+    #[test]
+    fn conflicting_named_entity_is_heavily_penalized() {
+        let truth = b"Maria Chen won the election";
+        let answer = b"David Chen won the election";
+        let score = score_bytes(b"Who won?", truth, answer);
+        assert!(score < 0.05, "entity conflict scored {score}");
+    }
+
+    #[test]
+    fn sentence_initial_function_word_is_not_mistaken_for_entity() {
+        let truth = b"The report confirmed the result";
+        let answer = b"The result was confirmed by the report";
+        let score = score_bytes(b"Did it confirm?", truth, answer);
+        assert!(score > 0.8, "paraphrase scored {score}");
     }
 
     #[test]
