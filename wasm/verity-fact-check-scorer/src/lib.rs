@@ -308,6 +308,11 @@ fn score_bytes(_question: &[u8], truth: &[u8], answer: &[u8]) -> f32 {
     if has_unmatched_number(truth, answer) {
         score *= 0.05;
     }
+    // The high-power odds curve can saturate near 1.0 even when a short answer
+    // omits an important fact. Apply a reference-coverage factor so omissions
+    // remain visible; exact and fully covered paraphrases retain full credit.
+    let coverage = (matched_weight / truth_weight).clamp(0.0, 1.0);
+    score *= coverage;
     if has_unmatched_capitalized_entity(truth, answer)
         || has_unmatched_capitalized_entity(answer, truth) {
         score *= 0.02;
@@ -385,6 +390,19 @@ mod tests {
         let truth = b"The population was 1200 in 2020";
         let answer = b"The population was 1200 in 2021";
         assert!(score_bytes(b"q", truth, answer) < 0.25);
+    }
+
+    #[test]
+    fn important_omitted_fact_reduces_score() {
+        let truth = b"Ada Lovelace founded the company in 1843.";
+        let partial = score_bytes(
+            b"Who founded the company and when?",
+            truth,
+            b"Ada Lovelace founded the company.",
+        );
+        let exact = score_bytes(b"q", truth, truth);
+        assert!(partial < 0.8, "partial answer scored {partial}");
+        assert_eq!(exact, 1.0);
     }
 
     #[test]
