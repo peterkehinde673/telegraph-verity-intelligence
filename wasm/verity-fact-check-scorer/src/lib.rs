@@ -900,7 +900,6 @@ mod tests {
         assert_eq!(score_bytes("q".as_bytes(), "東京 is a city 🗼".as_bytes(), "東京 is a city 🗼".as_bytes()), 1.0);
     }
     #[test]
-    #[test]
     fn large_distinct_token_input_stays_finite() {
         let mut truth = std::string::String::new();
         for i in 0..12000 {
@@ -912,6 +911,7 @@ mod tests {
         assert!(score.is_finite() && (0.0..=1.0).contains(&score));
     }
 
+    #[test]
     fn long_inputs_do_not_panic() {
         let truth = "correct answer ".repeat(5000);
         let answer = "correct answer ".repeat(5000);
