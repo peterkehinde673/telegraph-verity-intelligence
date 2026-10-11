@@ -824,11 +824,11 @@ mod tests {
 
     #[test]
     fn cross_unit_financial_quantity_is_equivalent() {
-        assert!(has_equivalent_scaled_financial_quantity(
+        assert!(super::has_equivalent_scaled_financial_quantity(
             b"Apple reported Q3 revenue of $3.42 billion.",
             b"Apple's Q3 revenue was 3,420 million dollars.",
         ));
-        assert!(!has_equivalent_scaled_financial_quantity(
+        assert!(!super::has_equivalent_scaled_financial_quantity(
             b"Apple reported Q3 revenue of $3.42 billion.",
             b"Apple reported Q3 revenue of $4.32 billion.",
         ));
