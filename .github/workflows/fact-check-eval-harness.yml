@@ -726,9 +726,19 @@ jobs:
               module="${spec#*:}"
               report="eval-artifacts/public-cases/results/${label}-vs-champion-${name}.txt"
               echo "=== $label vs live champion on $name ===" | tee "$report"
-              "$RUNNER_TEMP/telegraph-wasm-check" "$module" \
+              # A pathological candidate/corpus pair must not consume the entire 15-minute job.
+              # Keep each diagnostic comparison bounded; the report records timeout exit codes.
+              timeout --signal=TERM --kill-after=5s 45s \
+                "$RUNNER_TEMP/telegraph-wasm-check" "$module" \
                 --cases "$corpus" --compare "$CHAMPION" \
-                --no-color >> "$report" 2>&1 || true
+                --no-color >> "$report" 2>&1
+              rc=$?
+              if [ "$rc" -eq 124 ] || [ "$rc" -eq 137 ]; then
+                echo "TIMEOUT after 45s: $label vs live champion on $name" | tee -a "$report"
+              elif [ "$rc" -ne 0 ]; then
+                echo "Evaluator exit code $rc: $label vs live champion on $name" | tee -a "$report"
+              fi
+              true
               grep -E '^(  candidate:|  baseline:|  FAIL|  WARN|  PASS|  [^ ]+\([0-9]|  resolved by candidate|  REGRESSED|  margin )|candidate:|baseline:|resolved by candidate|REGRESSED vs baseline|cases ordered correctly|worst inversion|did not beat' "$report" | tail -n 100 || true
             done
           done
