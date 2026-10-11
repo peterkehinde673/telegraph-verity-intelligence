@@ -288,7 +288,7 @@ fn compact_label_category(bytes: &[u8]) -> Option<&'static [u8]> {
     let mut found: Option<&'static [u8]> = None;
     while let Some((start, end, next)) = next_token(bytes, cursor) {
         let hash = token_hash(&bytes[start..end]);
-        let categories: [(&[u8], &[u8]); 20] = [
+        let categories: [(&[u8], &[u8]); 24] = [
             (b"positive", b"positive"), (b"negative", b"negative"),
             (b"safe", b"safe"), (b"fraud", b"fraud"),
             (b"human", b"human"), (b"ai", b"ai"),
@@ -299,6 +299,8 @@ fn compact_label_category(bytes: &[u8]) -> Option<&'static [u8]> {
             (b"bearish", b"negative"), (b"downbeat", b"negative"),
             (b"legitimate", b"safe"), (b"secure", b"safe"),
             (b"phishing", b"fraud"), (b"scam", b"fraud"),
+            (b"unsafe", b"fraud"), (b"dangerous", b"fraud"),
+            (b"malicious", b"fraud"), (b"risky", b"fraud"),
         ];
         for (word, label) in categories {
             if hash == token_hash(word) {
@@ -455,7 +457,8 @@ fn score_bytes(_question: &[u8], truth: &[u8], answer: &[u8]) -> f32 {
     // Avoid collapsing short label-only truths (e.g. "bullish") to near zero
     // merely because a valid synonymous answer uses different surrounding words.
     // This floor is disabled for explicit polarity/negation/number conflicts.
-    if answer.len() <= 256
+    if truth.len() <= 512
+        && answer.len() <= 256
         && question_targets_label(_question)
         && !opposite_verdict
         && has_negation(truth) == has_negation(answer)
@@ -465,15 +468,16 @@ fn score_bytes(_question: &[u8], truth: &[u8], answer: &[u8]) -> f32 {
             (compact_label_category(truth), compact_label_category(answer))
         {
             if expected == actual {
-                // Preserve a strict exact-match advantage while ensuring a
-                // genuine concise paraphrase beats unrelated/contradictory text.
+                // A longer, concise explanatory answer may carry more context
+                // than a bare synonym, but an exact reference always ranks first.
                 if truth != answer {
-                    // Keep a bare category synonym below a concise explanatory
-                    // sentence, while both remain below an exact reference match.
-                    if token_count(answer) <= 1 {
-                        score = score.clamp(0.90, 0.95);
+                    let count = token_count(answer);
+                    if count <= 1 {
+                        score = score.max(0.90).min(0.95);
+                    } else if count <= 3 {
+                        score = score.max(0.97).min(0.97);
                     } else {
-                        score = score.max(0.97).min(0.99);
+                        score = score.max(0.98).min(0.98);
                     }
                 } else {
                     score = score.max(0.90);
@@ -647,6 +651,13 @@ mod tests {
         let exact = score_bytes(question, truth, truth);
         assert!(sentence > bare, "sentence {sentence} must beat bare synonym {bare}");
         assert!(exact > sentence, "exact {exact} must beat sentence {sentence}");
+    }
+
+    #[test]
+    fn long_label_reference_skips_expensive_label_override() {
+        let truth = format!("bullish {}", "market ".repeat(200));
+        let score = score_bytes(b"sentiment?", truth.as_bytes(), b"upbeat");
+        assert!(score.is_finite() && (0.0..=1.0).contains(&score));
     }
 
     #[test]
