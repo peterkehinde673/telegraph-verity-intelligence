@@ -109,7 +109,7 @@ fn normalized_token(token: &[u8], out: &mut [u8; 64]) -> usize {
     // that preserve factual polarity. Antonyms are deliberately never merged.
     let word = &out[..len];
     let canonical: Option<&[u8]> = match word {
-        b"fraudulent" | b"fraud" | b"scam" | b"phishing" => Some(b"fraud"),
+        b"fraudulent" | b"fraud" | b"scam" | b"phishing" | b"unsafe" | b"dangerous" | b"malicious" | b"risky" => Some(b"fraud"),
         b"safe" | b"secure" | b"legitimate" | b"genuine" | b"authentic" => Some(b"safe"),
         b"reduce" | b"reduc" | b"reduced" | b"reduces" | b"reducing" | b"lower" | b"lowered" | b"lowers" | b"fell" | b"fall" | b"decrease" | b"decreased" | b"decreases" => Some(b"decrease"),
         b"increase" | b"increas" | b"increased" | b"increases" | b"rises" | b"rose" | b"raise" | b"rais" | b"raised" | b"raises" => Some(b"increase"),
@@ -710,6 +710,22 @@ mod tests {
     fn safe_and_scam_are_not_treated_as_synonyms() {
         let truth = b"The URL is a scam.";
         let answer = b"The URL is safe and legitimate.";
+        let score = score_bytes(b"Is this URL safe?", truth, answer);
+        assert!(score < 0.05, "opposite safety verdict scored {score}");
+    }
+
+    #[test]
+    fn unsafe_alias_matches_other_fraud_verdicts() {
+        let truth = b"The URL is unsafe.";
+        let answer = b"The URL appears fraudulent.";
+        let score = score_bytes(b"Is this URL safe?", truth, answer);
+        assert!(score > 0.5, "equivalent unsafe verdict scored {score}");
+    }
+
+    #[test]
+    fn safe_and_unsafe_are_opposite_verdicts() {
+        let truth = b"The URL is safe and legitimate.";
+        let answer = b"The URL is unsafe and malicious.";
         let score = score_bytes(b"Is this URL safe?", truth, answer);
         assert!(score < 0.05, "opposite safety verdict scored {score}");
     }
