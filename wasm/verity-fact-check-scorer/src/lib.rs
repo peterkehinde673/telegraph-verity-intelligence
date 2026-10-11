@@ -295,15 +295,35 @@ fn compact_label_category(bytes: &[u8]) -> Option<&'static [u8]> {
         for (word, label) in categories {
             if hash == token_hash(word) { category = Some(label); break; }
         }
-        if category.is_some() {
+        if let Some(label) = category {
             content_tokens += 1;
-            if found.is_none() { found = category; }
+            if let Some(previous) = found {
+                if previous != label { return None; }
+            } else {
+                found = Some(label);
+            }
         } else if token_weight(token) >= 1.0 {
             content_tokens += 1;
         }
         cursor = next;
     }
     if content_tokens <= 2 { found } else { None }
+}
+
+fn question_targets_label(question: &[u8]) -> bool {
+    const CUES: [&[u8]; 24] = [
+        b"sentiment", b"bullish", b"bearish", b"outlook", b"safe", b"url",
+        b"phishing", b"visit", b"ai", b"human", b"essay", b"written",
+        b"hawkish", b"dovish", b"fed", b"stance", b"rating", b"analyst",
+        b"recommend", b"buy", b"sell", b"hold", b"verdict", b"true",
+    ];
+    let mut cursor = 0usize;
+    while let Some((start, end, next)) = next_token(question, cursor) {
+        let hash = token_hash(&question[start..end]);
+        if CUES.iter().any(|cue| hash == token_hash(cue)) { return true; }
+        cursor = next;
+    }
+    false
 }
 
 // Detect a likely named-entity substitution when both reference and answer
@@ -321,33 +341,27 @@ fn has_conflicting_proper_noun(truth: &[u8], answer: &[u8]) -> bool {
             && token[0].is_ascii_uppercase()
             && token[1..].iter().all(|b| b.is_ascii_lowercase())
     }
-    let mut truth_has_entity = false;
+    // Fixed-size scratch space keeps this guard linear-time and allocation-free.
+    let mut entities = [0u64; 64];
+    let mut count = 0usize;
     let mut cursor = 0usize;
     while let Some((start, end, next)) = next_token(truth, cursor) {
         let token = &truth[start..end];
         if is_entity_token(token) && !GENERIC.iter().any(|g| *g == token) {
-            truth_has_entity = true;
-            break;
+            let hash = token_hash(token);
+            if !entities[..count].contains(&hash) && count < entities.len() {
+                entities[count] = hash;
+                count += 1;
+            }
         }
         cursor = next;
     }
-    if !truth_has_entity { return false; }
-
+    if count == 0 { return false; }
     cursor = 0;
     while let Some((start, end, next)) = next_token(answer, cursor) {
         let token = &answer[start..end];
         if is_entity_token(token) && !GENERIC.iter().any(|g| *g == token) {
-            let hash = token_hash(token);
-            let mut truth_cursor = 0usize;
-            let mut found = false;
-            while let Some((ts, te, tn)) = next_token(truth, truth_cursor) {
-                if token_hash(&truth[ts..te]) == hash {
-                    found = true;
-                    break;
-                }
-                truth_cursor = tn;
-            }
-            if !found { return true; }
+            if !entities[..count].contains(&token_hash(token)) { return true; }
         }
         cursor = next;
     }
@@ -426,7 +440,8 @@ fn score_bytes(_question: &[u8], truth: &[u8], answer: &[u8]) -> f32 {
     // Avoid collapsing short label-only truths (e.g. "bullish") to near zero
     // merely because a valid synonymous answer uses different surrounding words.
     // This floor is disabled for explicit polarity/negation/number conflicts.
-    if truth.len() <= 96 && answer.len() <= 256
+    if answer.len() <= 96
+        && question_targets_label(_question)
         && !opposite_verdict
         && has_negation(truth) == has_negation(answer)
         && !has_unmatched_number(truth, answer)
