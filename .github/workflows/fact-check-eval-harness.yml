@@ -700,6 +700,38 @@ jobs:
           done < eval-artifacts/probes.tsv
           cat eval-artifacts/scores.tsv
 
+      - name: Run public case-level evaluator against candidate, V15, and live champion
+        shell: bash
+        run: |
+          set -euo pipefail
+          TOOL_SHA="1685e5372cc83b9ae4f58a5d85f0cf81a43ac390"
+          git clone https://github.com/neromtoobad/telegraph-wasm-check.git /tmp/telegraph-wasm-check
+          git -C /tmp/telegraph-wasm-check checkout "$TOOL_SHA"
+          cd /tmp/telegraph-wasm-check
+          go build -o "$RUNNER_TEMP/telegraph-wasm-check" .
+          cd "$GITHUB_WORKSPACE"
+          mkdir -p eval-artifacts/public-cases/results
+          CHAMPION="eval-artifacts/wasm/verity-current-champion.wasm"
+          V15="eval-artifacts/wasm/verity-v15-baseline.wasm"
+          CANDIDATE="/tmp/verity-pr-candidate.wasm"
+          for corpus in \
+            "eval-artifacts/public-cases/fact-check.json" \
+            "/tmp/telegraph-wasm-check/examples/hard.json" \
+            "/tmp/telegraph-wasm-check/examples/labels.json"; do
+            name="$(basename "$corpus" .json)"
+            for spec in "v15:$V15" "candidate:$CANDIDATE"; do
+              label="${spec%%:*}"
+              module="${spec#*:}"
+              report="eval-artifacts/public-cases/results/${label}-vs-champion-${name}.txt"
+              echo "=== $label vs live champion on $name ===" | tee "$report"
+              "$RUNNER_TEMP/telegraph-wasm-check" "$module" \
+                --cases "$corpus" --compare "$CHAMPION" \
+                --no-color >> "$report" 2>&1 || true
+              grep -E '^(  candidate:|  baseline:|  FAIL|  WARN|  PASS|  [^ ]+\([0-9]|  resolved by candidate|  REGRESSED|  margin )|candidate:|baseline:|resolved by candidate|REGRESSED vs baseline|cases ordered correctly|worst inversion|did not beat' "$report" | tail -n 100 || true
+            done
+          done
+          echo "Public evaluator commit: $TOOL_SHA"
+          echo "These are diagnostic public cases, not the hidden promotion benchmark."
       - name: Upload investigation outputs
         if: always()
         uses: actions/upload-artifact@v6
