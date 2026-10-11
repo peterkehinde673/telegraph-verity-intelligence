@@ -1,4 +1,5 @@
 name: FACT_CHECK local scorer investigation
+# V25 compact-label calibration experiment.
 
 on:
   push:
