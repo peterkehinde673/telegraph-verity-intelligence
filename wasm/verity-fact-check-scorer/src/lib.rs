@@ -18,6 +18,7 @@
 //! V34 adds Fed-stance synonyms to the compact categorical fallback, fixing V33's unreachable alias coverage.
 //! V35 increases token-table capacity to reduce collision probing on high-entropy inputs.
 //! V36 assigns explicit score tiers to non-exact categorical matches to prevent lexical-score ties.
+//! V37 recognizes equivalent million/billion quantities for financial fact-checks.
 //! It compares the candidate answer to the supplied reference and performs no
 //! network access. Common function words receive less weight than factual terms.
 
