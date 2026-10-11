@@ -12,6 +12,7 @@
 //! V28 allows unambiguous labels in concise sentences and rejects mixed-polarity references.
 //! V29 adds explicit label aliases and preserves an exact-match advantage over paraphrases.
 //! V30 calibrates concise explanatory label answers above bare synonyms while keeping exact matches highest.
+//! V31 bounds the compact-label override to short references and calibrates concise answer lengths.
 //! It compares the candidate answer to the supplied reference and performs no
 //! network access. Common function words receive less weight than factual terms.
 
