@@ -591,6 +591,24 @@ fn score_bytes(_question: &[u8], truth: &[u8], answer: &[u8]) -> f32 {
             }
         }
     }
+    // Equivalent million/billion expressions can have almost no literal token
+    // overlap ("$3.42 billion" vs "3,420 million"). When the numeric value is
+    // equivalent and the answer still shares contextual evidence, prevent the
+    // lexical calibration from scoring the valid unit conversion below a wrong
+    // entity or wrong quantity. Entity, polarity, and unmatched-number guards
+    // remain authoritative and are checked before applying this floor.
+    if overlap > 0.0
+        && has_equivalent_scaled_financial_quantity(truth, answer)
+        && !opposite_verdict
+        && !has_conflicting_proper_noun(truth, answer)
+        && has_negation(truth) == has_negation(answer)
+        && !has_unmatched_number(truth, answer)
+        && truth.len() <= 512
+        && answer.len() <= 256
+    {
+        score = score.max(0.90);
+    }
+
     score.clamp(0.0, 1.0)
 }
 
@@ -859,6 +877,8 @@ mod tests {
         let cross_unit = score_bytes(question, truth, b"Apple's Q3 revenue was 3,420 million dollars.");
         let wrong_company = score_bytes(question, truth, b"Microsoft reported Q3 revenue of $3.42 billion.");
         assert!(cross_unit > wrong_company, "cross-unit {cross_unit} <= wrong company {wrong_company}");
+        assert!(cross_unit >= 0.90, "equivalent quantity paraphrase scored {cross_unit}");
+        assert!(wrong_company < 0.05, "wrong-company answer scored {wrong_company}");
     }
 
     #[test]
