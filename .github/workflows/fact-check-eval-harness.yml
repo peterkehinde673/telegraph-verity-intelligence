@@ -233,10 +233,10 @@ jobs:
           set -euo pipefail
           git clone --depth 1 https://github.com/shreshth006/telegraph-factscore.git "$RUNNER_TEMP/telegraph-factscore"
           mkdir -p eval-artifacts/fact-check-corpus eval-artifacts/proxy-v15 eval-artifacts/proxy-candidate
-          python - <<'PY'
-          import json
+          FACTSCORE_DIR="$RUNNER_TEMP/telegraph-factscore" python - <<'PY'
+          import json, os
           from pathlib import Path
-          src=Path("$RUNNER_TEMP/telegraph-factscore")
+          src=Path(os.environ["FACTSCORE_DIR"])
           out=Path("eval-artifacts/fact-check-corpus")
           names=[
               "CONTENT_VERIFICATION_CLEAN_PAIR.json",
