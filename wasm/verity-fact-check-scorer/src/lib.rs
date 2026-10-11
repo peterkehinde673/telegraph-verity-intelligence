@@ -2,12 +2,12 @@
 
 //! Deterministic, content-weighted lexical scorer for Telegraph FACT_CHECK.
 //! This is still a lexical baseline, not a semantic fact-checking engine.
-//! V19 adds a conservative guard for explicit opposite factual verdicts.
+//! V20 strengthens the penalty for explicit opposite factual verdicts while retaining V15's tenth-power calibration.
 //! Release note: inflection normalization is a hypothesis; protocol promotion remains unverified.
 //! Retains tenth-power odds calibration and numeric-token weighting.
 //! Keeps polarity and numeric contradiction guards; adds explicit opposite-verdict detection.
 //! Keeps V11 content-word weighting and existing contradiction guards.
-//! V19 uses weighted unigram overlap, numeric evidence, inflection normalization, and opposite-verdict detection.
+//! V20 uses weighted unigram overlap, numeric evidence, inflection normalization, and a stronger opposite-verdict penalty.
 //! It compares the candidate answer to the supplied reference and performs no
 //! network access. Common function words receive less weight than factual terms.
 
@@ -303,7 +303,7 @@ fn score_bytes(_question: &[u8], truth: &[u8], answer: &[u8]) -> f32 {
         score *= 0.05;
     }
     if has_opposite_verdict(truth, answer) {
-        score *= 0.02;
+        score *= 0.005;
     }
     score.clamp(0.0, 1.0)
 }
@@ -386,6 +386,16 @@ mod tests {
         let answer = b"The essay is original.";
         let score = score_bytes(b"Verify the essay.", truth, answer);
         assert!(score < 0.05, "opposite verdict scored {score}");
+    }
+
+    #[test]
+    fn opposite_verdict_penalty_is_stronger_than_generic_negation() {
+        let score = score_bytes(
+            b"Check authenticity.",
+            b"The document is original.",
+            b"The document is plagiarised.",
+        );
+        assert!(score < 0.01, "opposite verdict scored {score}");
     }
 
     #[test]
