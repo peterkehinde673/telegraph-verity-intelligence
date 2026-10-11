@@ -42,11 +42,36 @@ jobs:
           go version
           go build -o "$RUNNER_TEMP/telegraph-wasm-tester" .
 
+      - name: Install Rust and WASM target
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Build and test PR candidate WASM
+        shell: bash
+        run: |
+          set -euo pipefail
+          cargo test --manifest-path wasm/verity-fact-check-scorer/Cargo.toml
+          cargo build --manifest-path wasm/verity-fact-check-scorer/Cargo.toml --release --target wasm32-unknown-unknown
+          cp wasm/verity-fact-check-scorer/target/wasm32-unknown-unknown/release/verity_fact_check_scorer.wasm eval-artifacts-candidate.wasm
+          mv eval-artifacts-candidate.wasm "$RUNNER_TEMP/verity-pr-candidate.wasm"
+          cp "$RUNNER_TEMP/verity-pr-candidate.wasm" /tmp/verity-pr-candidate.wasm
+          python -m pip install --quiet pycryptodome
+          python - <<'PY'
+          from pathlib import Path
+          from Crypto.Hash import keccak
+          p=Path("/tmp/verity-pr-candidate.wasm")
+          h=keccak.new(digest_bits=256); h.update(p.read_bytes())
+          print("PR candidate WASM bytes:", p.stat().st_size)
+          print("PR candidate Keccak-256: 0x"+h.hexdigest())
+          PY
+
       - name: Download V16 and public FACT_CHECK registration data
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p eval-artifacts/wasm
+          cp /tmp/verity-pr-candidate.wasm eval-artifacts/wasm/verity-pr-candidate.wasm
           curl -fsSL --retry 3 \
             "https://github.com/peterkehinde673/telegraph-verity-intelligence/releases/download/verity-fact-check-scorer-731be5bde59c2800211a365f9d1886be5cbac1dd/verity_fact_check_scorer.wasm" \
             -o eval-artifacts/wasm/verity-v16.wasm
