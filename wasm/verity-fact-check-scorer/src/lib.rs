@@ -426,7 +426,8 @@ fn score_bytes(_question: &[u8], truth: &[u8], answer: &[u8]) -> f32 {
     // Avoid collapsing short label-only truths (e.g. "bullish") to near zero
     // merely because a valid synonymous answer uses different surrounding words.
     // This floor is disabled for explicit polarity/negation/number conflicts.
-    if !opposite_verdict
+    if truth.len() <= 96 && answer.len() <= 256
+        && !opposite_verdict
         && has_negation(truth) == has_negation(answer)
         && !has_unmatched_number(truth, answer)
     {
