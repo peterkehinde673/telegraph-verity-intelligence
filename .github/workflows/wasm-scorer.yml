@@ -1,4 +1,5 @@
 name: Verity WASM scorer
+# V25 compact-label calibration experiment.
 
 on:
   push:
