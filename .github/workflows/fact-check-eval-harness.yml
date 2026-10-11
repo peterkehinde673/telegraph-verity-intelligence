@@ -1,6 +1,10 @@
 name: FACT_CHECK local scorer investigation
 
 on:
+  push:
+    branches: ["foundation/**"]
+    paths:
+      - ".github/workflows/fact-check-eval-harness.yml"
   pull_request:
     branches: ["foundation/**"]
     paths:
@@ -57,7 +61,7 @@ jobs:
 
           path = Path("eval-artifacts/wasm/verity-v16.wasm")
           b = path.read_bytes()
-          if not b.startswith(b"\\x00asm\\x01\\x00\\x00\\x00"):
+          if not b.startswith(b"\x00asm\x01\x00\x00\x00"):
               raise SystemExit("V16 is not a valid WASM v1 binary")
           h = keccak.new(digest_bits=256); h.update(b)
           actual = "0x" + h.hexdigest()
