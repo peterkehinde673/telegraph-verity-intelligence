@@ -1,0 +1,200 @@
+name: FACT_CHECK local scorer investigation
+
+on:
+  push:
+    branches: ["foundation/**"]
+    paths:
+      - ".github/workflows/fact-check-eval-harness.yml"
+  pull_request:
+    branches: ["foundation/**"]
+    paths:
+      - ".github/workflows/fact-check-eval-harness.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe-scorers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout Verity repository
+        uses: actions/checkout@v6
+
+      - name: Install Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install exact Go toolchain for official tester
+        uses: actions/setup-go@v6
+        with:
+          go-version: "1.26.1"
+          cache: false
+
+      - name: Build official Telegraph WASM tester
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --depth 1 https://github.com/telegraphprotocol/telegraph-examples.git /tmp/telegraph-examples
+          cd /tmp/telegraph-examples/wasm-scoring-module/go-tester
+          go version
+          go build -o "$RUNNER_TEMP/telegraph-wasm-tester" .
+
+      - name: Install Rust and WASM target
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Build clean V15 baseline for direct comparison
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin foundation/verity-fact-check-discrimination-v15
+          git worktree add /tmp/verity-v15-baseline FETCH_HEAD
+          cargo test --manifest-path /tmp/verity-v15-baseline/wasm/verity-fact-check-scorer/Cargo.toml
+          cargo build --manifest-path /tmp/verity-v15-baseline/wasm/verity-fact-check-scorer/Cargo.toml --release --target wasm32-unknown-unknown
+          mkdir -p eval-artifacts/wasm
+          cp /tmp/verity-v15-baseline/wasm/verity-fact-check-scorer/target/wasm32-unknown-unknown/release/verity_fact_check_scorer.wasm eval-artifacts/wasm/verity-v15-baseline.wasm
+
+      - name: Build and test PR candidate WASM
+        shell: bash
+        run: |
+          set -euo pipefail
+          cargo test --manifest-path wasm/verity-fact-check-scorer/Cargo.toml
+          cargo build --manifest-path wasm/verity-fact-check-scorer/Cargo.toml --release --target wasm32-unknown-unknown
+          cp wasm/verity-fact-check-scorer/target/wasm32-unknown-unknown/release/verity_fact_check_scorer.wasm eval-artifacts-candidate.wasm
+          mv eval-artifacts-candidate.wasm "$RUNNER_TEMP/verity-pr-candidate.wasm"
+          cp "$RUNNER_TEMP/verity-pr-candidate.wasm" /tmp/verity-pr-candidate.wasm
+          python -m pip install --quiet pycryptodome
+          python - <<'PY'
+          from pathlib import Path
+          from Crypto.Hash import keccak
+          p=Path("/tmp/verity-pr-candidate.wasm")
+          h=keccak.new(digest_bits=256); h.update(p.read_bytes())
+          print("PR candidate WASM bytes:", p.stat().st_size)
+          print("PR candidate Keccak-256: 0x"+h.hexdigest())
+          PY
+
+      - name: Download V16 and public FACT_CHECK registration data
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p eval-artifacts/wasm
+          cp /tmp/verity-pr-candidate.wasm eval-artifacts/wasm/verity-pr-candidate.wasm
+          python - <<'PY'
+          from pathlib import Path
+          from Crypto.Hash import keccak
+          for p in sorted(Path("eval-artifacts/wasm").glob("*.wasm")):
+              h=keccak.new(digest_bits=256); h.update(p.read_bytes())
+              print(f"{p.name}: bytes={p.stat().st_size} keccak=0x{h.hexdigest()}")
+          PY
+          curl -fsSL --retry 3 \
+            "https://github.com/peterkehinde673/telegraph-verity-intelligence/releases/download/verity-fact-check-scorer-731be5bde59c2800211a365f9d1886be5cbac1dd/verity_fact_check_scorer.wasm" \
+            -o eval-artifacts/wasm/verity-v16.wasm
+          curl -fsSL --retry 3 \
+            "https://devnode.telegraphprotocol.com/engine/v1/intents/FACT_CHECK/wasm" \
+            -o eval-artifacts/fact-check-registrations.json
+          python -m pip install --quiet pycryptodome
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from Crypto.Hash import keccak
+
+          path = Path("eval-artifacts/wasm/verity-v16.wasm")
+          b = path.read_bytes()
+          if not b.startswith(b"\x00asm\x01\x00\x00\x00"):
+              raise SystemExit("V16 is not a valid WASM v1 binary")
+          h = keccak.new(digest_bits=256); h.update(b)
+          actual = "0x" + h.hexdigest()
+          expected = "0xfc020cf5f9245f54ce6b0eab83830b31236708c3b25bf4cffed7cd3f37beefb1"
+          print("V16 Keccak:", actual)
+          if actual != expected:
+              raise SystemExit(f"V16 hash mismatch: expected {expected}")
+          data = json.loads(Path("eval-artifacts/fact-check-registrations.json").read_text())
+          all_rows = data.get("wasm", [])
+          rows = [r for r in all_rows if str(r.get("IntentID", "")).upper() == "FACT_CHECK"]
+          print("Public endpoint rows:", len(all_rows))
+          print("Rows actually tagged FACT_CHECK:", len(rows))
+          if not rows:
+              print("NO COMPARABLE FACT_CHECK BINARIES: endpoint response is tagged FACT_CHECK at top level, but its records belong to other intents.")
+          active = [r for r in rows if str(r.get("ActivationStatus", "")).lower() in ("active", "champion", "active_champion")]
+          if active:
+              print("Active-looking public rows:")
+              for row in active:
+                  print(json.dumps({k: row.get(k) for k in ("RegistrationID","ActivationStatus","WasmURL","WasmHash")}, sort_keys=True))
+          else:
+              print("NO CURRENT CHAMPION IDENTIFIED: endpoint only returned historical/non-active registration rows.")
+          PY
+
+      - name: Download public historical scorer binaries
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, subprocess
+          from pathlib import Path
+          data = json.loads(Path("eval-artifacts/fact-check-registrations.json").read_text())
+          out = Path("eval-artifacts/wasm")
+          rows = [r for r in data.get("wasm", []) if str(r.get("IntentID", "")).upper() == "FACT_CHECK"]
+          if not rows:
+              print("Skipping historical downloads: no rows are explicitly tagged FACT_CHECK.")
+          manifest = []
+          for row in rows:
+              url = row.get("WasmURL")
+              rid = row.get("RegistrationID")
+              if not url or rid is None:
+                  continue
+              path = out / f"registration-{rid}.wasm"
+              try:
+                  subprocess.run(["curl","-fsSL","--retry","2",url,"-o",str(path)],check=True,timeout=90)
+                  manifest.append({"registration_id":rid,"status":row.get("ActivationStatus"),"url":url,"file":str(path),"hash":row.get("WasmHash")})
+                  print(f"Downloaded registration {rid}: {path.stat().st_size} bytes")
+              except Exception as exc:
+                  print(f"Could not download registration {rid}: {exc}")
+          Path("eval-artifacts/wasm-manifest.json").write_text(json.dumps(manifest,indent=2))
+          PY
+
+      - name: Run same behavioural probes against each available binary
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > eval-artifacts/probes.tsv <<'EOF'
+          id	question	ground_truth	answer
+          exact	What is the capital of France?	Paris is the capital of France.	Paris is the capital of France.
+          paraphrase	What is the capital of France?	Paris is the capital of France.	The capital of France is Paris.
+          unrelated	What is the capital of France?	Paris is the capital of France.	The Moon is a natural satellite of Earth.
+          negation	Did the study find a benefit?	The study found a benefit.	The study did not find a benefit.
+          number_conflict	What was the reported count?	The report recorded 120 cases.	The report recorded 12 cases.
+          number_omission	What was the reported count?	The report recorded 120 cases.	The report discussed the cases.
+          partial	Who founded the company and when?	Ada Lovelace founded the company in 1843.	Ada Lovelace founded the company.
+          entity_conflict	Who won the election?	Maria Chen won the election.	David Chen won the election.
+          same_meaning	Did the report confirm the result?	The report confirmed the result.	The result was confirmed by the report.
+          empty	What is the capital of France?	Paris is the capital of France.	
+          EOF
+          : > eval-artifacts/scores.tsv
+          printf "binary\tprobe\tscore\tstatus\n" >> eval-artifacts/scores.tsv
+          while IFS=$'\t' read -r id q gt answer; do
+            [ "$id" = "id" ] && continue
+            for wasm in eval-artifacts/wasm/*.wasm; do
+              [ -f "$wasm" ] || continue
+              name="$(basename "$wasm")"
+              if score=$("$RUNNER_TEMP/telegraph-wasm-tester" "$wasm" "$q" "$gt" "$answer" 2>&1); then
+                value="$(printf '%s' "$score" | sed -n 's/.*score: *//p' | tail -n1)"
+                printf "%s\t%s\t%s\tOK\n" "$name" "$id" "${value:-unknown}" >> eval-artifacts/scores.tsv
+              else
+                printf "%s\t%s\tNA\tERROR: %s\n" "$name" "$id" "$(printf '%s' "$score" | tr '\t\n' ' ' | cut -c1-180)" >> eval-artifacts/scores.tsv
+              fi
+            done
+          done < eval-artifacts/probes.tsv
+          cat eval-artifacts/scores.tsv
+
+      - name: Upload investigation outputs
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: fact-check-eval-investigation
+          path: eval-artifacts/
+          if-no-files-found: warn
+          retention-days: 14
