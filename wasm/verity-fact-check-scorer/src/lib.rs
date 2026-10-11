@@ -278,12 +278,13 @@ fn has_opposite_verdict(truth: &[u8], answer: &[u8]) -> bool {
  // a one-word ground truth such as "bullish" should still recognize "upbeat"
  // without letting this shortcut override an explicit contradiction.
 fn compact_label_category(bytes: &[u8]) -> Option<&'static [u8]> {
+    // Allow a label to appear in a concise explanatory sentence, but reject
+    // ambiguous references containing more than one categorical polarity.
+    // The caller separately gates this on label-oriented question intent.
     let mut cursor = 0usize;
     let mut found: Option<&'static [u8]> = None;
-    let mut content_tokens = 0usize;
     while let Some((start, end, next)) = next_token(bytes, cursor) {
-        let token = &bytes[start..end];
-        let hash = token_hash(token);
+        let hash = token_hash(&bytes[start..end]);
         let categories: [(&[u8], &[u8]); 12] = [
             (b"positive", b"positive"), (b"negative", b"negative"),
             (b"safe", b"safe"), (b"fraud", b"fraud"),
@@ -292,23 +293,19 @@ fn compact_label_category(bytes: &[u8]) -> Option<&'static [u8]> {
             (b"hold", b"hold"), (b"hawkish", b"hawkish"),
             (b"dovish", b"dovish"), (b"true", b"true"),
         ];
-        let mut category = None;
         for (word, label) in categories {
-            if hash == token_hash(word) { category = Some(label); break; }
-        }
-        if let Some(label) = category {
-            content_tokens += 1;
-            if let Some(previous) = found {
-                if previous != label { return None; }
-            } else {
-                found = Some(label);
+            if hash == token_hash(word) {
+                if let Some(previous) = found {
+                    if previous != label { return None; }
+                } else {
+                    found = Some(label);
+                }
+                break;
             }
-        } else if token_weight(token) >= 1.0 {
-            content_tokens += 1;
         }
         cursor = next;
     }
-    if content_tokens <= 2 { found } else { None }
+    found
 }
 
 fn question_targets_label(question: &[u8]) -> bool {
@@ -441,7 +438,7 @@ fn score_bytes(_question: &[u8], truth: &[u8], answer: &[u8]) -> f32 {
     // Avoid collapsing short label-only truths (e.g. "bullish") to near zero
     // merely because a valid synonymous answer uses different surrounding words.
     // This floor is disabled for explicit polarity/negation/number conflicts.
-    if answer.len() <= 96
+    if answer.len() <= 256
         && question_targets_label(_question)
         && !opposite_verdict
         && has_negation(truth) == has_negation(answer)
@@ -600,6 +597,26 @@ mod tests {
         let answer = b"The outlook is bearish.";
         let score = score_bytes(b"What is the outlook?", truth, answer);
         assert!(score < 0.05, "opposite sentiment scored {score}");
+    }
+
+    #[test]
+    fn compact_label_accepts_label_in_short_sentence() {
+        let score = score_bytes(
+            b"Is the earnings call sentiment bullish or bearish?",
+            b"The outlook is bullish and positive.",
+            b"The tone is upbeat.",
+        );
+        assert!(score >= 0.90, "short sentence synonym scored {score}");
+    }
+
+    #[test]
+    fn compact_label_rejects_mixed_polarity_reference() {
+        let score = score_bytes(
+            b"Is the earnings call sentiment bullish or bearish?",
+            b"The outlook is bullish but later turns bearish.",
+            b"The tone is upbeat.",
+        );
+        assert!(score < 0.90, "ambiguous mixed-polarity truth scored {score}");
     }
 
     #[test]
