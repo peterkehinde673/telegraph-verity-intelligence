@@ -264,12 +264,12 @@ jobs:
           run_proxy() {
             label="$1"; scorer="$2"; outdir="$3"
             set +e
-            node eval-artifacts/public-harness/run-eval.mjs \\
-              --scorer "$scorer" \\
-              --against eval-artifacts/wasm/verity-current-champion.wasm \\
-              --fixtures eval-artifacts/fact-check-corpus \\
-              --intent FACT_CHECK \\
-              --workers 2 \\
+            node eval-artifacts/public-harness/run-eval.mjs \
+              --scorer "$scorer" \
+              --against eval-artifacts/wasm/verity-current-champion.wasm \
+              --fixtures eval-artifacts/fact-check-corpus \
+              --intent FACT_CHECK \
+              --workers 2 \
               --out "$outdir" > "eval-artifacts/$label-proxy.txt" 2>&1
             rc=$?
             set -e
