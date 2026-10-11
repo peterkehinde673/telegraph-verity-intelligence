@@ -113,8 +113,8 @@ fn normalized_token(token: &[u8], out: &mut [u8; 64]) -> usize {
         b"buy" | b"purchase" | b"outperform" | b"overweight" => Some(b"buy"),
         b"sell" | b"underperform" | b"underweight" => Some(b"sell"),
         b"hold" | b"neutral" | b"marketperform" => Some(b"hold"),
-        b"hawkish" | b"tightening" => Some(b"hawkish"),
-        b"dovish" | b"easing" => Some(b"dovish"),
+        b"hawkish" | b"tightening" | b"aggressive" | b"restrictive" => Some(b"hawkish"),
+        b"dovish" | b"easing" | b"accommodative" | b"supportive" => Some(b"dovish"),
         b"reported" | b"reports" | b"stated" | b"states" => Some(b"report"),
         _ => None,
     };
@@ -480,7 +480,7 @@ fn score_bytes(_question: &[u8], truth: &[u8], answer: &[u8]) -> f32 {
                     let count = token_count(answer);
                     if count <= 1 {
                         score = score.max(0.90).min(0.95);
-                    } else if count <= 3 {
+                    } else if count <= 4 {
                         score = score.max(0.97).min(0.97);
                     } else {
                         score = score.max(0.98).min(0.98);
@@ -674,6 +674,16 @@ mod tests {
             b"upbeat",
         );
         assert!(score >= 0.90, "synonym fallback scored {score}");
+    }
+
+    #[test]
+    fn hawkish_tightening_synonym_is_canonicalized() {
+        let score = score_bytes(
+            b"Was the Fed statement hawkish or dovish?",
+            b"The statement was hawkish.",
+            b"Tightening",
+        );
+        assert!(score >= 0.90, "hawkish synonym scored {score}");
     }
 
     #[test]
