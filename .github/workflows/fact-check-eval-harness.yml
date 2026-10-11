@@ -5,10 +5,12 @@ on:
     branches: ["foundation/**"]
     paths:
       - ".github/workflows/fact-check-eval-harness.yml"
+      - "wasm/verity-fact-check-scorer/**"
   pull_request:
     branches: ["foundation/**"]
     paths:
       - ".github/workflows/fact-check-eval-harness.yml"
+      - "wasm/verity-fact-check-scorer/**"
   workflow_dispatch:
 
 permissions:
@@ -47,6 +49,17 @@ jobs:
         with:
           targets: wasm32-unknown-unknown
 
+      - name: Build clean V15 baseline for direct comparison
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin foundation/verity-fact-check-discrimination-v15
+          git worktree add /tmp/verity-v15-baseline FETCH_HEAD
+          cargo test --manifest-path /tmp/verity-v15-baseline/wasm/verity-fact-check-scorer/Cargo.toml
+          cargo build --manifest-path /tmp/verity-v15-baseline/wasm/verity-fact-check-scorer/Cargo.toml --release --target wasm32-unknown-unknown
+          mkdir -p eval-artifacts/wasm
+          cp /tmp/verity-v15-baseline/wasm/verity-fact-check-scorer/target/wasm32-unknown-unknown/release/verity_fact_check_scorer.wasm eval-artifacts/wasm/verity-v15-baseline.wasm
+
       - name: Build and test PR candidate WASM
         shell: bash
         run: |
@@ -72,6 +85,13 @@ jobs:
           set -euo pipefail
           mkdir -p eval-artifacts/wasm
           cp /tmp/verity-pr-candidate.wasm eval-artifacts/wasm/verity-pr-candidate.wasm
+          python - <<'PY'
+          from pathlib import Path
+          from Crypto.Hash import keccak
+          for p in sorted(Path("eval-artifacts/wasm").glob("*.wasm")):
+              h=keccak.new(digest_bits=256); h.update(p.read_bytes())
+              print(f"{p.name}: bytes={p.stat().st_size} keccak=0x{h.hexdigest()}")
+          PY
           curl -fsSL --retry 3 \
             "https://github.com/peterkehinde673/telegraph-verity-intelligence/releases/download/verity-fact-check-scorer-731be5bde59c2800211a365f9d1886be5cbac1dd/verity_fact_check_scorer.wasm" \
             -o eval-artifacts/wasm/verity-v16.wasm
