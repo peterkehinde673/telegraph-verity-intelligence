@@ -137,7 +137,7 @@ jobs:
           from pathlib import Path
           from Crypto.Hash import keccak
           p=Path("eval-artifacts/wasm/verity-current-champion.wasm")
-          if not p.read_bytes().startswith(b"\\x00asm\\x01\\x00\\x00\\x00"):
+          if not p.read_bytes().startswith(bytes.fromhex("0061736d01000000")):
               raise SystemExit("Current champion is not a valid WASM v1 binary")
           h=keccak.new(digest_bits=256); h.update(p.read_bytes())
           actual="0x"+h.hexdigest()
