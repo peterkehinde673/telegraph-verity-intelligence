@@ -70,8 +70,12 @@ jobs:
           if actual != expected:
               raise SystemExit(f"V16 hash mismatch: expected {expected}")
           data = json.loads(Path("eval-artifacts/fact-check-registrations.json").read_text())
-          rows = data.get("wasm", [])
-          print("Public endpoint registration rows:", len(rows))
+          all_rows = data.get("wasm", [])
+          rows = [r for r in all_rows if str(r.get("IntentID", "")).upper() == "FACT_CHECK"]
+          print("Public endpoint rows:", len(all_rows))
+          print("Rows actually tagged FACT_CHECK:", len(rows))
+          if not rows:
+              print("NO COMPARABLE FACT_CHECK BINARIES: endpoint response is tagged FACT_CHECK at top level, but its records belong to other intents.")
           active = [r for r in rows if str(r.get("ActivationStatus", "")).lower() in ("active", "champion", "active_champion")]
           if active:
               print("Active-looking public rows:")
@@ -90,7 +94,9 @@ jobs:
           from pathlib import Path
           data = json.loads(Path("eval-artifacts/fact-check-registrations.json").read_text())
           out = Path("eval-artifacts/wasm")
-          rows = data.get("wasm", [])
+          rows = [r for r in data.get("wasm", []) if str(r.get("IntentID", "")).upper() == "FACT_CHECK"]
+          if not rows:
+              print("Skipping historical downloads: no rows are explicitly tagged FACT_CHECK.")
           manifest = []
           for row in rows:
               url = row.get("WasmURL")
