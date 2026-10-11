@@ -305,12 +305,14 @@ fn score_bytes(_question: &[u8], truth: &[u8], answer: &[u8]) -> f32 {
     // years, and counts are often decisive in factual claims.
     let overlap = (2.0 * matched_weight / (answer_weight + truth_weight)).clamp(0.0, 1.0);
 
-    // V14 returns to the strongest measured calibration (V11, margin 0.3217)
-    // after the V13 order signal reduced margin to 0.2818. Numeric-token
-    // weighting is a targeted factual-evidence experiment.
+    // V22 calibration experiment: reduce saturation for high-but-imperfect
+    // lexical overlap. The previous tenth-power odds calibration pushed many
+    // materially different answers close to 1.0, erasing useful ranking gaps.
+    // This is only a diagnostic experiment; keep it only if the public evaluator
+    // shows better ordering and the champion comparison does not regress.
     let mut hit = 1.0f32;
     let mut miss = 1.0f32;
-    for _ in 0..10 {
+    for _ in 0..6 {
         hit *= overlap;
         miss *= 1.0 - overlap;
     }
