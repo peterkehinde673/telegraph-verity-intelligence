@@ -16,6 +16,7 @@
 //! V32 allows the guarded label-category fallback to run even when literal token overlap is zero.
 //! V33 separates short explanatory answers from bare synonyms and expands Fed-stance aliases.
 //! V34 adds Fed-stance synonyms to the compact categorical fallback, fixing V33's unreachable alias coverage.
+//! V35 increases token-table capacity to reduce collision probing on high-entropy inputs.
 //! It compares the candidate answer to the supplied reference and performs no
 //! network access. Common function words receive less weight than factual terms.
 
