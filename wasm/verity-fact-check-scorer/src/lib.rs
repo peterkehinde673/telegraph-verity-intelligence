@@ -291,7 +291,7 @@ fn compact_label_category(bytes: &[u8]) -> Option<&'static [u8]> {
     let mut found: Option<&'static [u8]> = None;
     while let Some((start, end, next)) = next_token(bytes, cursor) {
         let hash = token_hash(&bytes[start..end]);
-        let categories: [(&[u8], &[u8]); 24] = [
+        let categories: [(&[u8], &[u8]); 30] = [
             (b"positive", b"positive"), (b"negative", b"negative"),
             (b"safe", b"safe"), (b"fraud", b"fraud"),
             (b"human", b"human"), (b"ai", b"ai"),
@@ -304,6 +304,9 @@ fn compact_label_category(bytes: &[u8]) -> Option<&'static [u8]> {
             (b"phishing", b"fraud"), (b"scam", b"fraud"),
             (b"unsafe", b"fraud"), (b"dangerous", b"fraud"),
             (b"malicious", b"fraud"), (b"risky", b"fraud"),
+            (b"tightening", b"hawkish"), (b"aggressive", b"hawkish"),
+            (b"restrictive", b"hawkish"), (b"easing", b"dovish"),
+            (b"accommodative", b"dovish"), (b"supportive", b"dovish"),
         ];
         for (word, label) in categories {
             if hash == token_hash(word) {
