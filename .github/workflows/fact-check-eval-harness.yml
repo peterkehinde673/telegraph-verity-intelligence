@@ -274,6 +274,108 @@ jobs:
           restore_source
           trap - EXIT
 
+      - name: Test a sentence-aware entity contradiction guard on V15
+        shell: bash
+        run: |
+          set -euo pipefail
+          SRC="/tmp/verity-v15-baseline/wasm/verity-fact-check-scorer/src/lib.rs"
+          ORIGINAL="$RUNNER_TEMP/verity-v15-original.rs"
+          cp "$SRC" "$ORIGINAL"
+          restore_source() { cp "$ORIGINAL" "$SRC"; }
+          trap restore_source EXIT
+          for power in 10 14; do
+            cp "$ORIGINAL" "$SRC"
+            POWER="$power" SRC="$SRC" python - <<'PY'
+          import os
+          from pathlib import Path
+          p=Path(os.environ["SRC"])
+          s=p.read_text()
+          old="""    let hit2 = overlap * overlap;
+              let hit4 = hit2 * hit2;
+              let hit8 = hit4 * hit4;
+              let hit10 = hit8 * hit2;
+              let miss = 1.0 - overlap;
+              let miss2 = miss * miss;
+              let miss4 = miss2 * miss2;
+              let miss8 = miss4 * miss4;
+              let miss10 = miss8 * miss2;
+              let denominator = hit10 + miss10;
+              let mut score = if denominator > 0.0 { hit10 / denominator } else { 0.0 };"""
+          power=int(os.environ["POWER"])
+          calibration=f"""    let mut hit = 1.0f32;
+              let mut miss = 1.0f32;
+              for _ in 0..{power} {{
+                  hit *= overlap;
+                  miss *= 1.0 - overlap;
+              }}
+              let denominator = hit + miss;
+              let mut score = if denominator > 0.0 {{ hit / denominator }} else {{ 0.0 }};"""
+          if old not in s:
+              raise SystemExit("Could not find exact V15 calibration block")
+          s=s.replace(old,calibration,1)
+          helper="""// Detect changed proper names without treating sentence-initial words like
+          // "The" as entities. This is deliberately lexical and conservative.
+          fn has_unmatched_capitalized_entity(source: &[u8], other: &[u8]) -> bool {
+              let mut cursor = 0usize;
+              let mut sentence_start = true;
+              while let Some((start, end, next)) = next_token(source, cursor) {
+                  if source[cursor..start].iter().any(|b| *b == b'.' || *b == b'!' || *b == b'?' || *b == b'\\n') {
+                      sentence_start = true;
+                  }
+                  let token = &source[start..end];
+                  let begins_upper = token.first().map(|b| *b >= b'A' && *b <= b'Z').unwrap_or(false);
+                  let mut lower = [0u8; 64];
+                  let len = normalized_token(token, &mut lower);
+                  let word = &lower[..len];
+                  let sentence_opener = [
+                      b"the".as_slice(), b"a", b"an", b"this", b"that", b"these", b"those",
+                      b"it", b"he", b"she", b"they", b"we", b"i", b"there", b"according",
+                      b"in", b"on", b"at", b"by", b"for", b"from", b"with", b"as",
+                      b"after", b"before",
+                  ].iter().any(|candidate| *candidate == word);
+                  if begins_upper && len > 1 && !(sentence_start && sentence_opener) {
+                      let wanted = token_hash(token);
+                      let mut other_cursor = 0usize;
+                      let mut found = false;
+                      while let Some((os, oe, onext)) = next_token(other, other_cursor) {
+                          if token_hash(&other[os..oe]) == wanted { found = true; break; }
+                          other_cursor = onext;
+                      }
+                      if !found { return true; }
+                  }
+                  sentence_start = false;
+                  cursor = next;
+              }
+              false
+          }
+
+          """
+          insert_at="fn score_bytes(_question: &[u8], truth: &[u8], answer: &[u8]) -> f32 {"
+          if insert_at not in s: raise SystemExit("score_bytes insertion point missing")
+          s=s.replace(insert_at,helper+insert_at,1)
+          old_guard="""    if has_unmatched_number(truth, answer) {
+                  score *= 0.05;
+              }
+              score.clamp(0.0, 1.0)"""
+          new_guard="""    if has_unmatched_number(truth, answer) {
+                  score *= 0.05;
+              }
+              if has_unmatched_capitalized_entity(truth, answer)
+                  || has_unmatched_capitalized_entity(answer, truth) {
+                  score *= 0.02;
+              }
+              score.clamp(0.0, 1.0)"""
+          if old_guard not in s: raise SystemExit("numeric-guard insertion point missing")
+          s=s.replace(old_guard,new_guard,1)
+          p.write_text(s)
+          PY
+            cargo build --manifest-path /tmp/verity-v15-baseline/wasm/verity-fact-check-scorer/Cargo.toml --release --target wasm32-unknown-unknown
+            cp /tmp/verity-v15-baseline/wasm/verity-fact-check-scorer/target/wasm32-unknown-unknown/release/verity_fact_check_scorer.wasm "eval-artifacts/wasm/verity-v15-entity-p${power}.wasm"
+            echo "Built sentence-aware entity guard, calibration power ${power}"
+          done
+          restore_source
+          trap - EXIT
+
       - name: Run local promotion-gate proxy on fact-verification examples
         shell: bash
         run: |
@@ -328,6 +430,9 @@ jobs:
           run_proxy candidate eval-artifacts/wasm/verity-pr-candidate.wasm eval-artifacts/proxy-candidate
           for power in 6 8 10 12 14; do
             run_proxy "v15-p${power}" "eval-artifacts/wasm/verity-v15-p${power}.wasm" "eval-artifacts/proxy-v15-p${power}"
+          done
+          for power in 10 14; do
+            run_proxy "v15-entity-p${power}" "eval-artifacts/wasm/verity-v15-entity-p${power}.wasm" "eval-artifacts/proxy-v15-entity-p${power}"
           done
 
       - name: Run same behavioural probes against each available binary
