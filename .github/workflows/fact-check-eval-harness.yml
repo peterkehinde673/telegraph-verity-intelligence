@@ -79,6 +79,40 @@ jobs:
           print("PR candidate Keccak-256: 0x"+h.hexdigest())
           PY
 
+      - name: Capture public champion and score endpoints
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p eval-artifacts/public-api
+          for spec in \
+            "wasm|https://devnode.telegraphprotocol.com/api/wasm" \
+            "fact-check-miners|https://devnode.telegraphprotocol.com/engine/v1/intents/FACT_CHECK/miners" \
+            "fact-check-scores|https://devnode.telegraphprotocol.com/scores?intent=FACT_CHECK" \
+            "fact-check-intent-wasm|https://devnode.telegraphprotocol.com/engine/v1/intents/FACT_CHECK/wasm"; do
+            name="${spec%%|*}"
+            url="${spec#*|}"
+            code="$(curl -sSL --retry 2 -w '%{http_code}' "$url" -o "eval-artifacts/public-api/$name.json" || true)"
+            echo "$name HTTP $code bytes $(wc -c < "eval-artifacts/public-api/$name.json" 2>/dev/null || echo 0)"
+          done
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          for p in sorted(Path("eval-artifacts/public-api").glob("*.json")):
+              try:
+                  obj=json.loads(p.read_text())
+                  print(f"\\n--- {p.name} ({type(obj).__name__}) ---")
+                  if isinstance(obj, dict):
+                      print("top-level keys:", list(obj.keys())[:40])
+                      print(json.dumps(obj, indent=2)[:3500])
+                  elif isinstance(obj, list):
+                      print("rows:", len(obj))
+                      print(json.dumps(obj[:3], indent=2)[:3500])
+                  else:
+                      print(str(obj)[:1000])
+              except Exception as e:
+                  print(f"{p.name}: not JSON: {e}")
+          PY
+
       - name: Download V16 and public FACT_CHECK registration data
         shell: bash
         run: |
