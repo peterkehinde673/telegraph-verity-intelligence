@@ -728,11 +728,13 @@ jobs:
               echo "=== $label vs live champion on $name ===" | tee "$report"
               # A pathological candidate/corpus pair must not consume the entire 15-minute job.
               # Keep each diagnostic comparison bounded; the report records timeout exit codes.
+              set +e
               timeout --signal=TERM --kill-after=5s 45s \
                 "$RUNNER_TEMP/telegraph-wasm-check" "$module" \
                 --cases "$corpus" --compare "$CHAMPION" \
                 --no-color >> "$report" 2>&1
               rc=$?
+              set -e
               if [ "$rc" -eq 124 ] || [ "$rc" -eq 137 ]; then
                 echo "TIMEOUT after 45s: $label vs live champion on $name" | tee -a "$report"
               elif [ "$rc" -ne 0 ]; then
