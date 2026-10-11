@@ -305,14 +305,13 @@ fn score_bytes(_question: &[u8], truth: &[u8], answer: &[u8]) -> f32 {
     // years, and counts are often decisive in factual claims.
     let overlap = (2.0 * matched_weight / (answer_weight + truth_weight)).clamp(0.0, 1.0);
 
-    // V22 calibration experiment: reduce saturation for high-but-imperfect
-    // lexical overlap. The previous tenth-power odds calibration pushed many
-    // materially different answers close to 1.0, erasing useful ranking gaps.
-    // V22 is a diagnostic experiment; keep it only if the public evaluator
-    // shows better ordering and the champion comparison does not regress.
+    // V23 experiment: test a sharper calibration while retaining the
+    // existing numeric, negation, and opposite-verdict guards. The public
+    // proxy favored sharper verdict-aware variants; keep only if the full
+    // same-corpus report beats the reference margin without runtime regressions.
     let mut hit = 1.0f32;
     let mut miss = 1.0f32;
-    for _ in 0..6 {
+    for _ in 0..14 {
         hit *= overlap;
         miss *= 1.0 - overlap;
     }
