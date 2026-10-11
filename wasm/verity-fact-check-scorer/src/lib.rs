@@ -4,7 +4,7 @@
 //! This is still a lexical baseline, not a semantic fact-checking engine.
 //! V19 adds a conservative guard for explicit opposite factual verdicts.
 //! Release note: inflection normalization is a hypothesis; protocol promotion remains unverified.
-//! Uses fourteenth-power odds calibration and numeric-token weighting.
+//! Retains tenth-power odds calibration and numeric-token weighting.
 //! Keeps polarity and numeric contradiction guards; adds explicit opposite-verdict detection.
 //! Keeps V11 content-word weighting and existing contradiction guards.
 //! V19 uses weighted unigram overlap, numeric evidence, inflection normalization, and opposite-verdict detection.
@@ -287,7 +287,7 @@ fn score_bytes(_question: &[u8], truth: &[u8], answer: &[u8]) -> f32 {
     // weighting is a targeted factual-evidence experiment.
     let mut hit = 1.0f32;
     let mut miss = 1.0f32;
-    for _ in 0..14 {
+    for _ in 0..10 {
         hit *= overlap;
         miss *= 1.0 - overlap;
     }
