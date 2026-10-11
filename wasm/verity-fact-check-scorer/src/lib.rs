@@ -97,8 +97,8 @@ fn normalized_token(token: &[u8], out: &mut [u8; 64]) -> usize {
     let canonical: Option<&[u8]> = match word {
         b"fraudulent" | b"fraud" | b"scam" | b"phishing" => Some(b"fraud"),
         b"legitimate" | b"genuine" | b"authentic" => Some(b"safe"),
-        b"reduce" | b"reduced" | b"reduces" | b"reducing" | b"lower" | b"lowered" | b"lowers" | b"fell" | b"fall" | b"decrease" | b"decreased" | b"decreases" => Some(b"decrease"),
-        b"increase" | b"increased" | b"increases" | b"rises" | b"rose" | b"raise" | b"raised" | b"raises" => Some(b"increase"),
+        b"reduce" | b"reduc" | b"reduced" | b"reduces" | b"reducing" | b"lower" | b"lowered" | b"lowers" | b"fell" | b"fall" | b"decrease" | b"decreased" | b"decreases" => Some(b"decrease"),
+        b"increase" | b"increas" | b"increased" | b"increases" | b"rises" | b"rose" | b"raise" | b"rais" | b"raised" | b"raises" => Some(b"increase"),
         b"benefit" | b"benefits" | b"advantage" | b"advantages" => Some(b"benefit"),
         b"positive" | b"positively" | b"bullish" | b"upbeat" | b"optimistic" => Some(b"positive"),
         b"negative" | b"negatively" | b"bearish" | b"downbeat" | b"pessimistic" => Some(b"negative"),
