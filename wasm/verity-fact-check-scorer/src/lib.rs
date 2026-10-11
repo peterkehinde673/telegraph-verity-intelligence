@@ -15,6 +15,7 @@
 //! V31 bounds the compact-label override to short references and calibrates concise answer lengths.
 //! V32 allows the guarded label-category fallback to run even when literal token overlap is zero.
 //! V33 separates short explanatory answers from bare synonyms and expands Fed-stance aliases.
+//! V34 adds Fed-stance synonyms to the compact categorical fallback, fixing V33's unreachable alias coverage.
 //! It compares the candidate answer to the supplied reference and performs no
 //! network access. Common function words receive less weight than factual terms.
 
