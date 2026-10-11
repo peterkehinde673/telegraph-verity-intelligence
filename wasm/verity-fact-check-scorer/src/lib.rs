@@ -8,6 +8,7 @@
 //! Keeps polarity and numeric contradiction guards; adds explicit opposite-verdict detection.
 //! Keeps V11 content-word weighting and existing contradiction guards.
 //! V20 uses weighted unigram overlap, numeric evidence, inflection normalization, and a stronger opposite-verdict penalty.
+//! V27 gates compact-label boosts by question intent and uses a linear-time entity guard.
 //! It compares the candidate answer to the supplied reference and performs no
 //! network access. Common function words receive less weight than factual terms.
 
