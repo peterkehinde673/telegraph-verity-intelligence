@@ -73,7 +73,8 @@ fn next_token(bytes: &[u8], from: usize) -> Option<(usize, usize, usize)> {
     Some((start, end, end))
 }
 
-const TOKEN_TABLE_SIZE: usize = 16_384;
+// Keep the open-addressed token table below half full for high-entropy inputs.
+const TOKEN_TABLE_SIZE: usize = 32_768;
 
 #[derive(Clone, Copy)]
 struct TokenSlot { hash: u64, count: u32 }
@@ -785,6 +786,18 @@ mod tests {
         assert_eq!(score_bytes("q".as_bytes(), "東京 is a city 🗼".as_bytes(), "東京 is a city 🗼".as_bytes()), 1.0);
     }
     #[test]
+    #[test]
+    fn large_distinct_token_input_stays_finite() {
+        let mut truth = std::string::String::new();
+        for i in 0..12000 {
+            truth.push_str("token");
+            truth.push_str(&i.to_string());
+            truth.push(' ');
+        }
+        let score = score_bytes(b"Summarise the evidence.", truth.as_bytes(), truth.as_bytes());
+        assert!(score.is_finite() && (0.0..=1.0).contains(&score));
+    }
+
     fn long_inputs_do_not_panic() {
         let truth = "correct answer ".repeat(5000);
         let answer = "correct answer ".repeat(5000);
