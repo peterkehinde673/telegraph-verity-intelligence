@@ -227,6 +227,59 @@ jobs:
           Path("eval-artifacts/wasm-manifest.json").write_text(json.dumps(manifest,indent=2))
           PY
 
+      - name: Run local promotion-gate proxy on fact-verification examples
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --depth 1 https://github.com/shreshth006/telegraph-factscore.git "$RUNNER_TEMP/telegraph-factscore"
+          mkdir -p eval-artifacts/fact-check-corpus eval-artifacts/proxy-v15 eval-artifacts/proxy-candidate
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          src=Path("$RUNNER_TEMP/telegraph-factscore")
+          out=Path("eval-artifacts/fact-check-corpus")
+          names=[
+              "CONTENT_VERIFICATION_CLEAN_PAIR.json",
+              "TEXT_AUTHENTICITY_CHECK.json",
+              "TEXT_AUTHENTICITY_CHECK_PARAPHRASE.json",
+          ]
+          total=0
+          for name in names:
+              p=src/"fixtures"/"synth"/name
+              if not p.exists():
+                  raise SystemExit(f"Missing public fixture file: {p}")
+              data=json.loads(p.read_text())
+              rows=data if isinstance(data,list) else data.get("fixtures")
+              if not isinstance(rows,list) or not rows:
+                  raise SystemExit(f"No fixtures found in {p}")
+              for row in rows:
+                  row["intent"]="FACT_CHECK"
+              if isinstance(data,dict): data["intent"]="FACT_CHECK"
+              (out/name).write_text(json.dumps(data,indent=2)+"\\n")
+              total+=len(rows)
+              print(f"Prepared {name}: {len(rows)} fixtures")
+          print(f"Total public synthetic fact-verification fixtures: {total}")
+          PY
+          cp -R "$RUNNER_TEMP/telegraph-factscore/harness" eval-artifacts/public-harness
+          run_proxy() {
+            label="$1"; scorer="$2"; outdir="$3"
+            set +e
+            node eval-artifacts/public-harness/run-eval.mjs \\
+              --scorer "$scorer" \\
+              --against eval-artifacts/wasm/verity-current-champion.wasm \\
+              --fixtures eval-artifacts/fact-check-corpus \\
+              --intent FACT_CHECK \\
+              --workers 2 \\
+              --out "$outdir" > "eval-artifacts/$label-proxy.txt" 2>&1
+            rc=$?
+            set -e
+            echo "$label proxy exit code: $rc (nonzero can indicate a structural gate failure; report is retained for diagnosis)"
+            cat "eval-artifacts/$label-proxy.txt"
+            return 0
+          }
+          run_proxy v15 eval-artifacts/wasm/verity-v15-baseline.wasm eval-artifacts/proxy-v15
+          run_proxy candidate eval-artifacts/wasm/verity-pr-candidate.wasm eval-artifacts/proxy-candidate
+
       - name: Run same behavioural probes against each available binary
         shell: bash
         run: |
