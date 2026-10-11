@@ -314,6 +314,16 @@ fn compact_label_category(bytes: &[u8]) -> Option<&'static [u8]> {
     found
 }
 
+fn token_count(bytes: &[u8]) -> usize {
+    let mut count = 0usize;
+    let mut cursor = 0usize;
+    while let Some((_start, _end, next)) = next_token(bytes, cursor) {
+        count = count.saturating_add(1);
+        cursor = next;
+    }
+    count
+}
+
 fn question_targets_label(question: &[u8]) -> bool {
     const CUES: [&[u8]; 24] = [
         b"sentiment", b"bullish", b"bearish", b"outlook", b"safe", b"url",
@@ -457,7 +467,13 @@ fn score_bytes(_question: &[u8], truth: &[u8], answer: &[u8]) -> f32 {
                 // Preserve a strict exact-match advantage while ensuring a
                 // genuine concise paraphrase beats unrelated/contradictory text.
                 if truth != answer {
-                    score = score.clamp(0.90, 0.95);
+                    // Keep a bare category synonym below a concise explanatory
+                    // sentence, while both remain below an exact reference match.
+                    if token_count(answer) <= 1 {
+                        score = score.clamp(0.90, 0.95);
+                    } else {
+                        score = score.max(0.97).min(0.99);
+                    }
                 } else {
                     score = score.max(0.90);
                 }
@@ -619,6 +635,17 @@ mod tests {
             b"The tone is upbeat.",
         );
         assert!(score >= 0.90, "short sentence synonym scored {score}");
+    }
+
+    #[test]
+    fn concise_label_sentence_outranks_bare_synonym_but_not_exact() {
+        let question = b"What is the sentiment of this earnings call?";
+        let truth = b"The earnings call sentiment is bullish.";
+        let bare = score_bytes(question, truth, b"upbeat");
+        let sentence = score_bytes(question, truth, b"The tone is upbeat and positive.");
+        let exact = score_bytes(question, truth, truth);
+        assert!(sentence > bare, "sentence {sentence} must beat bare synonym {bare}");
+        assert!(exact > sentence, "exact {exact} must beat sentence {sentence}");
     }
 
     #[test]
