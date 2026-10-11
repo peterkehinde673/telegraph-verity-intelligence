@@ -5,10 +5,12 @@ on:
     branches: ["foundation/**"]
     paths:
       - ".github/workflows/fact-check-eval-harness.yml"
+      - "wasm/verity-fact-check-scorer/**"
   pull_request:
     branches: ["foundation/**"]
     paths:
       - ".github/workflows/fact-check-eval-harness.yml"
+      - "wasm/verity-fact-check-scorer/**"
   workflow_dispatch:
 
 permissions:
