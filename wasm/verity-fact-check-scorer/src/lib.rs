@@ -308,7 +308,7 @@ fn score_bytes(_question: &[u8], truth: &[u8], answer: &[u8]) -> f32 {
     // V22 calibration experiment: reduce saturation for high-but-imperfect
     // lexical overlap. The previous tenth-power odds calibration pushed many
     // materially different answers close to 1.0, erasing useful ranking gaps.
-    // This is only a diagnostic experiment; keep it only if the public evaluator
+    // V22 is a diagnostic experiment; keep it only if the public evaluator
     // shows better ordering and the champion comparison does not regress.
     let mut hit = 1.0f32;
     let mut miss = 1.0f32;
