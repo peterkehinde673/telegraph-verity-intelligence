@@ -220,10 +220,96 @@ fn has_negation(bytes: &[u8]) -> bool {
     false
 }
 
+// Parse a financial quantity expressed in millions or billions into
+// thousandths of a million. This deliberately handles only unambiguous ASCII
+// decimal forms; it is not a general-purpose natural-language number parser.
+fn scaled_financial_quantity_at(bytes: &[u8], from: usize) -> Option<(i64, usize)> {
+    let mut start = from;
+    while start < bytes.len() && !bytes[start].is_ascii_digit() {
+        if is_word_byte(bytes[start]) { start += 1; } else { start += 1; }
+    }
+    if start >= bytes.len() { return None; }
+    if start > 0 && is_word_byte(bytes[start - 1]) { return None; }
+
+    let mut i = start;
+    let mut whole = 0i64;
+    let mut fractional = 0i64;
+    let mut fractional_digits = 0usize;
+    let mut after_decimal = false;
+    let mut saw_digit = false;
+    while i < bytes.len() {
+        let b = bytes[i];
+        if b.is_ascii_digit() {
+            saw_digit = true;
+            if after_decimal {
+                if fractional_digits < 3 {
+                    fractional = fractional.saturating_mul(10).saturating_add((b - b'0') as i64);
+                    fractional_digits += 1;
+                }
+            } else {
+                whole = whole.saturating_mul(10).saturating_add((b - b'0') as i64);
+            }
+            i += 1;
+        } else if b == b',' && !after_decimal {
+            i += 1;
+        } else if b == b'.' && !after_decimal {
+            after_decimal = true;
+            i += 1;
+        } else {
+            break;
+        }
+    }
+    if !saw_digit { return None; }
+    while fractional_digits < 3 {
+        fractional = fractional.saturating_mul(10);
+        fractional_digits += 1;
+    }
+    let number_milli = whole.saturating_mul(1000).saturating_add(fractional);
+    while i < bytes.len() && !is_word_byte(bytes[i]) { i += 1; }
+    let unit_start = i;
+    while i < bytes.len() && is_word_byte(bytes[i]) { i += 1; }
+    if unit_start == i { return None; }
+    let unit: &[u8] = &bytes[unit_start..i];
+    let mut lower = [0u8; 16];
+    if unit.len() > lower.len() { return None; }
+    for (j, b) in unit.iter().enumerate() { lower[j] = lower_ascii(*b); }
+    let multiplier = match &lower[..unit.len()] {
+        b"billion" | b"billions" => 1000i64,
+        b"million" | b"millions" => 1i64,
+        _ => return None,
+    };
+    Some((number_milli.saturating_mul(multiplier), i))
+}
+
+fn has_equivalent_scaled_financial_quantity(truth: &[u8], answer: &[u8]) -> bool {
+    let mut truth_cursor = 0usize;
+    while truth_cursor < truth.len() {
+        if let Some((truth_value, truth_next)) = scaled_financial_quantity_at(truth, truth_cursor) {
+            let mut answer_cursor = 0usize;
+            while answer_cursor < answer.len() {
+                if let Some((answer_value, answer_next)) = scaled_financial_quantity_at(answer, answer_cursor) {
+                    if truth_value == answer_value { return true; }
+                    answer_cursor = answer_next;
+                } else {
+                    answer_cursor += 1;
+                }
+            }
+            truth_cursor = truth_next;
+        } else {
+            truth_cursor += 1;
+        }
+    }
+    false
+}
+
 // Detect unsupported numeric claims. Numbers often carry the key factual distinction
 // (years, counts, dates, percentages); a mismatching number should not be rescued
 // by otherwise copying most of the reference sentence.
 fn has_unmatched_number(truth: &[u8], answer: &[u8]) -> bool {
+    // A quantity written as 3.42 billion and 3,420 million is numerically
+    // equivalent despite different digit tokens. Preserve the number guard
+    // for non-equivalent quantities.
+    if has_equivalent_scaled_financial_quantity(truth, answer) { return false; }
     let mut cursor = 0usize;
     while let Some((start, end, next)) = next_token(answer, cursor) {
         let token = &answer[start..end];
@@ -733,6 +819,27 @@ mod tests {
     fn compact_label_does_not_promote_unrelated_prose() {
         let score = score_bytes(b"sentiment?", b"bullish", b"the weather is sunny");
         assert!(score < 0.90, "unrelated prose scored {score}");
+    }
+
+    #[test]
+    fn cross_unit_financial_quantity_is_equivalent() {
+        assert!(has_equivalent_scaled_financial_quantity(
+            b"Apple reported Q3 revenue of $3.42 billion.",
+            b"Apple's Q3 revenue was 3,420 million dollars.",
+        ));
+        assert!(!has_equivalent_scaled_financial_quantity(
+            b"Apple reported Q3 revenue of $3.42 billion.",
+            b"Apple reported Q3 revenue of $4.32 billion.",
+        ));
+    }
+
+    #[test]
+    fn cross_unit_paraphrase_beats_wrong_company_same_number() {
+        let question = b"Which company reported Q3 revenue of $3.42 billion?";
+        let truth = b"Apple reported Q3 revenue of $3.42 billion.";
+        let cross_unit = score_bytes(question, truth, b"Apple's Q3 revenue was 3,420 million dollars.");
+        let wrong_company = score_bytes(question, truth, b"Microsoft reported Q3 revenue of $3.42 billion.");
+        assert!(cross_unit > wrong_company, "cross-unit {cross_unit} <= wrong company {wrong_company}");
     }
 
     #[test]
