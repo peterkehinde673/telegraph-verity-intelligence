@@ -100,8 +100,17 @@ fn normalized_token(token: &[u8], out: &mut [u8; 64]) -> usize {
         b"reduce" | b"reduced" | b"reduces" | b"reducing" | b"lower" | b"lowered" | b"lowers" | b"fell" | b"fall" | b"decrease" | b"decreased" | b"decreases" => Some(b"decrease"),
         b"increase" | b"increased" | b"increases" | b"rises" | b"rose" | b"raise" | b"raised" | b"raises" => Some(b"increase"),
         b"benefit" | b"benefits" | b"advantage" | b"advantages" => Some(b"benefit"),
-        b"positive" | b"positively" => Some(b"positive"),
-        b"safe" | b"secure" => Some(b"safe"),
+        b"positive" | b"positively" | b"bullish" | b"upbeat" | b"optimistic" => Some(b"positive"),
+        b"negative" | b"negatively" | b"bearish" | b"downbeat" | b"pessimistic" => Some(b"negative"),
+        b"safe" | b"secure" | b"legitimate" | b"genuine" | b"authentic" => Some(b"safe"),
+        b"phishing" | b"fraudulent" | b"fraud" | b"scam" => Some(b"fraud"),
+        b"human" | b"person" | b"writtenbyhuman" => Some(b"human"),
+        b"ai" | b"machine" | b"artificial" | b"generated" => Some(b"ai"),
+        b"buy" | b"purchase" | b"outperform" | b"overweight" => Some(b"buy"),
+        b"sell" | b"underperform" | b"underweight" => Some(b"sell"),
+        b"hold" | b"neutral" | b"marketperform" => Some(b"hold"),
+        b"hawkish" | b"tightening" => Some(b"hawkish"),
+        b"dovish" | b"easing" => Some(b"dovish"),
         b"reported" | b"reports" | b"stated" | b"states" => Some(b"report"),
         _ => None,
     };
@@ -240,7 +249,7 @@ fn contains_normalized_token(bytes: &[u8], wanted: &[u8]) -> bool {
 // exclusively and the answer contains the other side exclusively. This avoids
 // false positives when both labels are discussed as context.
 fn has_opposite_verdict(truth: &[u8], answer: &[u8]) -> bool {
-    const PAIRS: [(&[u8], &[u8]); 11] = [
+    const PAIRS: [(&[u8], &[u8]); 16] = [
         (b"true", b"false"),
         (b"correct", b"incorrect"),
         (b"original", b"plagiarised"),
@@ -252,6 +261,11 @@ fn has_opposite_verdict(truth: &[u8], answer: &[u8]) -> bool {
         (b"reduced", b"increased"),
         (b"lowered", b"raised"),
         (b"decreased", b"increased"),
+        (b"bullish", b"bearish"),
+        (b"positive", b"negative"),
+        (b"human", b"ai"),
+        (b"buy", b"sell"),
+        (b"hawkish", b"dovish"),
     ];
     for (left, right) in PAIRS {
         let tl = contains_normalized_token(truth, left);
@@ -449,6 +463,30 @@ mod tests {
         let answer = b"The URL is safe and legitimate.";
         let score = score_bytes(b"Is this URL safe?", truth, answer);
         assert!(score < 0.05, "opposite safety verdict scored {score}");
+    }
+
+    #[test]
+    fn sentiment_synonyms_share_a_canonical_token() {
+        let truth = b"The earnings call was bullish.";
+        let answer = b"The earnings call was upbeat.";
+        let score = score_bytes(b"What was the sentiment?", truth, answer);
+        assert!(score > 0.5, "sentiment synonym scored {score}");
+    }
+
+    #[test]
+    fn stock_rating_synonyms_share_a_canonical_token() {
+        let truth = b"The analyst rating is outperform.";
+        let answer = b"The analyst recommends buy.";
+        let score = score_bytes(b"What is the rating?", truth, answer);
+        assert!(score > 0.5, "rating synonym scored {score}");
+    }
+
+    #[test]
+    fn bullish_and_bearish_are_opposite_verdicts() {
+        let truth = b"The outlook is bullish.";
+        let answer = b"The outlook is bearish.";
+        let score = score_bytes(b"What is the outlook?", truth, answer);
+        assert!(score < 0.05, "opposite sentiment scored {score}");
     }
 
     #[test]
