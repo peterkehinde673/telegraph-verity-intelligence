@@ -306,6 +306,54 @@ fn compact_label_category(bytes: &[u8]) -> Option<&'static [u8]> {
     if content_tokens <= 2 { found } else { None }
 }
 
+// Detect a likely named-entity substitution when both reference and answer
+// contain capitalized entity-like tokens (e.g. Apple vs Microsoft). This is
+// intentionally conservative: it does not penalize a short answer that omits
+// the entity, and it ignores common sentence-initial words.
+fn has_conflicting_proper_noun(truth: &[u8], answer: &[u8]) -> bool {
+    const GENERIC: [&[u8]; 18] = [
+        b"The", b"A", b"An", b"This", b"That", b"It", b"He", b"She", b"They",
+        b"We", b"Revenue", b"Reported", b"According", b"However", b"Overall",
+        b"Results", b"Q", b"First",
+    ];
+    fn is_entity_token(token: &[u8]) -> bool {
+        token.len() >= 3
+            && token[0].is_ascii_uppercase()
+            && token[1..].iter().all(|b| b.is_ascii_lowercase())
+    }
+    let mut truth_has_entity = false;
+    let mut cursor = 0usize;
+    while let Some((start, end, next)) = next_token(truth, cursor) {
+        let token = &truth[start..end];
+        if is_entity_token(token) && !GENERIC.iter().any(|g| *g == token) {
+            truth_has_entity = true;
+            break;
+        }
+        cursor = next;
+    }
+    if !truth_has_entity { return false; }
+
+    cursor = 0;
+    while let Some((start, end, next)) = next_token(answer, cursor) {
+        let token = &answer[start..end];
+        if is_entity_token(token) && !GENERIC.iter().any(|g| *g == token) {
+            let hash = token_hash(token);
+            let mut truth_cursor = 0usize;
+            let mut found = false;
+            while let Some((ts, te, tn)) = next_token(truth, truth_cursor) {
+                if token_hash(&truth[ts..te]) == hash {
+                    found = true;
+                    break;
+                }
+                truth_cursor = tn;
+            }
+            if !found { return true; }
+        }
+        cursor = next;
+    }
+    false
+}
+
 fn score_bytes(_question: &[u8], truth: &[u8], answer: &[u8]) -> f32 {
     if answer.iter().all(|b| b.is_ascii_whitespace())
         || truth.iter().all(|b| b.is_ascii_whitespace()) { return 0.0; }
@@ -369,6 +417,11 @@ fn score_bytes(_question: &[u8], truth: &[u8], answer: &[u8]) -> f32 {
     let opposite_verdict = has_opposite_verdict(truth, answer);
     if opposite_verdict {
         score *= 0.005;
+    }
+    // Do not let a matching quantity compensate for a substituted company or
+    // other explicit named entity when the reference identifies one.
+    if has_conflicting_proper_noun(truth, answer) {
+        score *= 0.02;
     }
     // Avoid collapsing short label-only truths (e.g. "bullish") to near zero
     // merely because a valid synonymous answer uses different surrounding words.
@@ -548,6 +601,22 @@ mod tests {
     fn compact_label_does_not_promote_unrelated_prose() {
         let score = score_bytes(b"sentiment?", b"bullish", b"the weather is sunny");
         assert!(score < 0.90, "unrelated prose scored {score}");
+    }
+
+    #[test]
+    fn wrong_company_with_same_number_is_penalized() {
+        let truth = b"Apple reported Q3 revenue of $3.42 billion.";
+        let answer = b"Microsoft reported Q3 revenue of $3.42 billion.";
+        let score = score_bytes(b"What was Apple Q3 revenue?", truth, answer);
+        assert!(score < 0.05, "wrong company scored {score}");
+    }
+
+    #[test]
+    fn concise_answer_is_not_penalized_for_omitting_entity() {
+        let truth = b"Apple reported Q3 revenue of $3.42 billion.";
+        let answer = b"$3.42 billion";
+        let score = score_bytes(b"What was Apple Q3 revenue?", truth, answer);
+        assert!(score > 0.0, "concise value answer scored {score}");
     }
 
     #[test]
