@@ -252,6 +252,6 @@ test("Google Safe Browsing surfaces sanitized 403 reason codes without leaking c
       JSON.stringify({ error: { status: "PERMISSION_DENIED", errors: [{ reason: "SERVICE_DISABLED" }] } }),
       { status: 403, headers: { "content-type": "application/json" } }
     )),
-    /HTTP 403 \\(PERMISSION_DENIED, SERVICE_DISABLED\\)/
+    /HTTP 403 \(PERMISSION_DENIED, SERVICE_DISABLED\)/
   );
 });
