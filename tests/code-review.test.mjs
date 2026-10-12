@@ -24,3 +24,14 @@ test("CODE_REVIEW rejects empty input without claiming a clean review", async ()
   assert.equal(result.answer.lines_reviewed, 0);
   assert.equal(result.evidence.length, 0);
 });
+
+test("CODE_REVIEW reports debug output and unfinished-work markers", async () => {
+  const result = await reviewCode(
+    'console.log("debug"); // TODO remove before release',
+    { now: () => "2026-10-12T00:00:00.000Z" }
+  );
+
+  const rules = result.answer.findings.map((finding) => finding.rule_id);
+  assert.ok(rules.includes("debug-output"));
+  assert.ok(rules.includes("unfinished-work"));
+});
