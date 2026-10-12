@@ -80,6 +80,7 @@ const liveCases = [
   ["THREAT_IP_REPUTATION", { ip_address: "8.8.8.8" }],
   ["THREAT_INTELLIGENCE", { indicator: "example.com", indicator_type: "domain" }]
 ];
+const liveResults = [];
 for (const [intent, input] of liveCases) {
   const result = await request("/v1/intent", {
     method: "POST",
@@ -100,6 +101,13 @@ for (const [intent, input] of liveCases) {
   if (body.verdict === "insufficient_evidence" && body.evidence.length !== 0) {
     throw new Error(`${intent} abstained but incorrectly returned evidence.`);
   }
+  liveResults.push({
+    intent,
+    verdict: body.verdict,
+    confidence: body.confidence,
+    evidence_count: body.evidence.length,
+    uncertainty_codes: body.uncertainty.map(item => item.code).filter(Boolean)
+  });
 }
 
 console.log(JSON.stringify({
@@ -108,5 +116,6 @@ console.log(JSON.stringify({
   intent_count: catalogue.intents.length,
   season_ii_intents_verified: seasonII.length,
   real_world_provider_cases: liveCases.length,
+  provider_diagnostics: liveResults,
   post_response_contracts_verified: true
 }, null, 2));
