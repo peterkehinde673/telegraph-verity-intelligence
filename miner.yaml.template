@@ -397,6 +397,7 @@ endpoints:
     description: Look up DNS records for a hostname. The request body uses intent and an input object containing hostname.
     intents:
       - DNS_RECORD_LOOKUP
+    - CODE_REVIEW
     content_type: application/json
     params:
       body:
@@ -411,6 +412,26 @@ endpoints:
             intents:
               - DNS_RECORD_LOOKUP
             description: Intent-specific input object. Required field: hostname.
+  - path: /v1/intent
+    external_path: /v1/intent
+    method: POST
+    description: Review supplied source code or a diff using bounded static heuristics. The request body uses intent and an input object containing code, source_code, or diff.
+    intents:
+      - CODE_REVIEW
+    content_type: application/json
+    params:
+      body:
+        required:
+          - name: intent
+            type: string
+            intents:
+              - CODE_REVIEW
+            description: Canonical Intent name; must be CODE_REVIEW.
+          - name: input
+            type: object
+            intents:
+              - CODE_REVIEW
+            description: Intent-specific source code or diff, supplied as code, source_code, or diff.
 semantics:
   supported_intents:
     - FACT_CHECK
