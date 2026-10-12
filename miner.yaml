@@ -78,13 +78,11 @@ input_schema:
         - DNS_RECORD_LOOKUP
         - CODE_REVIEW
         - URL_SAFE
-    - THREAT_IP_REPUTATION
-    - THREAT_INTELLIGENCE
         - THREAT_IP_REPUTATION
         - THREAT_INTELLIGENCE
     input:
       type: object
-      description: Intent-specific structured input. For URL_SAFE, provide a url field.
+      description: Intent-specific structured input. For URL_SAFE, provide url; for THREAT_IP_REPUTATION, provide ip or ip_address; for THREAT_INTELLIGENCE, provide indicator and optional indicator_type.
 
 output_schema:
   type: object
@@ -154,3 +152,5 @@ semantics:
     - DNS_RECORD_LOOKUP
     - CODE_REVIEW
     - URL_SAFE
+    - THREAT_IP_REPUTATION
+    - THREAT_INTELLIGENCE
