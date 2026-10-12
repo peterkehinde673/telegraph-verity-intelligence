@@ -12,8 +12,8 @@ const health = await get("/health");
 if (health.status !== "ok") throw new Error("Health endpoint did not report status=ok.");
 
 const catalogue = await get("/intents");
-if (!Array.isArray(catalogue.intents) || catalogue.intents.length !== 20) {
-  throw new Error(`Expected 20 Verity Intents, received ${catalogue.intents?.length ?? "unknown"}.`);
+if (!Array.isArray(catalogue.intents) || catalogue.intents.length < 20 || new Set(catalogue.intents).size !== catalogue.intents.length) {
+  throw new Error(`Expected at least 20 unique Verity Intents, received ${catalogue.intents?.length ?? "unknown"}.`);
 }
 
 console.log(JSON.stringify({
