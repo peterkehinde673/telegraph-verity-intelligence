@@ -24,7 +24,8 @@ export const VERITY_INTENTS = [
   "THREAT_IP_REPUTATION",
   "THREAT_INTELLIGENCE",
   "PLAGIARISM_DETECTION",
-  "SECURITY_REVIEW"
+  "SECURITY_REVIEW",
+  "REGRESSION_VERIFY"
 ] as const;
 
 export type VerityIntent = (typeof VERITY_INTENTS)[number];
