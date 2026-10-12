@@ -56,6 +56,13 @@ function isPrivateAddress(address: string): boolean {
   if (normalized.startsWith("::ffff:")) {
     const mapped = normalized.slice("::ffff:".length);
     if (isIP(mapped) === 4) return isPrivateAddress(mapped);
+    const groups = mapped.split(":");
+    if (groups.length === 2 && groups.every(group => /^[0-9a-f]{1,4}$/.test(group))) {
+      const high = Number.parseInt(groups[0]!, 16);
+      const low = Number.parseInt(groups[1]!, 16);
+      const ipv4 = [high >> 8, high & 255, low >> 8, low & 255].join(".");
+      return isPrivateAddress(ipv4);
+    }
     return true;
   }
   // Conservatively allow only globally allocated unicast space (2000::/3),
@@ -100,12 +107,13 @@ async function resolvePublicHost(
   hostname: string,
   lookup: typeof dns.lookup
 ): Promise<string[]> {
-  if (isIP(hostname)) {
-    if (isPrivateAddress(hostname)) throw new Error("Target address is not publicly routable");
-    return [hostname];
+  const unbracketedHost = hostname.replace(/^\\[|\\]$/g, "");
+  if (isIP(unbracketedHost)) {
+    if (isPrivateAddress(unbracketedHost)) throw new Error("Target address is not publicly routable");
+    return [unbracketedHost];
   }
 
-  const results = await lookup(hostname, { all: true, verbatim: true });
+  const results = await lookup(unbracketedHost, { all: true, verbatim: true });
   const addresses = results.map((entry) => entry.address);
   if (addresses.length === 0 || addresses.some(isPrivateAddress)) {
     throw new Error("Target hostname resolves to a non-public address");
