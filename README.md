@@ -73,7 +73,7 @@ The 29 Intent names are the canonical scope implemented in this repository and d
 
 ## Next Steps
 
-1. Run `npm run smoke:render` to confirm live health and verify that `GET /intents` returns exactly 29 unique canonical intents, including all seven Season II additions. This check is available locally; direct live HTTP verification from the current execution environment is still pending.
+1. Run `npm run smoke:render` to verify live health, the exact 29-intent catalogue, and response contracts for safe validation requests to all seven Season II handlers. The production health and catalogue endpoints have been manually confirmed by the project owner; the automated POST checks should be monitored in GitHub Actions.
 2. Configure `GOOGLE_SAFE_BROWSING_API_KEY`, `ABUSEIPDB_API_KEY`, and `OTX_API_KEY` in Render if provider-backed reputation results are required; without these, the handlers abstain with `insufficient_evidence`.
 3. Configure `REGRESSION_ALLOWED_HOSTS` before using REGRESSION_VERIFY; it only executes read-only GET probes. CODE_PATCH_VERIFY uses the public GitHub Checks API; configure `GITHUB_TOKEN` only if higher API rate limits are needed.
 4. Expand plagiarism checking only after adding a reliable, permissioned comparison corpus and measuring false positives/negatives.
