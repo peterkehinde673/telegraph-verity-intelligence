@@ -147,4 +147,4 @@ semantics:
     - CVE_LOOKUP
     - SSL_VERIFICATION
     - DNS_RECORD_LOOKUP
-              - CODE_REVIEW
+    - CODE_REVIEW
