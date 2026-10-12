@@ -187,3 +187,104 @@ test("URL scan returns structured uncertainty when a request times out", async (
   assert.equal(result.evidence.length, 0);
   assert.equal(result.uncertainty[0]?.code, "url_scan_timeout");
 });
+
+
+test("URL scan returns structured uncertainty for a malformed redirect target", async () => {
+  let calls = 0;
+  const result = await scanUrl("https://example.com/start", {
+    lookupImpl: async () => [{ address: "93.184.216.34", family: 4 }],
+    fetchImpl: async () => {
+      calls += 1;
+      return new Response(null, {
+        status: 302,
+        headers: { location: "http://[invalid-ipv6/" }
+      });
+    }
+  });
+
+  assert.equal(result.verdict, "uncertain");
+  assert.equal(result.confidence, 0);
+  assert.equal(result.uncertainty[0]?.code, "invalid_redirect_target");
+  assert.equal(calls, 1, "malformed redirect target must not be requested");
+});
+
+test("URL scan rejects redirect targets with embedded credentials", async () => {
+  let calls = 0;
+  const result = await scanUrl("https://example.com/start", {
+    lookupImpl: async () => [{ address: "93.184.216.34", family: 4 }],
+    fetchImpl: async () => {
+      calls += 1;
+      return new Response(null, {
+        status: 302,
+        headers: { location: "https://user:password@other.example/private" }
+      });
+    }
+  });
+
+  assert.equal(result.verdict, "rejected");
+  assert.equal(result.uncertainty[0]?.code, "redirect_credentials_not_allowed");
+  assert.equal(calls, 1, "credential-bearing redirect target must not be requested");
+});
+
+
+test("URL scan returns structured uncertainty for a malformed redirect target", async () => {
+  let calls = 0;
+  const result = await scanUrl("https://example.com/start", {
+    lookupImpl: async () => [{ address: "93.184.216.34", family: 4 }],
+    fetchImpl: async () => {
+      calls += 1;
+      return new Response(null, {
+        status: 302,
+        headers: { location: "http://[invalid-ipv6/" }
+      });
+    }
+  });
+
+  assert.equal(result.verdict, "uncertain");
+  assert.equal(result.confidence, 0);
+  assert.equal(result.uncertainty[0]?.code, "invalid_redirect_target");
+  assert.equal(calls, 1, "malformed redirect target must not be requested");
+});
+
+test("URL scan rejects redirect targets with embedded credentials", async () => {
+  let calls = 0;
+  const result = await scanUrl("https://example.com/start", {
+    lookupImpl: async () => [{ address: "93.184.216.34", family: 4 }],
+    fetchImpl: async () => {
+      calls += 1;
+      return new Response(null, {
+        status: 302,
+        headers: { location: "https://user:password@other.example/private" }
+      });
+    }
+  });
+
+  assert.equal(result.verdict, "rejected");
+  assert.equal(result.uncertainty[0]?.code, "redirect_credentials_not_allowed");
+  assert.equal(calls, 1, "credential-bearing redirect target must not be requested");
+});
+
+test("URL scan bounds DNS resolution and returns safe uncertainty on timeout", async () => {
+  let fetchCalled = false;
+  const result = await scanUrl("https://slow-dns.example/", {
+    timeoutMs: 10,
+    lookupImpl: async () => new Promise(() => {}),
+    fetchImpl: async () => {
+      fetchCalled = true;
+      return new Response("should not be requested", { status: 200 });
+    }
+  });
+
+  assert.equal(result.verdict, "rejected");
+  assert.equal(result.uncertainty[0]?.code, "url_scan_dns_timeout");
+  assert.equal(fetchCalled, false);
+});
+
+test("URL scan sanitizes DNS resolver failures", async () => {
+  const result = await scanUrl("https://broken-dns.example/", {
+    lookupImpl: async () => { throw new Error("resolver internal details / secret"); }
+  });
+
+  assert.equal(result.uncertainty[0]?.code, "url_scan_dns_failed");
+  assert.doesNotMatch(result.uncertainty[0]?.message ?? "", /internal details|secret/);
+});

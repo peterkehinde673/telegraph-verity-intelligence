@@ -107,7 +107,8 @@ async function requestPinnedAddress(url: URL, address: string, timeoutMs: number
 
 async function resolvePublicHost(
   hostname: string,
-  lookup: typeof dns.lookup
+  lookup: typeof dns.lookup,
+  timeoutMs: number
 ): Promise<string[]> {
   const unbracketedHost = hostname.replace(/^\[|\]$/g, "");
   if (isIP(unbracketedHost)) {
@@ -115,7 +116,23 @@ async function resolvePublicHost(
     return [unbracketedHost];
   }
 
-  const results = await lookup(unbracketedHost, { all: true, verbatim: true });
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  let results: Array<{ address: string; family: number }>;
+  try {
+    results = await Promise.race([
+      lookup(unbracketedHost, { all: true, verbatim: true }) as Promise<Array<{ address: string; family: number }>>,
+      new Promise<never>((_resolve, reject) => {
+        timer = setTimeout(() => reject(new Error("DNS lookup timed out")), timeoutMs);
+      })
+    ]);
+  } catch (error) {
+    if (error instanceof Error && /DNS lookup timed out/.test(error.message)) {
+      throw new Error("DNS lookup timed out");
+    }
+    throw new Error("DNS lookup failed");
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
   const addresses = results.map((entry) => entry.address);
   if (addresses.length === 0 || addresses.some(isPrivateAddress)) {
     throw new Error("Target hostname resolves to a non-public address");
@@ -191,7 +208,7 @@ export async function scanUrl(
   for (let attempt = 0; attempt <= maxRedirects; attempt += 1) {
     let resolvedAddresses: string[];
     try {
-      resolvedAddresses = await resolvePublicHost(current.hostname, lookup);
+      resolvedAddresses = await resolvePublicHost(current.hostname, lookup, timeoutMs);
     } catch (error) {
       return {
         intent: "URL_SCAN",
@@ -206,8 +223,18 @@ export async function scanUrl(
         },
         evidence: [],
         uncertainty: [{
-          code: "non_public_target",
-          message: error instanceof Error ? error.message : "Target is not publicly routable."
+          code: error instanceof Error && /DNS lookup timed out/.test(error.message)
+            ? "url_scan_dns_timeout"
+            : error instanceof Error && /DNS lookup failed/.test(error.message)
+              ? "url_scan_dns_failed"
+              : "non_public_target",
+          message: error instanceof Error && /DNS lookup timed out/.test(error.message)
+            ? "The hostname could not be resolved within the configured timeout."
+            : error instanceof Error && /DNS lookup failed/.test(error.message)
+              ? "The hostname could not be resolved."
+              : error instanceof Error
+                ? error.message
+                : "Target is not publicly routable."
         }],
         retrieved_at: retrievedAt
       };
@@ -317,7 +344,51 @@ export async function scanUrl(
       };
     }
 
-    const next = new URL(location!, current);
+    let next: URL;
+    try {
+      next = new URL(location!, current);
+    } catch {
+      return {
+        intent: "URL_SCAN",
+        verdict: "uncertain",
+        confidence: 0,
+        answer: {
+          input_url: raw,
+          final_url: current.toString(),
+          redirect_count: redirects.length,
+          redirects,
+          hostname: current.hostname
+        },
+        evidence: [],
+        uncertainty: [{
+          code: "invalid_redirect_target",
+          message: "The server returned a redirect target that is not a valid URL."
+        }],
+        retrieved_at: retrievedAt
+      };
+    }
+
+    if (next.username || next.password) {
+      return {
+        intent: "URL_SCAN",
+        verdict: "rejected",
+        confidence: 1,
+        answer: {
+          input_url: raw,
+          final_url: current.toString(),
+          redirect_count: redirects.length,
+          redirects,
+          hostname: current.hostname
+        },
+        evidence: [],
+        uncertainty: [{
+          code: "redirect_credentials_not_allowed",
+          message: "Redirect targets containing embedded credentials are not allowed."
+        }],
+        retrieved_at: retrievedAt
+      };
+    }
+
     if (next.protocol !== "http:" && next.protocol !== "https:") {
       return {
         intent: "URL_SCAN",
