@@ -20,6 +20,7 @@ import { detectMalware, type MalwareDetectionOptions } from "./intents/malware-d
 import { lookupCve, type CveLookupOptions } from "./intents/cve-lookup.js";
 import { verifySsl, type SslVerificationOptions } from "./intents/ssl-verification.js";
 import { lookupDnsRecord, type DnsLookupOptions } from "./intents/dns-record-lookup.js";
+import { reviewCode } from "./intents/code-review.js";
 import { wikipediaSearch, crossrefSearch, googleNewsRss } from "./providers/public-sources.js";
 import { malwareBazaarLookup } from "./providers/malware-bazaar.js";
 import { googleFactCheck } from "./providers/google-fact-check.js";
@@ -101,6 +102,9 @@ export function createIntentHandlers(
       const port = typeof value.port === "number" ? value.port : 443;
       return verifySsl(stringInput(input, "hostname"), port, providers.SSL_VERIFICATION);
     }),
+    CODE_REVIEW: handler((input) => reviewCode(
+      stringInput(input, "code") || stringInput(input, "source_code") || stringInput(input, "diff")
+    )),
     DNS_RECORD_LOOKUP: handler((input) => {
       const value = objectInput(input);
       const recordType = typeof value.record_type === "string"
