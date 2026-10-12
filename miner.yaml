@@ -75,7 +75,7 @@ input_schema:
               - CVE_LOOKUP
               - SSL_VERIFICATION
               - DNS_RECORD_LOOKUP
-              - CODE_REVIEW
+    - CODE_REVIEW
         description: Canonical Telegraph Intent name.
     input:
         description: Intent-specific structured input.
