@@ -157,3 +157,33 @@ test("URL scan revalidates redirect targets and blocks a private destination", a
   assert.equal(result.uncertainty[0]?.code, "non_public_target");
   assert.equal(requested.length, 1, "the private redirect destination must never be requested");
 });
+
+
+test("URL scan returns structured uncertainty when the remote request fails", async () => {
+  const result = await scanUrl("https://example.com/", {
+    lookupImpl: async () => [{ address: "93.184.216.34", family: 4 }],
+    fetchImpl: async () => { throw new Error("ECONNRESET private implementation detail"); }
+  });
+
+  assert.equal(result.verdict, "uncertain");
+  assert.equal(result.confidence, 0);
+  assert.equal(result.evidence.length, 0);
+  assert.equal(result.uncertainty[0]?.code, "url_fetch_failed");
+  assert.doesNotMatch(result.uncertainty[0]?.message ?? "", /ECONNRESET|implementation detail/);
+});
+
+test("URL scan returns structured uncertainty when a request times out", async () => {
+  const result = await scanUrl("https://example.com/", {
+    lookupImpl: async () => [{ address: "93.184.216.34", family: 4 }],
+    fetchImpl: async () => {
+      const error = new Error("The operation was aborted due to timeout");
+      error.name = "AbortError";
+      throw error;
+    }
+  });
+
+  assert.equal(result.verdict, "uncertain");
+  assert.equal(result.confidence, 0);
+  assert.equal(result.evidence.length, 0);
+  assert.equal(result.uncertainty[0]?.code, "url_scan_timeout");
+});
