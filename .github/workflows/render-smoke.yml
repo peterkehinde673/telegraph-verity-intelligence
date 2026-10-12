@@ -22,5 +22,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-      - name: Verify production health and intent catalogue
+      - name: Verify production health, intent catalogue, and Season II response contracts
         run: node scripts/smoke-render-api.mjs
+      - name: Verify live Telegraph miner activation
+        run: npm run verify:miner-live
