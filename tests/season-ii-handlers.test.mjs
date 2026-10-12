@@ -106,7 +106,7 @@ test("Season II VULNERABILITY_TRIAGE rejects malformed finding collections", asy
 });
 
 
-import { checkUrlSafe } from "../dist/intents/url-safe.js";
+import { checkUrlSafe, googleSafeBrowsingLookup } from "../dist/intents/url-safe.js";
 import { checkThreatIpReputation } from "../dist/intents/threat-ip-reputation.js";
 import { lookupThreatIntelligence } from "../dist/intents/threat-intelligence.js";
 import { reviewSecurity } from "../dist/intents/security-review.js";
@@ -243,4 +243,15 @@ test("Season II THREAT_INTELLIGENCE abstains when OTX fails", async () => {
   assert.equal(response.confidence, 0);
   assert.equal(response.evidence.length, 0);
   assert.equal(response.uncertainty[0].code, "threat_feed_lookup_failed");
+});
+
+
+test("Google Safe Browsing surfaces sanitized 403 reason codes without leaking credentials", async () => {
+  await assert.rejects(
+    googleSafeBrowsingLookup("https://example.com/", "test-secret-key", async () => new Response(
+      JSON.stringify({ error: { status: "PERMISSION_DENIED", errors: [{ reason: "SERVICE_DISABLED" }] } }),
+      { status: 403, headers: { "content-type": "application/json" } }
+    )),
+    /HTTP 403 \\(PERMISSION_DENIED, SERVICE_DISABLED\\)/
+  );
 });
