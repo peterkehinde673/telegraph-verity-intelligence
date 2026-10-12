@@ -20,6 +20,7 @@ console.log(JSON.stringify({
   slug: result.slug,
   name: result.name,
   errors: result.errors ?? [],
+  warnings: result.warnings ?? [],
   conflicts: result.conflicts ?? [],
   results: Array.isArray(result.results) ? result.results.map(item => ({
     path: item.path, method: item.method, status: item.status,
