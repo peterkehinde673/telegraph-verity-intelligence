@@ -23,10 +23,12 @@ const expectedIntents = [
   "SSL_VERIFICATION",
   "DNS_RECORD_LOOKUP",
   "CODE_REVIEW",
-  "URL_SAFE"
+  "URL_SAFE",
+  "THREAT_IP_REPUTATION",
+  "THREAT_INTELLIGENCE"
 ];
 
-test("the initial Verity scope contains the configured 22 intents", () => {
-  assert.equal(expectedIntents.length, 22);
-  assert.equal(new Set(expectedIntents).size, 22);
+test("the initial Verity scope contains the configured 24 intents", () => {
+  assert.equal(expectedIntents.length, 24);
+  assert.equal(new Set(expectedIntents).size, 24);
 });
