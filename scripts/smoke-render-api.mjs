@@ -101,13 +101,33 @@ for (const [intent, input] of liveCases) {
   if (body.verdict === "insufficient_evidence" && body.evidence.length !== 0) {
     throw new Error(`${intent} abstained but incorrectly returned evidence.`);
   }
+  const uncertaintyCodes = body.uncertainty.map(item => item.code).filter(Boolean);
+  const providerNotConfigured = uncertaintyCodes.some(code =>
+    ["reputation_source_unconfigured", "threat_feed_unconfigured"].includes(code)
+  );
+  const providerLookupFailed = uncertaintyCodes.some(code =>
+    ["reputation_lookup_failed", "threat_feed_lookup_failed"].includes(code)
+  );
   liveResults.push({
     intent,
     verdict: body.verdict,
     confidence: body.confidence,
     evidence_count: body.evidence.length,
-    uncertainty_codes: body.uncertainty.map(item => item.code).filter(Boolean)
+    provider_configured: !providerNotConfigured,
+    provider_lookup_succeeded: !providerLookupFailed && body.evidence.length > 0,
+    uncertainty_codes: uncertaintyCodes
   });
+  if (providerNotConfigured || providerLookupFailed || body.evidence.length === 0) {
+    throw new Error(
+      `Live provider test failed for ${intent}: ${JSON.stringify({
+        verdict: body.verdict,
+        evidence_count: body.evidence.length,
+        provider_configured: !providerNotConfigured,
+        provider_lookup_succeeded: !providerLookupFailed,
+        uncertainty_codes: uncertaintyCodes
+      })}`
+    );
+  }
 }
 
 console.log(JSON.stringify({
