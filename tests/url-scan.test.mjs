@@ -119,3 +119,20 @@ test("URL scan blocks a hostname if any resolved answer is non-public", async ()
   assert.equal(result.uncertainty[0]?.code, "non_public_target");
   assert.equal(called, false);
 });
+
+
+test("URL scan accepts a globally routable IPv6 literal after removing URL brackets", async () => {
+  const result = await scanUrl("https://[2606:4700:4700::1111]/", {
+    fetchImpl: async () => new Response("ok", { status: 200 })
+  });
+  assert.equal(result.verdict, "confirmed");
+  assert.equal(result.answer.status_code, 200);
+});
+
+test("URL scan blocks unique-local IPv6 targets", async () => {
+  const result = await scanUrl("https://[fd12:3456::1]/", {
+    fetchImpl: async () => { throw new Error("network must not be called"); }
+  });
+  assert.equal(result.verdict, "rejected");
+  assert.equal(result.uncertainty[0]?.code, "non_public_target");
+});
