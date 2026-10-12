@@ -3,20 +3,10 @@ import { readFile } from "node:fs/promises";
 
 const file = process.argv[2] ?? "miner.yaml.template";
 const yaml = await readFile(file, "utf8");
+const expectedPlaceholder = 'id: "REPLACE_WITH_VERIFIED_UNUSED_MINER_ID"';
 
-const forbidden = [
-  'id: "REPLACE_WITH_VERIFIED_UNUSED_MINER_ID"',
-  "id: 0",
-  "id: 501"
-];
-
-const found = forbidden.filter((value) => yaml.includes(value));
-if (found.length > 0) {
-  console.log("Template preflight: no registrable Miner ID is present (expected).");
-} else {
-  throw new Error(
-    "Template preflight expected the registration ID placeholder. Refusing to treat the template as registration-ready."
-  );
+if (!yaml.includes(expectedPlaceholder)) {
+  throw new Error("Miner template must retain the verified-unused-ID placeholder; do not treat it as registration-ready.");
 }
 
 if (!yaml.includes("base_url: https://telegraph-verity-intelligence-api.onrender.com")) {

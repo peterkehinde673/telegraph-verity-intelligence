@@ -22,6 +22,13 @@ import { verifySsl, type SslVerificationOptions } from "./intents/ssl-verificati
 import { lookupDnsRecord, type DnsLookupOptions } from "./intents/dns-record-lookup.js";
 import { reviewCode } from "./intents/code-review.js";
 import { checkUrlSafe } from "./intents/url-safe.js";
+import { checkThreatIpReputation } from "./intents/threat-ip-reputation.js";
+import { lookupThreatIntelligence } from "./intents/threat-intelligence.js";
+import { detectPlagiarism } from "./intents/plagiarism-detection.js";
+import { reviewSecurity } from "./intents/security-review.js";
+import { verifyRegression } from "./intents/regression-verify.js";
+import { verifyCodePatch } from "./intents/code-patch-verify.js";
+import { triageVulnerabilities } from "./intents/vulnerability-triage.js";
 import { wikipediaSearch, crossrefSearch, googleNewsRss } from "./providers/public-sources.js";
 import { malwareBazaarLookup } from "./providers/malware-bazaar.js";
 import { googleFactCheck } from "./providers/google-fact-check.js";
@@ -104,6 +111,13 @@ export function createIntentHandlers(
       return verifySsl(stringInput(input, "hostname"), port, providers.SSL_VERIFICATION);
     }),
     URL_SAFE: handler((input) => checkUrlSafe(stringInput(input, "url"))),
+    THREAT_IP_REPUTATION: handler((input) => checkThreatIpReputation(stringInput(input, "ip_address") || stringInput(input, "ip"))),
+    THREAT_INTELLIGENCE: handler((input) => lookupThreatIntelligence(input)),
+    PLAGIARISM_DETECTION: handler((input) => detectPlagiarism(input)),
+    SECURITY_REVIEW: handler((input) => reviewSecurity(input)),
+    REGRESSION_VERIFY: handler((input) => verifyRegression(input)),
+    CODE_PATCH_VERIFY: handler((input) => verifyCodePatch(input)),
+    VULNERABILITY_TRIAGE: handler(async (input) => triageVulnerabilities(input)),
     CODE_REVIEW: handler((input) => reviewCode(
       stringInput(input, "code") || stringInput(input, "source_code") || stringInput(input, "diff")
     )),
