@@ -21,6 +21,7 @@ import { lookupCve, type CveLookupOptions } from "./intents/cve-lookup.js";
 import { verifySsl, type SslVerificationOptions } from "./intents/ssl-verification.js";
 import { lookupDnsRecord, type DnsLookupOptions } from "./intents/dns-record-lookup.js";
 import { reviewCode } from "./intents/code-review.js";
+import { checkUrlSafe } from "./intents/url-safe.js";
 import { wikipediaSearch, crossrefSearch, googleNewsRss } from "./providers/public-sources.js";
 import { malwareBazaarLookup } from "./providers/malware-bazaar.js";
 import { googleFactCheck } from "./providers/google-fact-check.js";
@@ -102,6 +103,7 @@ export function createIntentHandlers(
       const port = typeof value.port === "number" ? value.port : 443;
       return verifySsl(stringInput(input, "hostname"), port, providers.SSL_VERIFICATION);
     }),
+    URL_SAFE: handler((input) => checkUrlSafe(stringInput(input, "url"))),
     CODE_REVIEW: handler((input) => reviewCode(
       stringInput(input, "code") || stringInput(input, "source_code") || stringInput(input, "diff")
     )),
