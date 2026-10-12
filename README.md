@@ -2,9 +2,9 @@
 
 Telegraph Verity Intelligence is a machine-callable intelligence provider designed for evidence, content authenticity, media verification, and digital-infrastructure security.
 
-## Initial Intent Scope
+## Current Intent Scope
 
-Verity will target these 20 Telegraph Intents:
+The working branch declares 22 Telegraph Intents. Each intent should only be advertised as production-capable when its handler, provider configuration, and tests are complete:
 
 ### Evidence & Research
 1. FACT_CHECK
@@ -33,6 +33,8 @@ Verity will target these 20 Telegraph Intents:
 18. CVE_LOOKUP
 19. SSL_VERIFICATION
 20. DNS_RECORD_LOOKUP
+21. CODE_REVIEW — bounded static heuristics for supplied source code/diffs
+22. URL_SAFE — Google Safe Browsing reputation lookup (requires API-key configuration)
 
 ## Design Principles
 
@@ -54,7 +56,7 @@ Verity will target these 20 Telegraph Intents:
 - **Public explorer:** https://explorer.telegraphprotocol.com/miners/telegraph-verity-intelligence
 - **Production API:** https://telegraph-verity-intelligence-api.onrender.com
 - **API status endpoints:** `GET /health` and `GET /intents`.
-- **Intent implementation:** The 20-intent catalogue and common response contract exist, but each intent still needs a real, evidence-backed handler. An intent listed by the API must not be described as production-capable until its handler and tests are complete.
+- **Intent implementation:** The working branch contains 22 intent handlers and tests. URL_SAFE requires `GOOGLE_SAFE_BROWSING_API_KEY` in the Render service environment; without it, the handler abstains with `insufficient_evidence` rather than claiming a URL is safe. CODE_REVIEW is bounded static heuristics, not a full semantic audit. The live deployment remains at 20 intents until this branch is merged and deployed.
 - **Scoring module (WASM):** Not yet built or registered. Telegraph scoring modules are separate from Miner APIs and score one canonical Intent at a time; see the official [Build a Scoring Module guide](https://docs.telegraphprotocol.com/docs/scoring/build-a-scoring-module).
 - **CI/deployment:** GitHub Actions verifies typecheck, build, tests, and Telegraph tooling. Render is the production hosting target.
 
@@ -64,8 +66,7 @@ The 20 Intent names are based on the current Telegraph Season II Intent catalogu
 
 ## Next Steps
 
-1. Establish the TypeScript service foundation.
-2. Add repository-wide validation and CI.
-3. Define the internal Verity response/evidence contract.
-4. Verify the live canonical Intent set and Miner registration state before Telegraph registration work.
-5. Implement Intents incrementally with tests and provenance requirements.
+1. Merge and deploy the reviewed Season II intent batch.
+2. Configure `GOOGLE_SAFE_BROWSING_API_KEY` in Render before enabling URL_SAFE reputation checks.
+3. Verify `GET /intents` and exercise each newly deployed intent.
+4. Continue with the next evidence-backed intent batch, starting with plagiarism detection only after selecting a reliable comparison corpus.
