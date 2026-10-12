@@ -255,3 +255,50 @@ test("Google Safe Browsing surfaces sanitized 403 reason codes without leaking c
     /HTTP 403 \(PERMISSION_DENIED, SERVICE_DISABLED\)/
   );
 });
+
+
+import { EventEmitter } from "node:events";
+import { verifySsl } from "../dist/intents/ssl-verification.js";
+
+function fakeTlsSocket(timeoutHandler = () => {}) {
+  const socket = new EventEmitter();
+  socket.setTimeout = (_ms, callback) => { timeoutHandler(callback); return socket; };
+  socket.destroy = () => socket;
+  return socket;
+}
+
+test("SSL_VERIFICATION returns a structured uncertain response for connection refusal", async () => {
+  const socket = fakeTlsSocket();
+  const promise = verifySsl("service.example", 443, { connectImpl: () => socket });
+  const error = Object.assign(new Error("connection refused"), { code: "ECONNREFUSED" });
+  socket.emit("error", error);
+  const response = await promise;
+  assertContract(response, "SSL_VERIFICATION");
+  assert.equal(response.verdict, "uncertain");
+  assert.equal(response.confidence, 0);
+  assert.equal(response.evidence.length, 0);
+  assert.equal(response.uncertainty[0].code, "tls_connection_failed");
+  assert.equal(response.answer.authorization_error, "ECONNREFUSED");
+  assert.doesNotMatch(JSON.stringify(response), /connection refused/i);
+});
+
+test("SSL_VERIFICATION returns a rejected response for an expired certificate", async () => {
+  const socket = fakeTlsSocket();
+  const promise = verifySsl("service.example", 443, { connectImpl: () => socket });
+  socket.emit("error", Object.assign(new Error("certificate expired"), { code: "CERT_HAS_EXPIRED" }));
+  const response = await promise;
+  assertContract(response, "SSL_VERIFICATION");
+  assert.equal(response.verdict, "rejected");
+  assert.equal(response.confidence, 1);
+  assert.equal(response.uncertainty[0].code, "certificate_not_authorized");
+  assert.equal(response.answer.authorization_error, "CERT_HAS_EXPIRED");
+});
+
+test("SSL_VERIFICATION returns a structured uncertain response on timeout", async () => {
+  const socket = fakeTlsSocket(callback => callback());
+  const response = await verifySsl("service.example", 443, { connectImpl: () => socket });
+  assertContract(response, "SSL_VERIFICATION");
+  assert.equal(response.verdict, "uncertain");
+  assert.equal(response.uncertainty[0].code, "tls_connection_failed");
+  assert.equal(response.answer.authorization_error, "TLS_TIMEOUT");
+});
