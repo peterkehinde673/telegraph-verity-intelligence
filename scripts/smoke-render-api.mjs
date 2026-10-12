@@ -81,6 +81,7 @@ const liveCases = [
   ["THREAT_INTELLIGENCE", { indicator: "example.com", indicator_type: "domain" }]
 ];
 const liveResults = [];
+const providerFailures = [];
 for (const [intent, input] of liveCases) {
   const result = await request("/v1/intent", {
     method: "POST",
@@ -115,18 +116,14 @@ for (const [intent, input] of liveCases) {
     evidence_count: body.evidence.length,
     provider_configured: !providerNotConfigured,
     provider_lookup_succeeded: !providerLookupFailed && body.evidence.length > 0,
-    uncertainty_codes: uncertaintyCodes
+    uncertainty_codes: uncertaintyCodes,
+    uncertainty_messages: body.uncertainty.map(item => ({
+      code: item.code,
+      message: typeof item.message === "string" ? item.message.slice(0, 180) : undefined
+    }))
   });
   if (providerNotConfigured || providerLookupFailed || body.evidence.length === 0) {
-    throw new Error(
-      `Live provider test failed for ${intent}: ${JSON.stringify({
-        verdict: body.verdict,
-        evidence_count: body.evidence.length,
-        provider_configured: !providerNotConfigured,
-        provider_lookup_succeeded: !providerLookupFailed,
-        uncertainty_codes: uncertaintyCodes
-      })}`
-    );
+    providerFailures.push(intent);
   }
 }
 
@@ -139,3 +136,6 @@ console.log(JSON.stringify({
   provider_diagnostics: liveResults,
   post_response_contracts_verified: true
 }, null, 2));
+if (providerFailures.length > 0) {
+  throw new Error(`Live provider checks failed for: ${providerFailures.join(", ")}. See the safe provider diagnostics above; no credential values are logged.`);
+}
