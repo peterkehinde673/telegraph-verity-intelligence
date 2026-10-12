@@ -41,3 +41,6 @@ jobs:
 
       - name: Verify Telegraph integration tooling
         run: npm run verify:telegraph
+
+      - name: Preflight miner template
+        run: npm run preflight:miner
