@@ -402,6 +402,7 @@ endpoints:
     - THREAT_IP_REPUTATION
     - THREAT_INTELLIGENCE
     - PLAGIARISM_DETECTION
+    - SECURITY_REVIEW
     - CODE_REVIEW
     content_type: application/json
     params:
@@ -537,6 +538,26 @@ endpoints:
             intents:
               - PLAGIARISM_DETECTION
             description: Include text and comparison_documents, each with reference text and optional title and URL.
+  - path: /v1/intent
+    external_path: /v1/intent
+    method: POST
+    description: Run bounded static security heuristics against supplied source code or configuration. Does not perform dependency feed queries.
+    intents:
+      - SECURITY_REVIEW
+    content_type: application/json
+    params:
+      body:
+        required:
+          - name: intent
+            type: string
+            intents:
+              - SECURITY_REVIEW
+            description: Canonical Intent name; must be SECURITY_REVIEW.
+          - name: input
+            type: object
+            intents:
+              - SECURITY_REVIEW
+            description: Include code, source_code, configuration, or config.
 semantics:
   supported_intents:
     - FACT_CHECK
