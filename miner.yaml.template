@@ -398,6 +398,8 @@ endpoints:
     intents:
       - DNS_RECORD_LOOKUP
     - CODE_REVIEW
+    - URL_SAFE
+    - CODE_REVIEW
     content_type: application/json
     params:
       body:
@@ -432,6 +434,46 @@ endpoints:
             intents:
               - CODE_REVIEW
             description: Intent-specific source code or diff, supplied as code, source_code, or diff.
+  - path: /v1/intent
+    external_path: /v1/intent
+    method: POST
+    description: Review supplied source code or diff using bounded static heuristics. The request body uses intent and input containing code, source_code, or diff.
+    intents:
+      - CODE_REVIEW
+    content_type: application/json
+    params:
+      body:
+        required:
+          - name: intent
+            type: string
+            intents:
+              - CODE_REVIEW
+            description: Canonical Intent name; must be CODE_REVIEW.
+          - name: input
+            type: object
+            intents:
+              - CODE_REVIEW
+            description: Intent-specific source code or diff.
+  - path: /v1/intent
+    external_path: /v1/intent
+    method: POST
+    description: Check a URL against Google Safe Browsing threat categories. The request body uses intent and an input object containing url.
+    intents:
+      - URL_SAFE
+    content_type: application/json
+    params:
+      body:
+        required:
+          - name: intent
+            type: string
+            intents:
+              - URL_SAFE
+            description: Canonical Intent name; must be URL_SAFE.
+          - name: input
+            type: object
+            intents:
+              - URL_SAFE
+            description: Intent-specific input object. Required field: url.
 semantics:
   supported_intents:
     - FACT_CHECK
