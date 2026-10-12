@@ -404,6 +404,7 @@ endpoints:
     - PLAGIARISM_DETECTION
     - SECURITY_REVIEW
     - REGRESSION_VERIFY
+    - CODE_PATCH_VERIFY
     - CODE_REVIEW
     content_type: application/json
     params:
@@ -579,6 +580,26 @@ endpoints:
             intents:
               - REGRESSION_VERIFY
             description: Include base_url and 1-10 checks with path and optional expected_status/json_path/equals/contains.
+  - path: /v1/intent
+    external_path: /v1/intent
+    method: POST
+    description: Check GitHub CI check runs for a public repository commit and report successful, failed, or pending checks with source links. Does not execute the build itself.
+    intents:
+      - CODE_PATCH_VERIFY
+    content_type: application/json
+    params:
+      body:
+        required:
+          - name: intent
+            type: string
+            intents:
+              - CODE_PATCH_VERIFY
+            description: Canonical Intent name; must be CODE_PATCH_VERIFY.
+          - name: input
+            type: object
+            intents:
+              - CODE_PATCH_VERIFY
+            description: Include repository as owner/repo and commit_sha as a hexadecimal commit identifier.
 semantics:
   supported_intents:
     - FACT_CHECK
