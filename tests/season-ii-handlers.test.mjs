@@ -207,3 +207,40 @@ test("Season II VULNERABILITY_TRIAGE ranks known-exploited exposed critical asse
   assert.equal(response.answer.findings_ranked[0].priority, "P1");
   assert.equal(response.answer.external_feeds_queried, false);
 });
+
+
+test("Season II URL_SAFE abstains when the provider lookup fails", async () => {
+  const response = await checkUrlSafe("https://example.com/", {
+    lookupImpl: async () => { throw new Error("provider unavailable"); },
+    now: () => "2026-10-12T00:00:00.000Z"
+  });
+  assertContract(response, "URL_SAFE");
+  assert.equal(response.verdict, "insufficient_evidence");
+  assert.equal(response.confidence, 0);
+  assert.equal(response.evidence.length, 0);
+  assert.equal(response.uncertainty[0].code, "reputation_lookup_failed");
+});
+
+test("Season II THREAT_IP_REPUTATION abstains when AbuseIPDB fails", async () => {
+  const response = await checkThreatIpReputation("8.8.8.8", {
+    lookupImpl: async () => { throw new Error("provider unavailable"); },
+    now: () => "2026-10-12T00:00:00.000Z"
+  });
+  assertContract(response, "THREAT_IP_REPUTATION");
+  assert.equal(response.verdict, "insufficient_evidence");
+  assert.equal(response.confidence, 0);
+  assert.equal(response.evidence.length, 0);
+  assert.equal(response.uncertainty[0].code, "reputation_lookup_failed");
+});
+
+test("Season II THREAT_INTELLIGENCE abstains when OTX fails", async () => {
+  const response = await lookupThreatIntelligence({ indicator: "example.com", indicator_type: "domain" }, {
+    lookupImpl: async () => { throw new Error("provider unavailable"); },
+    now: () => "2026-10-12T00:00:00.000Z"
+  });
+  assertContract(response, "THREAT_INTELLIGENCE");
+  assert.equal(response.verdict, "insufficient_evidence");
+  assert.equal(response.confidence, 0);
+  assert.equal(response.evidence.length, 0);
+  assert.equal(response.uncertainty[0].code, "threat_feed_lookup_failed");
+});
