@@ -26,7 +26,8 @@ export const VERITY_INTENTS = [
   "PLAGIARISM_DETECTION",
   "SECURITY_REVIEW",
   "REGRESSION_VERIFY",
-  "CODE_PATCH_VERIFY"
+  "CODE_PATCH_VERIFY",
+  "VULNERABILITY_TRIAGE"
 ] as const;
 
 export type VerityIntent = (typeof VERITY_INTENTS)[number];
