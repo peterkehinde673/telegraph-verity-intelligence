@@ -401,6 +401,7 @@ endpoints:
     - URL_SAFE
     - THREAT_IP_REPUTATION
     - THREAT_INTELLIGENCE
+    - PLAGIARISM_DETECTION
     - CODE_REVIEW
     content_type: application/json
     params:
@@ -516,6 +517,26 @@ endpoints:
             intents:
               - THREAT_INTELLIGENCE
             description: Intent-specific input object. Required field: indicator and optional indicator_type.
+  - path: /v1/intent
+    external_path: /v1/intent
+    method: POST
+    description: Compare submitted text against a caller-supplied corpus using overlapping five-word shingles. This is not an internet-wide plagiarism search.
+    intents:
+      - PLAGIARISM_DETECTION
+    content_type: application/json
+    params:
+      body:
+        required:
+          - name: intent
+            type: string
+            intents:
+              - PLAGIARISM_DETECTION
+            description: Canonical Intent name; must be PLAGIARISM_DETECTION.
+          - name: input
+            type: object
+            intents:
+              - PLAGIARISM_DETECTION
+            description: Include text and comparison_documents, each with reference text and optional title and URL.
 semantics:
   supported_intents:
     - FACT_CHECK
