@@ -69,11 +69,11 @@ The working branch declares 29 Telegraph Intents. Each intent should only be adv
 
 ## Source of Intent Selection
 
-The 20 Intent names are based on the current Telegraph Season II Intent catalogue. The catalogue is authoritative for the available Intent names; commercial mission usage is not treated as proof that an Intent has or has not previously been implemented by another Miner.
+The 29 Intent names are the canonical scope implemented in this repository and declared in `src/intents/catalogue.ts`. Confirm current Telegraph protocol availability against the official catalogue before registering or advertising additional intents; commercial mission usage is not treated as proof that an Intent has or has not previously been implemented by another Miner.
 
 ## Next Steps
 
-1. Confirm the live `GET /health` and `GET /intents` responses and exercise each deployed intent.
+1. Run `npm run smoke:render` to confirm live health and verify that `GET /intents` returns exactly 29 unique canonical intents, including all seven Season II additions. This check is available locally; direct live HTTP verification from the current execution environment is still pending.
 2. Configure `GOOGLE_SAFE_BROWSING_API_KEY`, `ABUSEIPDB_API_KEY`, and `OTX_API_KEY` in Render if provider-backed reputation results are required; without these, the handlers abstain with `insufficient_evidence`.
 3. Configure `REGRESSION_ALLOWED_HOSTS` before using REGRESSION_VERIFY; it only executes read-only GET probes. CODE_PATCH_VERIFY uses the public GitHub Checks API; configure `GITHUB_TOKEN` only if higher API rate limits are needed.
 4. Expand plagiarism checking only after adding a reliable, permissioned comparison corpus and measuring false positives/negatives.
