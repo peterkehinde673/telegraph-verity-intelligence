@@ -74,10 +74,39 @@ for (const [intent, input, expectedVerdict] of seasonII) {
   }
 }
 
+
+const liveCases = [
+  ["URL_SAFE", { url: "https://example.com/" }],
+  ["THREAT_IP_REPUTATION", { ip_address: "8.8.8.8" }],
+  ["THREAT_INTELLIGENCE", { indicator: "example.com", indicator_type: "domain" }]
+];
+for (const [intent, input] of liveCases) {
+  const result = await request("/v1/intent", {
+    method: "POST",
+    headers: { "content-type": "application/json", accept: "application/json" },
+    body: JSON.stringify({ intent, input })
+  });
+  if (result.status !== 200) {
+    throw new Error(`Real-world smoke request for ${intent} returned HTTP ${result.status}: ${JSON.stringify(result.body)}`);
+  }
+  const body = result.body;
+  if (body.intent !== intent ||
+      !["confirmed", "likely", "uncertain", "not_found", "insufficient_evidence", "rejected"].includes(body.verdict) ||
+      !Number.isFinite(body.confidence) || body.confidence < 0 || body.confidence > 1 ||
+      !Array.isArray(body.evidence) || !Array.isArray(body.uncertainty) ||
+      typeof body.retrieved_at !== "string") {
+    throw new Error(`Real-world smoke response contract failed for ${intent}: ${JSON.stringify(body)}`);
+  }
+  if (body.verdict === "insufficient_evidence" && body.evidence.length !== 0) {
+    throw new Error(`${intent} abstained but incorrectly returned evidence.`);
+  }
+}
+
 console.log(JSON.stringify({
   base_url: baseUrl,
   health,
   intent_count: catalogue.intents.length,
   season_ii_intents_verified: seasonII.length,
+  real_world_provider_cases: liveCases.length,
   post_response_contracts_verified: true
 }, null, 2));
