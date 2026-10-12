@@ -42,7 +42,25 @@ export async function googleSafeBrowsingLookup(
     signal: AbortSignal.timeout(10_000)
   });
 
-  if (!response.ok) throw new Error(`Google Safe Browsing returned HTTP ${response.status}.`);
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => null) as {
+      error?: {
+        status?: string;
+        errors?: Array<{ reason?: string }>;
+      };
+    } | null;
+    const apiStatus = errorBody?.error?.status;
+    const reasons = (errorBody?.error?.errors ?? [])
+      .map((item) => item.reason)
+      .filter((reason): reason is string => typeof reason === "string" && /^[A-Z0-9_]+$/.test(reason));
+    const safeStatus = typeof apiStatus === "string" && /^[A-Z0-9_]+$/.test(apiStatus)
+      ? apiStatus
+      : undefined;
+    const details = [safeStatus, ...reasons].filter(Boolean).join(", ");
+    throw new Error(
+      `Google Safe Browsing returned HTTP ${response.status}${details ? ` (${details})` : ""}.`
+    );
+  }
   const data = await response.json() as {
     matches?: Array<{ threatType?: string; platformType?: string; threat?: { url?: string } }>;
   };
