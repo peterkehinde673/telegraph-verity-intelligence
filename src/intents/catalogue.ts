@@ -20,7 +20,9 @@ export const VERITY_INTENTS = [
   "SSL_VERIFICATION",
   "DNS_RECORD_LOOKUP",
   "CODE_REVIEW",
-  "URL_SAFE"
+  "URL_SAFE",
+  "THREAT_IP_REPUTATION",
+  "THREAT_INTELLIGENCE"
 ] as const;
 
 export type VerityIntent = (typeof VERITY_INTENTS)[number];
