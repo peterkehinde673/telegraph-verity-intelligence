@@ -85,3 +85,37 @@ test("URL scan rejects an excessive redirect limit", async () => {
   assert.equal(result.verdict, "rejected");
   assert.equal(result.uncertainty[0]?.code, "invalid_redirect_limit");
 });
+
+
+test("URL scan blocks IPv4-mapped IPv6 loopback targets", async () => {
+  const result = await scanUrl("http://[::ffff:7f00:1]/", {
+    fetchImpl: async () => { throw new Error("network must not be called"); }
+  });
+  assert.equal(result.verdict, "rejected");
+  assert.equal(result.uncertainty[0]?.code, "non_public_target");
+});
+
+test("URL scan blocks reserved documentation IPv4 targets", async () => {
+  const result = await scanUrl("http://192.0.2.10/", {
+    fetchImpl: async () => { throw new Error("network must not be called"); }
+  });
+  assert.equal(result.verdict, "rejected");
+  assert.equal(result.uncertainty[0]?.code, "non_public_target");
+});
+
+test("URL scan blocks a hostname if any resolved answer is non-public", async () => {
+  let called = false;
+  const result = await scanUrl("https://mixed.example/", {
+    lookupImpl: async () => [
+      { address: "93.184.216.34", family: 4 },
+      { address: "10.0.0.8", family: 4 }
+    ],
+    fetchImpl: async () => {
+      called = true;
+      return new Response("should not happen", { status: 200 });
+    }
+  });
+  assert.equal(result.verdict, "rejected");
+  assert.equal(result.uncertainty[0]?.code, "non_public_target");
+  assert.equal(called, false);
+});
