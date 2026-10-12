@@ -117,10 +117,10 @@ async function resolvePublicHost(
   }
 
   let timer: ReturnType<typeof setTimeout> | undefined;
-  let results: Awaited<ReturnType<typeof dns.lookup>>;
+  let results: Array<{ address: string; family: number }>;
   try {
     results = await Promise.race([
-      lookup(unbracketedHost, { all: true, verbatim: true }),
+      lookup(unbracketedHost, { all: true, verbatim: true }) as Promise<Array<{ address: string; family: number }>>,
       new Promise<never>((_resolve, reject) => {
         timer = setTimeout(() => reject(new Error("DNS lookup timed out")), timeoutMs);
       })
@@ -133,7 +133,7 @@ async function resolvePublicHost(
   } finally {
     if (timer) clearTimeout(timer);
   }
-  const addresses = (results as Array<{ address: string; family: number }>).map((entry) => entry.address);
+  const addresses = results.map((entry) => entry.address);
   if (addresses.length === 0 || addresses.some(isPrivateAddress)) {
     throw new Error("Target hostname resolves to a non-public address");
   }
