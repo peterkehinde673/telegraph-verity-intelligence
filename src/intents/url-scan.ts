@@ -76,8 +76,10 @@ function isPrivateAddress(address: string): boolean {
 async function requestPinnedAddress(url: URL, address: string, timeoutMs: number): Promise<Response> {
   return await new Promise((resolve, reject) => {
     const transport = url.protocol === "https:" ? https : http;
-    const pinnedLookup = ((_hostname: string, _options: unknown, callback: (error: NodeJS.ErrnoException | null, address: string, family: number) => void) => {
-      callback(null, address, isIP(address));
+    const pinnedLookup = ((_hostname: string, options: { all?: boolean }, callback: (error: NodeJS.ErrnoException | null, address: string | Array<{ address: string; family: number }>, family?: number) => void) => {
+      const family = isIP(address);
+      if (options?.all) callback(null, [{ address, family }]);
+      else callback(null, address, family);
     }) as never;
     const request = transport.request(url, {
       method: "GET",
