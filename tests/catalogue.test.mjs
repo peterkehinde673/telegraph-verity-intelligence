@@ -27,5 +27,5 @@ const expectedIntents = [
 
 test("the initial Verity scope contains the configured 21 intents", () => {
   assert.equal(expectedIntents.length, 21);
-  assert.equal(new Set(expectedIntents).size, 20);
+  assert.equal(new Set(expectedIntents).size, 21);
 });
