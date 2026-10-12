@@ -27,6 +27,8 @@ import { lookupThreatIntelligence } from "./intents/threat-intelligence.js";
 import { detectPlagiarism } from "./intents/plagiarism-detection.js";
 import { reviewSecurity } from "./intents/security-review.js";
 import { verifyRegression } from "./intents/regression-verify.js";
+import { verifyCodePatch } from "./intents/code-patch-verify.js";
+import { triageVulnerabilities } from "./intents/vulnerability-triage.js";
 import { wikipediaSearch, crossrefSearch, googleNewsRss } from "./providers/public-sources.js";
 import { malwareBazaarLookup } from "./providers/malware-bazaar.js";
 import { googleFactCheck } from "./providers/google-fact-check.js";
@@ -114,6 +116,8 @@ export function createIntentHandlers(
     PLAGIARISM_DETECTION: handler((input) => detectPlagiarism(input)),
     SECURITY_REVIEW: handler((input) => reviewSecurity(input)),
     REGRESSION_VERIFY: handler((input) => verifyRegression(input)),
+    CODE_PATCH_VERIFY: handler((input) => verifyCodePatch(input)),
+    VULNERABILITY_TRIAGE: handler(async (input) => triageVulnerabilities(input)),
     CODE_REVIEW: handler((input) => reviewCode(
       stringInput(input, "code") || stringInput(input, "source_code") || stringInput(input, "diff")
     )),
