@@ -104,3 +104,106 @@ test("Season II VULNERABILITY_TRIAGE rejects malformed finding collections", asy
   assertContract(response, "VULNERABILITY_TRIAGE");
   assert.equal(response.verdict, "rejected");
 });
+
+
+import { checkUrlSafe } from "../dist/intents/url-safe.js";
+import { checkThreatIpReputation } from "../dist/intents/threat-ip-reputation.js";
+import { lookupThreatIntelligence } from "../dist/intents/threat-intelligence.js";
+import { reviewSecurity } from "../dist/intents/security-review.js";
+import { verifyRegression } from "../dist/intents/regression-verify.js";
+import { verifyCodePatch } from "../dist/intents/code-patch-verify.js";
+import { triageVulnerabilities } from "../dist/intents/vulnerability-triage.js";
+
+test("Season II URL_SAFE returns a feed-qualified non-match using a controlled provider", async () => {
+  const response = await checkUrlSafe("https://example.com/", {
+    lookupImpl: async () => [],
+    now: () => "2026-10-12T00:00:00.000Z"
+  });
+  assertContract(response, "URL_SAFE");
+  assert.equal(response.verdict, "not_found");
+  assert.equal(response.answer.safe_on_checked_feeds, true);
+  assert.ok(response.uncertainty.some(item => item.code === "feed_non_match_is_not_a_guarantee"));
+});
+
+test("Season II THREAT_IP_REPUTATION normalizes a provider score and includes caveats", async () => {
+  const response = await checkThreatIpReputation("8.8.8.8", {
+    lookupImpl: async () => ({ abuse_confidence_score: 88, total_reports: 20, country_code: "US" }),
+    now: () => "2026-10-12T00:00:00.000Z"
+  });
+  assertContract(response, "THREAT_IP_REPUTATION");
+  assert.equal(response.verdict, "confirmed");
+  assert.equal(response.answer.abuse_confidence_score, 88);
+  assert.ok(response.uncertainty.some(item => item.code === "reputation_is_signal_not_proof"));
+});
+
+test("Season II THREAT_INTELLIGENCE handles a controlled OTX pulse result", async () => {
+  const response = await lookupThreatIntelligence({ indicator: "example.com", indicator_type: "domain" }, {
+    lookupImpl: async () => ({ pulse_count: 1, pulses: [{ name: "Test pulse", tags: ["test"] }] }),
+    now: () => "2026-10-12T00:00:00.000Z"
+  });
+  assertContract(response, "THREAT_INTELLIGENCE");
+  assert.equal(response.verdict, "likely");
+  assert.equal(response.answer.pulse_count, 1);
+  assert.ok(response.uncertainty.some(item => item.code === "single_feed_limit"));
+});
+
+test("Season II SECURITY_REVIEW reports a possible hard-coded secret with line evidence", async () => {
+  const response = await reviewSecurity({ code: 'const api_key = "example-secret-value-123";' }, {
+    now: () => "2026-10-12T00:00:00.000Z"
+  });
+  assertContract(response, "SECURITY_REVIEW");
+  assert.ok(response.answer.findings.some(item => item.rule_id === "possible-hardcoded-secret"));
+  assert.ok(response.evidence.some(item => item.source_type === "static-security-review"));
+});
+
+test("Season II REGRESSION_VERIFY passes an allowlisted GET with JSON assertions", async () => {
+  const response = await verifyRegression({
+    base_url: "https://api.example.com",
+    checks: [{ name: "health", path: "/health", expected_status: 200, json_path: "status", equals: "ok" }]
+  }, {
+    allowedHosts: ["api.example.com"],
+    fetchImpl: async () => new Response(JSON.stringify({ status: "ok" }), {
+      status: 200, headers: { "content-type": "application/json" }
+    }),
+    now: () => "2026-10-12T00:00:00.000Z"
+  });
+  assertContract(response, "REGRESSION_VERIFY");
+  assert.equal(response.verdict, "confirmed");
+  assert.equal(response.answer.passed, 1);
+  assert.equal(response.answer.errors, 0);
+});
+
+test("Season II CODE_PATCH_VERIFY summarizes mocked GitHub check runs", async () => {
+  const response = await verifyCodePatch({
+    repository: "owner/repo",
+    commit_sha: "a".repeat(40)
+  }, {
+    fetchImpl: async () => new Response(JSON.stringify({
+      check_runs: [{
+        name: "CI",
+        status: "completed",
+        conclusion: "success",
+        html_url: "https://github.com/owner/repo/actions/runs/1",
+        app: { name: "GitHub Actions" }
+      }]
+    }), { status: 200, headers: { "content-type": "application/json" } }),
+    now: () => "2026-10-12T00:00:00.000Z"
+  });
+  assertContract(response, "CODE_PATCH_VERIFY");
+  assert.equal(response.verdict, "confirmed");
+  assert.equal(response.answer.successful, 1);
+  assert.equal(response.answer.failed, 0);
+});
+
+test("Season II VULNERABILITY_TRIAGE ranks known-exploited exposed critical assets first", async () => {
+  const response = await triageVulnerabilities({
+    findings: [
+      { id: "low", cvss_score: 2.1, known_exploited: false, asset_criticality: "low", internet_exposed: false },
+      { id: "urgent", cvss_score: 9.8, known_exploited: true, asset_criticality: "critical", internet_exposed: true }
+    ]
+  }, { now: () => "2026-10-12T00:00:00.000Z" });
+  assertContract(response, "VULNERABILITY_TRIAGE");
+  assert.equal(response.answer.findings_ranked[0].id, "urgent");
+  assert.equal(response.answer.findings_ranked[0].priority, "P1");
+  assert.equal(response.answer.external_feeds_queried, false);
+});
