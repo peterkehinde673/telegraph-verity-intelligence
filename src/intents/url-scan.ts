@@ -107,7 +107,8 @@ async function requestPinnedAddress(url: URL, address: string, timeoutMs: number
 
 async function resolvePublicHost(
   hostname: string,
-  lookup: typeof dns.lookup
+  lookup: typeof dns.lookup,
+  timeoutMs: number
 ): Promise<string[]> {
   const unbracketedHost = hostname.replace(/^\[|\]$/g, "");
   if (isIP(unbracketedHost)) {
@@ -115,8 +116,24 @@ async function resolvePublicHost(
     return [unbracketedHost];
   }
 
-  const results = await lookup(unbracketedHost, { all: true, verbatim: true });
-  const addresses = results.map((entry) => entry.address);
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  let results: Awaited<ReturnType<typeof dns.lookup>>;
+  try {
+    results = await Promise.race([
+      lookup(unbracketedHost, { all: true, verbatim: true }),
+      new Promise<never>((_resolve, reject) => {
+        timer = setTimeout(() => reject(new Error("DNS lookup timed out")), timeoutMs);
+      })
+    ]);
+  } catch (error) {
+    if (error instanceof Error && /DNS lookup timed out/.test(error.message)) {
+      throw new Error("DNS lookup timed out");
+    }
+    throw new Error("DNS lookup failed");
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+  const addresses = (results as Array<{ address: string; family: number }>).map((entry) => entry.address);
   if (addresses.length === 0 || addresses.some(isPrivateAddress)) {
     throw new Error("Target hostname resolves to a non-public address");
   }
@@ -191,7 +208,7 @@ export async function scanUrl(
   for (let attempt = 0; attempt <= maxRedirects; attempt += 1) {
     let resolvedAddresses: string[];
     try {
-      resolvedAddresses = await resolvePublicHost(current.hostname, lookup);
+      resolvedAddresses = await resolvePublicHost(current.hostname, lookup, timeoutMs);
     } catch (error) {
       return {
         intent: "URL_SCAN",
@@ -206,8 +223,18 @@ export async function scanUrl(
         },
         evidence: [],
         uncertainty: [{
-          code: "non_public_target",
-          message: error instanceof Error ? error.message : "Target is not publicly routable."
+          code: error instanceof Error && /DNS lookup timed out/.test(error.message)
+            ? "url_scan_dns_timeout"
+            : error instanceof Error && /DNS lookup failed/.test(error.message)
+              ? "url_scan_dns_failed"
+              : "non_public_target",
+          message: error instanceof Error && /DNS lookup timed out/.test(error.message)
+            ? "The hostname could not be resolved within the configured timeout."
+            : error instanceof Error && /DNS lookup failed/.test(error.message)
+              ? "The hostname could not be resolved."
+              : error instanceof Error
+                ? error.message
+                : "Target is not publicly routable."
         }],
         retrieved_at: retrievedAt
       };
