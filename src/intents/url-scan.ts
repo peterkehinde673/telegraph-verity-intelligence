@@ -214,25 +214,50 @@ export async function scanUrl(
     }
 
     let response: Response;
-    if (fetchImpl) {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), timeoutMs);
-      try {
-        response = await fetchImpl(current, {
-          method: "GET",
-          redirect: "manual",
-          signal: controller.signal,
-          headers: { "user-agent": "telegraph-verity-intelligence/0.1" }
-        });
-      } finally {
-        clearTimeout(timer);
+    try {
+      if (fetchImpl) {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), timeoutMs);
+        try {
+          response = await fetchImpl(current, {
+            method: "GET",
+            redirect: "manual",
+            signal: controller.signal,
+            headers: { "user-agent": "telegraph-verity-intelligence/0.1" }
+          });
+        } finally {
+          clearTimeout(timer);
+        }
+      } else {
+        // Pin the connection to the exact address that passed the public-address check.
+        // The original URL hostname remains intact for Host headers and TLS SNI.
+        const pinnedAddress = resolvedAddresses[0];
+        if (!pinnedAddress) throw new Error("No vetted target address is available");
+        response = await requestPinnedAddress(current, pinnedAddress, timeoutMs);
       }
-    } else {
-      // Pin the connection to the exact address that passed the public-address check.
-      // The original URL hostname remains intact for Host headers and TLS SNI.
-      const pinnedAddress = resolvedAddresses[0];
-      if (!pinnedAddress) throw new Error("No vetted target address is available");
-      response = await requestPinnedAddress(current, pinnedAddress, timeoutMs);
+    } catch (error) {
+      const isTimeout = error instanceof Error &&
+        (error.name === "AbortError" || /timed out|timeout/i.test(error.message));
+      return {
+        intent: "URL_SCAN",
+        verdict: "uncertain",
+        confidence: 0,
+        answer: {
+          input_url: raw,
+          final_url: current.toString(),
+          redirect_count: redirects.length,
+          redirects,
+          hostname: current.hostname
+        },
+        evidence: [],
+        uncertainty: [{
+          code: isTimeout ? "url_scan_timeout" : "url_fetch_failed",
+          message: isTimeout
+            ? "The URL did not respond within the configured timeout."
+            : "The URL could not be fetched, so its availability could not be verified."
+        }],
+        retrieved_at: retrievedAt
+      };
     }
 
     const location = response.headers.get("location");
