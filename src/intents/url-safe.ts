@@ -46,6 +46,7 @@ export async function googleSafeBrowsingLookup(
     const errorBody = await response.json().catch(() => null) as {
       error?: {
         status?: string;
+        message?: string;
         errors?: Array<{ reason?: string }>;
       };
     } | null;
@@ -57,8 +58,11 @@ export async function googleSafeBrowsingLookup(
       ? apiStatus
       : undefined;
     const details = [safeStatus, ...reasons].filter(Boolean).join(", ");
+    const safeMessage = typeof errorBody?.error?.message === "string"
+      ? errorBody.error.message.replaceAll(apiKey, "[redacted]").replace(/[\\r\\n\\t]+/g, " ").slice(0, 240)
+      : undefined;
     throw new Error(
-      `Google Safe Browsing returned HTTP ${response.status}${details ? ` (${details})` : ""}.`
+      `Google Safe Browsing returned HTTP ${response.status}${details ? ` (${details})` : ""}${safeMessage ? `: ${safeMessage}` : ""}.`
     );
   }
   const data = await response.json() as {
