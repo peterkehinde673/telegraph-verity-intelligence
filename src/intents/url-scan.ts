@@ -317,7 +317,51 @@ export async function scanUrl(
       };
     }
 
-    const next = new URL(location!, current);
+    let next: URL;
+    try {
+      next = new URL(location!, current);
+    } catch {
+      return {
+        intent: "URL_SCAN",
+        verdict: "uncertain",
+        confidence: 0,
+        answer: {
+          input_url: raw,
+          final_url: current.toString(),
+          redirect_count: redirects.length,
+          redirects,
+          hostname: current.hostname
+        },
+        evidence: [],
+        uncertainty: [{
+          code: "invalid_redirect_target",
+          message: "The server returned a redirect target that is not a valid URL."
+        }],
+        retrieved_at: retrievedAt
+      };
+    }
+
+    if (next.username || next.password) {
+      return {
+        intent: "URL_SCAN",
+        verdict: "rejected",
+        confidence: 1,
+        answer: {
+          input_url: raw,
+          final_url: current.toString(),
+          redirect_count: redirects.length,
+          redirects,
+          hostname: current.hostname
+        },
+        evidence: [],
+        uncertainty: [{
+          code: "redirect_credentials_not_allowed",
+          message: "Redirect targets containing embedded credentials are not allowed."
+        }],
+        retrieved_at: retrievedAt
+      };
+    }
+
     if (next.protocol !== "http:" && next.protocol !== "https:") {
       return {
         intent: "URL_SCAN",
