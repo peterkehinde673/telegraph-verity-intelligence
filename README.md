@@ -63,7 +63,7 @@ The working branch declares 29 Telegraph Intents. Each intent should only be adv
 - **Public explorer:** https://explorer.telegraphprotocol.com/miners/telegraph-verity-intelligence
 - **Production API:** https://telegraph-verity-intelligence-api.onrender.com
 - **API status endpoints:** `GET /health` and `GET /intents`.
-- **Intent implementation:** The working branch contains 29 intent handlers and tests. URL_SAFE requires `GOOGLE_SAFE_BROWSING_API_KEY`, THREAT_IP_REPUTATION requires `ABUSEIPDB_API_KEY`, and THREAT_INTELLIGENCE requires `OTX_API_KEY` in the Render service environment. Without a required key, each handler abstains with `insufficient_evidence` rather than inventing a reputation result. CODE_REVIEW is bounded static heuristics, not a full semantic audit. The live deployment remains at 20 intents until the changes are merged and deployed.
+- **Intent implementation:** The 29-intent Season II batch is merged into `foundation/verity-20-intents` and deployed to Render. The service build and startup succeeded; verify the live count using `GET /intents`. URL_SAFE requires `GOOGLE_SAFE_BROWSING_API_KEY`, THREAT_IP_REPUTATION requires `ABUSEIPDB_API_KEY`, and THREAT_INTELLIGENCE requires `OTX_API_KEY` in the Render service environment. Without a required key, each handler abstains with `insufficient_evidence` rather than inventing a reputation result. CODE_REVIEW is bounded static heuristics, not a full semantic audit.
 - **Scoring module (WASM):** Not yet built or registered. Telegraph scoring modules are separate from Miner APIs and score one canonical Intent at a time; see the official [Build a Scoring Module guide](https://docs.telegraphprotocol.com/docs/scoring/build-a-scoring-module).
 - **CI/deployment:** GitHub Actions verifies typecheck, build, tests, and Telegraph tooling. Render is the production hosting target.
 
@@ -73,7 +73,7 @@ The 20 Intent names are based on the current Telegraph Season II Intent catalogu
 
 ## Next Steps
 
-1. Merge and deploy the reviewed Season II intent batch.
-2. Configure `GOOGLE_SAFE_BROWSING_API_KEY`, `ABUSEIPDB_API_KEY`, and `OTX_API_KEY` in Render before enabling the corresponding reputation handlers.
-3. Verify `GET /intents` and exercise each newly deployed intent.
-4. Expand plagiarism checking only after adding a reliable, permissioned comparison corpus and measuring false positives/negatives. REGRESSION_VERIFY requires `REGRESSION_ALLOWED_HOSTS` in Render and only executes read-only GET probes. CODE_PATCH_VERIFY uses the public GitHub Checks API; configure `GITHUB_TOKEN` only if higher API rate limits are needed.
+1. Confirm the live `GET /health` and `GET /intents` responses and exercise each deployed intent.
+2. Configure `GOOGLE_SAFE_BROWSING_API_KEY`, `ABUSEIPDB_API_KEY`, and `OTX_API_KEY` in Render if provider-backed reputation results are required; without these, the handlers abstain with `insufficient_evidence`.
+3. Configure `REGRESSION_ALLOWED_HOSTS` before using REGRESSION_VERIFY; it only executes read-only GET probes. CODE_PATCH_VERIFY uses the public GitHub Checks API; configure `GITHUB_TOKEN` only if higher API rate limits are needed.
+4. Expand plagiarism checking only after adding a reliable, permissioned comparison corpus and measuring false positives/negatives.
