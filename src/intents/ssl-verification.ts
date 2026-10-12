@@ -11,6 +11,25 @@ export interface SslVerificationAnswer {
 }
 export interface SslVerificationOptions { connectImpl?: typeof tls.connect; timeoutMs?: number; now?: () => string; }
 
+const CERTIFICATE_ERROR_CODES = new Set([
+  "CERT_HAS_EXPIRED",
+  "CERT_NOT_YET_VALID",
+  "DEPTH_ZERO_SELF_SIGNED_CERT",
+  "SELF_SIGNED_CERT_IN_CHAIN",
+  "UNABLE_TO_VERIFY_LEAF_SIGNATURE",
+  "UNABLE_TO_GET_ISSUER_CERT",
+  "UNABLE_TO_GET_ISSUER_CERT_LOCALLY",
+  "ERR_TLS_CERT_ALTNAME_INVALID",
+  "CERT_REVOKED",
+  "ERR_TLS_CERT_SIGNATURE_ALGORITHM_UNSUPPORTED"
+]);
+
+function errorCode(error: unknown): string {
+  if (!error || typeof error !== "object") return "TLS_CONNECTION_ERROR";
+  const code = (error as { code?: unknown }).code;
+  return typeof code === "string" && /^[A-Z0-9_]+$/.test(code) ? code : "TLS_CONNECTION_ERROR";
+}
+
 export async function verifySsl(hostname: string, port = 443, options: SslVerificationOptions = {}): Promise<VerityResponse<SslVerificationAnswer>> {
   const normalizedHost = hostname.trim().toLowerCase();
   const retrievedAt = options.now?.() ?? new Date().toISOString();
@@ -20,17 +39,47 @@ export async function verifySsl(hostname: string, port = 443, options: SslVerifi
   if (!Number.isInteger(port) || port < 1 || port > 65535) return { intent: "SSL_VERIFICATION", verdict: "rejected", confidence: 1, answer: { hostname: normalizedHost, port, authorized: false }, evidence: [], uncertainty: [{ code: "invalid_port", message: "The port must be an integer between 1 and 65535." }], retrieved_at: retrievedAt };
 
   const connect = options.connectImpl ?? tls.connect;
-  return await new Promise((resolve, reject) => {
-    const socket = connect({ host: normalizedHost, port, servername: normalizedHost, rejectUnauthorized: true });
+  return await new Promise((resolve) => {
+    let socket: ReturnType<typeof tls.connect> | undefined;
     let settled = false;
-    const finish = (response: VerityResponse<SslVerificationAnswer>) => { if (settled) return; settled = true; socket.destroy(); resolve(response); };
-    socket.setTimeout(timeoutMs, () => { if (settled) return; settled = true; socket.destroy(); reject(new Error("TLS connection timed out")); });
+    const finish = (response: VerityResponse<SslVerificationAnswer>) => {
+      if (settled) return;
+      settled = true;
+      socket?.destroy();
+      resolve(response);
+    };
+    const failure = (code: string, message: string, certificateFailure: boolean) => finish({
+      intent: "SSL_VERIFICATION",
+      verdict: certificateFailure ? "rejected" : "uncertain",
+      confidence: certificateFailure ? 1 : 0,
+      answer: { hostname: normalizedHost, port, authorized: false, authorization_error: code },
+      evidence: [],
+      uncertainty: [{ code: certificateFailure ? "certificate_not_authorized" : "tls_connection_failed", message }],
+      retrieved_at: retrievedAt
+    });
+
+    try {
+      socket = connect({ host: normalizedHost, port, servername: normalizedHost, rejectUnauthorized: true });
+    } catch (error) {
+      const code = errorCode(error);
+      const certificateFailure = CERTIFICATE_ERROR_CODES.has(code);
+      failure(code, certificateFailure
+        ? "The TLS endpoint presented a certificate that could not be trusted or validated."
+        : "The TLS endpoint could not be verified because the connection failed.", certificateFailure);
+      return;
+    }
+
+    socket.setTimeout(timeoutMs, () => {
+      failure("TLS_TIMEOUT", "The TLS connection timed out before verification completed.", false);
+    });
     socket.once("secureConnect", () => {
+      if (!socket || settled) return;
       const certificate = socket.getPeerCertificate();
       const cipher = socket.getCipher();
+      const protocol = socket.getProtocol();
       const answer: SslVerificationAnswer = {
         hostname: normalizedHost, port, authorized: socket.authorized,
-        ...(socket.getProtocol() ? { protocol: socket.getProtocol()! } : {}),
+        ...(protocol ? { protocol } : {}),
         ...(cipher.name ? { cipher: cipher.name } : {}),
         ...(certificate.subject ? { subject: certificate.subject } : {}),
         ...(certificate.issuer ? { issuer: certificate.issuer } : {}),
@@ -42,11 +91,32 @@ export async function verifySsl(hostname: string, port = 443, options: SslVerifi
         ...(socket.authorizationError ? { authorization_error: String(socket.authorizationError) } : {})
       };
       const endpoint = "tls:" + normalizedHost + ":" + port;
-      finish({ intent: "SSL_VERIFICATION", verdict: socket.authorized ? "confirmed" : "rejected", confidence: 1, answer,
-        evidence: [normalizeEvidence({ source_id: endpoint, source_type: "tls", title: "TLS certificate for " + normalizedHost, url: "https://" + normalizedHost + ":" + port + "/", retrieved_at: retrievedAt })],
-        uncertainty: socket.authorized ? [] : [{ code: "certificate_not_authorized", message: socket.authorizationError ? String(socket.authorizationError) : "The TLS certificate was not authorized by the local trust store." }],
-        retrieved_at: retrievedAt });
+      finish({
+        intent: "SSL_VERIFICATION",
+        verdict: socket.authorized ? "confirmed" : "rejected",
+        confidence: 1,
+        answer,
+        evidence: [normalizeEvidence({
+          source_id: endpoint,
+          source_type: "tls",
+          title: "TLS certificate for " + normalizedHost,
+          url: "https://" + normalizedHost + ":" + port + "/",
+          retrieved_at: retrievedAt
+        })],
+        uncertainty: socket.authorized ? [] : [{
+          code: "certificate_not_authorized",
+          message: socket.authorizationError ? String(socket.authorizationError) : "The TLS certificate was not authorized by the local trust store."
+        }],
+        retrieved_at: retrievedAt
+      });
     });
-    socket.once("error", (error) => { if (settled) return; settled = true; socket.destroy(); reject(error); });
+    socket.once("error", (error) => {
+      if (settled) return;
+      const code = errorCode(error);
+      const certificateFailure = CERTIFICATE_ERROR_CODES.has(code);
+      failure(code, certificateFailure
+        ? "The TLS endpoint presented a certificate that could not be trusted or validated."
+        : "The TLS endpoint could not be verified because the connection failed.", certificateFailure);
+    });
   });
 }
