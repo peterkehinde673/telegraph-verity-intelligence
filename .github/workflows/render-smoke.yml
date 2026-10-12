@@ -1,6 +1,9 @@
 name: Render production smoke test
 
 on:
+  push:
+    branches:
+      - foundation/verity-20-intents
   workflow_dispatch:
   schedule:
     - cron: "17 */6 * * *"
