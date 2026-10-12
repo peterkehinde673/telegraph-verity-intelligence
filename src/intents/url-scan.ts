@@ -85,6 +85,9 @@ async function requestPinnedAddress(url: URL, address: string, timeoutMs: number
       method: "GET",
       headers: { "user-agent": "telegraph-verity-intelligence/0.1" },
       lookup: pinnedLookup,
+      // Keep certificate-chain and hostname verification explicitly enabled.
+      // The URL hostname remains unchanged, preserving TLS SNI and hostname checks.
+      rejectUnauthorized: true,
       timeout: timeoutMs
     }, (incoming) => {
       incoming.resume();
