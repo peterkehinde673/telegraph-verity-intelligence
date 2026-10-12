@@ -68,6 +68,7 @@ export async function verifySsl(hostname: string, port = 443, options: SslVerifi
         : "The TLS endpoint could not be verified because the connection failed.", certificateFailure);
       return;
     }
+    if (!socket) return;
 
     socket.setTimeout(timeoutMs, () => {
       failure("TLS_TIMEOUT", "The TLS connection timed out before verification completed.", false);
