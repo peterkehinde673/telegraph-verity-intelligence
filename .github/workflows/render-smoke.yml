@@ -24,5 +24,7 @@ jobs:
           node-version: "20"
       - name: Verify production health, intent catalogue, and Season II response contracts
         run: node scripts/smoke-render-api.mjs
+      - name: Validate miner.yaml with Telegraph Integrate's live validator
+        run: npm run validate:miner-integrate
       - name: Check Telegraph miner registry presence (not dashboard YAML registration)
         run: npm run verify:miner-live
