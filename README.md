@@ -4,7 +4,7 @@ Telegraph Verity Intelligence is a machine-callable intelligence provider design
 
 ## Current Intent Scope
 
-The working branch declares 26 Telegraph Intents. Each intent should only be advertised as production-capable when its handler, provider configuration, and tests are complete:
+The working branch declares 27 Telegraph Intents. Each intent should only be advertised as production-capable when its handler, provider configuration, and tests are complete:
 
 ### Evidence & Research
 1. FACT_CHECK
@@ -39,6 +39,7 @@ The working branch declares 26 Telegraph Intents. Each intent should only be adv
 24. THREAT_INTELLIGENCE — AlienVault OTX pulse lookup for IPs, domains, URLs, or SHA-256 hashes (requires API-key configuration)
 25. PLAGIARISM_DETECTION — compares supplied text against a caller-provided reference corpus using five-word overlap shingles; not an internet-wide search
 26. SECURITY_REVIEW — bounded static security heuristics for source/configuration; not a full audit or dependency scan
+27. REGRESSION_VERIFY — read-only allowlisted HTTPS GET probes with response assertions; not a test-suite/build runner
 
 ## Design Principles
 
@@ -60,7 +61,7 @@ The working branch declares 26 Telegraph Intents. Each intent should only be adv
 - **Public explorer:** https://explorer.telegraphprotocol.com/miners/telegraph-verity-intelligence
 - **Production API:** https://telegraph-verity-intelligence-api.onrender.com
 - **API status endpoints:** `GET /health` and `GET /intents`.
-- **Intent implementation:** The working branch contains 26 intent handlers and tests. URL_SAFE requires `GOOGLE_SAFE_BROWSING_API_KEY`, THREAT_IP_REPUTATION requires `ABUSEIPDB_API_KEY`, and THREAT_INTELLIGENCE requires `OTX_API_KEY` in the Render service environment. Without a required key, each handler abstains with `insufficient_evidence` rather than inventing a reputation result. CODE_REVIEW is bounded static heuristics, not a full semantic audit. The live deployment remains at 20 intents until the changes are merged and deployed.
+- **Intent implementation:** The working branch contains 27 intent handlers and tests. URL_SAFE requires `GOOGLE_SAFE_BROWSING_API_KEY`, THREAT_IP_REPUTATION requires `ABUSEIPDB_API_KEY`, and THREAT_INTELLIGENCE requires `OTX_API_KEY` in the Render service environment. Without a required key, each handler abstains with `insufficient_evidence` rather than inventing a reputation result. CODE_REVIEW is bounded static heuristics, not a full semantic audit. The live deployment remains at 20 intents until the changes are merged and deployed.
 - **Scoring module (WASM):** Not yet built or registered. Telegraph scoring modules are separate from Miner APIs and score one canonical Intent at a time; see the official [Build a Scoring Module guide](https://docs.telegraphprotocol.com/docs/scoring/build-a-scoring-module).
 - **CI/deployment:** GitHub Actions verifies typecheck, build, tests, and Telegraph tooling. Render is the production hosting target.
 
@@ -73,4 +74,4 @@ The 20 Intent names are based on the current Telegraph Season II Intent catalogu
 1. Merge and deploy the reviewed Season II intent batch.
 2. Configure `GOOGLE_SAFE_BROWSING_API_KEY`, `ABUSEIPDB_API_KEY`, and `OTX_API_KEY` in Render before enabling the corresponding reputation handlers.
 3. Verify `GET /intents` and exercise each newly deployed intent.
-4. Expand plagiarism checking only after adding a reliable, permissioned comparison corpus and measuring false positives/negatives.
+4. Expand plagiarism checking only after adding a reliable, permissioned comparison corpus and measuring false positives/negatives. REGRESSION_VERIFY requires `REGRESSION_ALLOWED_HOSTS` in Render and only executes read-only GET probes.
