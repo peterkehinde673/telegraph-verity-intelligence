@@ -117,7 +117,7 @@ export function createIntentHandlers(
     SECURITY_REVIEW: handler((input) => reviewSecurity(input)),
     REGRESSION_VERIFY: handler((input) => verifyRegression(input)),
     CODE_PATCH_VERIFY: handler((input) => verifyCodePatch(input)),
-    VULNERABILITY_TRIAGE: handler((input) => triageVulnerabilities(input)),
+    VULNERABILITY_TRIAGE: handler(async (input) => triageVulnerabilities(input)),
     CODE_REVIEW: handler((input) => reviewCode(
       stringInput(input, "code") || stringInput(input, "source_code") || stringInput(input, "diff")
     )),
