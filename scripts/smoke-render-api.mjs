@@ -3,16 +3,38 @@ const baseUrl = process.argv[2] ?? "https://telegraph-verity-intelligence-api.on
 const expectedCount = 29;
 
 async function request(path, options = {}) {
-  const response = await fetch(new URL(path, baseUrl), {
-    signal: AbortSignal.timeout(15_000),
-    ...options
-  });
+  const method = options.method ?? "GET";
+  const attempts = method === "GET" ? 3 : 1;
+  let response;
+  let lastError;
+
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    try {
+      response = await fetch(new URL(path, baseUrl), {
+        signal: AbortSignal.timeout(15_000),
+        ...options
+      });
+      // Retry only idempotent GETs for transient deployment/proxy errors.
+      if (method === "GET" && [502, 503, 504].includes(response.status) && attempt < attempts) {
+        await response.arrayBuffer();
+        await new Promise(resolve => setTimeout(resolve, attempt * 1000));
+        continue;
+      }
+      break;
+    } catch (error) {
+      lastError = error;
+      if (attempt >= attempts) throw error;
+      await new Promise(resolve => setTimeout(resolve, attempt * 1000));
+    }
+  }
+
+  if (!response) throw lastError ?? new Error(`Request failed for ${method} ${path}.`);
   const body = await response.text();
   let json;
   try {
     json = JSON.parse(body);
   } catch {
-    throw new Error(`${options.method ?? "GET"} ${path} did not return valid JSON (HTTP ${response.status}).`);
+    throw new Error(`${method} ${path} did not return valid JSON (HTTP ${response.status}).`);
   }
   return { status: response.status, body: json };
 }
