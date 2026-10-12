@@ -136,3 +136,24 @@ test("URL scan blocks unique-local IPv6 targets", async () => {
   assert.equal(result.verdict, "rejected");
   assert.equal(result.uncertainty[0]?.code, "non_public_target");
 });
+
+
+test("URL scan revalidates redirect targets and blocks a private destination", async () => {
+  const requested = [];
+  const result = await scanUrl("https://example.com/start", {
+    lookupImpl: async hostname => hostname === "private.example"
+      ? [{ address: "10.0.0.8", family: 4 }]
+      : [{ address: "93.184.216.34", family: 4 }],
+    fetchImpl: async url => {
+      requested.push(url.toString());
+      return new Response(null, {
+        status: 302,
+        headers: { location: "http://private.example/admin" }
+      });
+    }
+  });
+
+  assert.equal(result.verdict, "rejected");
+  assert.equal(result.uncertainty[0]?.code, "non_public_target");
+  assert.equal(requested.length, 1, "the private redirect destination must never be requested");
+});
