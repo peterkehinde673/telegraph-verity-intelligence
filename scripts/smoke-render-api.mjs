@@ -102,6 +102,20 @@ for (const [intent, input] of liveCases) {
   if (body.verdict === "insufficient_evidence" && body.evidence.length !== 0) {
     throw new Error(`${intent} abstained but incorrectly returned evidence.`);
   }
+  if (intent === "URL_SAFE" &&
+      (body.answer?.provider !== "google-safe-browsing" ||
+       !Array.isArray(body.answer?.matches) ||
+       typeof body.answer?.safe_on_checked_feeds !== "boolean")) {
+    throw new Error("URL_SAFE did not return the expected Google Safe Browsing answer contract.");
+  }
+  if (intent === "THREAT_IP_REPUTATION" &&
+      body.answer?.provider !== "abuseipdb") {
+    throw new Error("THREAT_IP_REPUTATION did not identify AbuseIPDB as its provider.");
+  }
+  if (intent === "THREAT_INTELLIGENCE" &&
+      body.answer?.provider !== "alienvault-otx") {
+    throw new Error("THREAT_INTELLIGENCE did not identify AlienVault OTX as its provider.");
+  }
   const uncertaintyCodes = body.uncertainty.map(item => item.code).filter(Boolean);
   const providerNotConfigured = uncertaintyCodes.some(code =>
     ["reputation_source_unconfigured", "threat_feed_unconfigured"].includes(code)
