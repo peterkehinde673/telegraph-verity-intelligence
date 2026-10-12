@@ -3,6 +3,7 @@ name: Render production smoke test
 on:
   push:
     branches:
+      - main
       - foundation/verity-20-intents
   workflow_dispatch:
   schedule:
