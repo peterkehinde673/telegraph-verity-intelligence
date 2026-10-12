@@ -19,7 +19,8 @@ export const VERITY_INTENTS = [
   "CVE_LOOKUP",
   "SSL_VERIFICATION",
   "DNS_RECORD_LOOKUP",
-  "CODE_REVIEW"
+  "CODE_REVIEW",
+  "URL_SAFE"
 ] as const;
 
 export type VerityIntent = (typeof VERITY_INTENTS)[number];
