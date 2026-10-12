@@ -403,6 +403,7 @@ endpoints:
     - THREAT_INTELLIGENCE
     - PLAGIARISM_DETECTION
     - SECURITY_REVIEW
+    - REGRESSION_VERIFY
     - CODE_REVIEW
     content_type: application/json
     params:
@@ -558,6 +559,26 @@ endpoints:
             intents:
               - SECURITY_REVIEW
             description: Include code, source_code, configuration, or config.
+  - path: /v1/intent
+    external_path: /v1/intent
+    method: POST
+    description: Run read-only HTTPS GET regression probes against an explicitly allowlisted host, checking status codes and optional response assertions. Does not execute a build or test command.
+    intents:
+      - REGRESSION_VERIFY
+    content_type: application/json
+    params:
+      body:
+        required:
+          - name: intent
+            type: string
+            intents:
+              - REGRESSION_VERIFY
+            description: Canonical Intent name; must be REGRESSION_VERIFY.
+          - name: input
+            type: object
+            intents:
+              - REGRESSION_VERIFY
+            description: Include base_url and 1-10 checks with path and optional expected_status/json_path/equals/contains.
 semantics:
   supported_intents:
     - FACT_CHECK
