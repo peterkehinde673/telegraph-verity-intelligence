@@ -43,18 +43,28 @@ if (new Set(catalogue.intents).size !== expectedCount) {
 if (catalogue.intents.some((intent) => typeof intent !== "string" || !/^[A-Z][A-Z0-9_]*$/.test(intent))) {
   throw new Error("Intent catalogue contains an invalid canonical intent name.");
 }
-const seasonII = [
+const validationCases = [
   ["URL_SAFE", { url: "file:///etc/passwd" }, "rejected"],
   ["THREAT_IP_REPUTATION", { ip_address: "999.999.1.1" }, "rejected"],
   ["THREAT_INTELLIGENCE", { indicator: "example.com", indicator_type: "invalid" }, "rejected"],
   ["SECURITY_REVIEW", {}, "rejected"],
   ["REGRESSION_VERIFY", { base_url: "http://example.com", checks: [{ path: "/health" }] }, "insufficient_evidence"],
   ["CODE_PATCH_VERIFY", { repository: "peterkehinde673/telegraph-verity-intelligence", commit_sha: "not-a-sha" }, "rejected"],
-  ["VULNERABILITY_TRIAGE", { findings: [] }, "rejected"]
+  ["VULNERABILITY_TRIAGE", { findings: [] }, "rejected"],
+  ["URL_SCAN", { url: "file:///etc/passwd" }, "rejected"],
+  ["MALWARE_DETECTION", { indicator: "not-a-hash" }, "rejected"],
+  ["CVE_LOOKUP", { cve_id: "not-a-cve" }, "rejected"],
+  ["SSL_VERIFICATION", { hostname: "" }, "rejected"],
+  ["DNS_RECORD_LOOKUP", { hostname: "bad..example" }, "rejected"]
 ];
 
-for (const [intent, input, expectedVerdict] of seasonII) {
-  if (!catalogue.intents.includes(intent)) throw new Error(`Required Season II intent is missing: ${intent}`);
+const seasonIIIntents = new Set([
+  "URL_SAFE", "THREAT_IP_REPUTATION", "THREAT_INTELLIGENCE",
+  "SECURITY_REVIEW", "REGRESSION_VERIFY", "CODE_PATCH_VERIFY", "VULNERABILITY_TRIAGE"
+]);
+
+for (const [intent, input, expectedVerdict] of validationCases) {
+  if (!catalogue.intents.includes(intent)) throw new Error(`Required intent is missing: ${intent}`);
   const result = await request("/v1/intent", {
     method: "POST",
     headers: { "content-type": "application/json", accept: "application/json" },
@@ -145,7 +155,8 @@ console.log(JSON.stringify({
   base_url: baseUrl,
   health,
   intent_count: catalogue.intents.length,
-  season_ii_intents_verified: seasonII.length,
+  season_ii_intents_verified: seasonIIIntents.size,
+  safe_validation_cases: validationCases.length,
   real_world_provider_cases: liveCases.length,
   provider_diagnostics: liveResults,
   post_response_contracts_verified: true
