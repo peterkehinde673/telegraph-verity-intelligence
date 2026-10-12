@@ -4,7 +4,7 @@ const expectedSlug = process.env.TELEGRAPH_MINER_SLUG ?? "telegraph-verity-intel
 const yamlResponse = await fetch("https://raw.githubusercontent.com/peterkehinde673/telegraph-verity-intelligence/foundation/verity-20-intents/miner.yaml", { signal: AbortSignal.timeout(15_000) });
 if (!yamlResponse.ok) throw new Error(`Could not fetch the public miner.yaml (HTTP ${yamlResponse.status}).`);
 const yaml = await yamlResponse.text();
-const endpointIntentsLine = yaml.match(/^\\s+intents:\\s*\\[([^\\]]+)\\]\\s*$/m)?.[1];
+const endpointIntentsLine = yaml.match(/^\s+intents:\s*\[([^\]]+)\]\s*$/m)?.[1];
 if (!endpointIntentsLine) throw new Error("Could not read endpoint intents from miner.yaml.");
 const expectedIntents = endpointIntentsLine.split(",").map(value => value.trim()).filter(Boolean);
 if (expectedIntents.length !== 29 || new Set(expectedIntents).size !== expectedIntents.length) {
