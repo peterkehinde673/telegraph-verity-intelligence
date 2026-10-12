@@ -399,6 +399,8 @@ endpoints:
       - DNS_RECORD_LOOKUP
     - CODE_REVIEW
     - URL_SAFE
+    - THREAT_IP_REPUTATION
+    - THREAT_INTELLIGENCE
     - CODE_REVIEW
     content_type: application/json
     params:
@@ -474,6 +476,46 @@ endpoints:
             intents:
               - URL_SAFE
             description: Intent-specific input object. Required field: url.
+  - path: /v1/intent
+    external_path: /v1/intent
+    method: POST
+    description: Assess a public IP address against AbuseIPDB reputation reports. The request body uses intent and input containing ip or ip_address.
+    intents:
+      - THREAT_IP_REPUTATION
+    content_type: application/json
+    params:
+      body:
+        required:
+          - name: intent
+            type: string
+            intents:
+              - THREAT_IP_REPUTATION
+            description: Canonical Intent name; must be THREAT_IP_REPUTATION.
+          - name: input
+            type: object
+            intents:
+              - THREAT_IP_REPUTATION
+            description: Intent-specific input object. Required field: ip or ip_address.
+  - path: /v1/intent
+    external_path: /v1/intent
+    method: POST
+    description: Query AlienVault OTX threat intelligence for an IP, domain, URL, or SHA-256 hash. The request body uses intent and input containing indicator and optional indicator_type.
+    intents:
+      - THREAT_INTELLIGENCE
+    content_type: application/json
+    params:
+      body:
+        required:
+          - name: intent
+            type: string
+            intents:
+              - THREAT_INTELLIGENCE
+            description: Canonical Intent name; must be THREAT_INTELLIGENCE.
+          - name: input
+            type: object
+            intents:
+              - THREAT_INTELLIGENCE
+            description: Intent-specific input object. Required field: indicator and optional indicator_type.
 semantics:
   supported_intents:
     - FACT_CHECK
