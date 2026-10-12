@@ -1,4 +1,4 @@
-import type { VerityResponse } from "../contracts/verity-response.js";
+import type { VerityEvidence, VerityResponse } from "../contracts/verity-response.js";
 import { normalizeEvidence } from "../evidence/normalize.js";
 
 export interface CodeReviewFinding {
@@ -92,7 +92,7 @@ export async function reviewCode(
 
   const lines = normalized.split(/\r?\n/);
   const findings: CodeReviewFinding[] = [];
-  const evidence = [];
+  const evidence: VerityEvidence[] = [];
 
   lines.forEach((line, index) => {
     for (const rule of RULES) {
