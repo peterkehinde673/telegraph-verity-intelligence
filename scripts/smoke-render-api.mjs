@@ -48,7 +48,7 @@ const seasonII = [
   ["THREAT_IP_REPUTATION", { ip_address: "999.999.1.1" }, "rejected"],
   ["THREAT_INTELLIGENCE", { indicator: "example.com", indicator_type: "invalid" }, "rejected"],
   ["SECURITY_REVIEW", {}, "rejected"],
-  ["REGRESSION_VERIFY", { base_url: "http://example.com", checks: [{ path: "/health" }] }, "rejected"],
+  ["REGRESSION_VERIFY", { base_url: "http://example.com", checks: [{ path: "/health" }] }, "insufficient_evidence"],
   ["CODE_PATCH_VERIFY", { repository: "peterkehinde673/telegraph-verity-intelligence", commit_sha: "not-a-sha" }, "rejected"],
   ["VULNERABILITY_TRIAGE", { findings: [] }, "rejected"]
 ];
