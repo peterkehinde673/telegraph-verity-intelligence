@@ -15,7 +15,8 @@
     "preflight:registration": "npm run verify:telegraph && npm run preflight:miner",
     "smoke:render": "node scripts/smoke-render-api.mjs",
     "preflight:deployment": "npm run build && npm run smoke:render",
-    "verify:miner-live": "node scripts/verify-live-miner.mjs"
+    "verify:miner-live": "node scripts/verify-live-miner.mjs",
+    "validate:miner-integrate": "node scripts/validate-miner-integrate.mjs"
   },
   "engines": {
     "node": ">=20"
