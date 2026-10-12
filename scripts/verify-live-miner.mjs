@@ -26,5 +26,6 @@ console.log(JSON.stringify({
   slug: miner.slug ?? expectedSlug,
   id: miner.id ?? miner.miner_id ?? null,
   activation_status: status,
-  supported_intents: miner.supported_intents ?? miner.intents ?? null
+  supported_intents_reported_by_registry: miner.supported_intents ?? miner.intents ?? null,
+  limitation: "This check confirms miner catalogue presence only. It does not verify that miner.yaml was registered or updated through the Telegraph Integrate dashboard, nor that Explorer displays all repository intents."
 }, null, 2));
