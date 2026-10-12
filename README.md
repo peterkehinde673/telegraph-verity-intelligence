@@ -59,7 +59,8 @@ The working branch declares 29 Telegraph Intents. Each intent should only be adv
 
 ## Project Status
 
-- **Miner registration:** Registered on Telegraph as `telegraph-verity-intelligence`, Miner ID `5530`.
+- **Miner registry presence:** The project has a recorded miner slug `telegraph-verity-intelligence` and Miner ID `5530`; the automated live-registry check only confirms catalogue presence/activation.
+- **Dashboard registration is separate:** Changes to `miner.yaml.template` or repository intent handlers do not update the registered miner configuration. After changing the intent list or endpoint schema, validate the final `miner.yaml` and submit/register the updated YAML through the Telegraph Integrate dashboard. Then verify the dashboard result and Explorer's displayed intent list. A passing registry-presence check is not proof that the updated YAML is registered.
 - **Public explorer:** https://explorer.telegraphprotocol.com/miners/telegraph-verity-intelligence
 - **Production API:** https://telegraph-verity-intelligence-api.onrender.com
 - **API status endpoints:** `GET /health` and `GET /intents`.
@@ -76,4 +77,5 @@ The 29 Intent names are the canonical scope implemented in this repository and d
 1. Run `npm run smoke:render` to verify live health, the exact 29-intent catalogue, and response contracts for safe validation requests to all seven Season II handlers. The production health and catalogue endpoints have been manually confirmed by the project owner; the automated POST checks should be monitored in GitHub Actions.
 2. Configure `GOOGLE_SAFE_BROWSING_API_KEY`, `ABUSEIPDB_API_KEY`, and `OTX_API_KEY` in Render if provider-backed reputation results are required; without these, the handlers abstain with `insufficient_evidence`.
 3. Configure `REGRESSION_ALLOWED_HOSTS` before using REGRESSION_VERIFY; it only executes read-only GET probes. CODE_PATCH_VERIFY uses the public GitHub Checks API; configure `GITHUB_TOKEN` only if higher API rate limits are needed.
-4. Expand plagiarism checking only after adding a reliable, permissioned comparison corpus and measuring false positives/negatives.
+4. Register the final `miner.yaml` through the Telegraph Integrate dashboard whenever the declared intents or endpoint configuration changes; verify the dashboard's registration/update result and confirm Explorer shows the same 29 intents.
+5. Expand plagiarism checking only after adding a reliable, permissioned comparison corpus and measuring false positives/negatives.
