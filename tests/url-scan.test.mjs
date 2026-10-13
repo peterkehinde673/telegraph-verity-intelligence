@@ -1,6 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { scanUrl } from "../dist/intents/url-scan.js";
+import { scanUrl, requestPinnedAddress } from "../dist/intents/url-scan.js";
+import { createServer } from "node:https";
+import { execFileSync } from "node:child_process";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+
 
 test("URL scan rejects unsupported schemes before network access", async () => {
   let called = false;
@@ -297,4 +303,39 @@ test("URL scan re-resolves each redirect hostname and blocks a changed private a
   assert.equal(result.uncertainty[0]?.code, "non_public_target");
   assert.equal(lookups, 2);
   assert.equal(requests, 1, "the second DNS result must be checked before requesting the redirect");
+});
+
+
+test("pinned HTTPS transport rejects a self-signed TLS certificate", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "verity-tls-test-"));
+  const keyPath = join(dir, "key.pem");
+  const certPath = join(dir, "cert.pem");
+  let server;
+  try {
+    execFileSync("openssl", [
+      "req", "-x509", "-newkey", "rsa:2048", "-nodes",
+      "-keyout", keyPath, "-out", certPath, "-days", "1",
+      "-subj", "/CN=localhost"
+    ], { stdio: "ignore" });
+    server = createServer({
+      key: readFileSync(keyPath),
+      cert: readFileSync(certPath)
+    }, (_req, res) => {
+      res.writeHead(200, { "content-type": "text/plain" });
+      res.end("should not be trusted");
+    });
+    await new Promise((resolve, reject) => {
+      server.once("error", reject);
+      server.listen(0, "127.0.0.1", resolve);
+    });
+    const address = server.address();
+    assert.ok(address && typeof address === "object");
+    await assert.rejects(
+      requestPinnedAddress(new URL(`https://localhost:${address.port}/`), "127.0.0.1", 2000),
+      /certificate|self-signed|issuer/i
+    );
+  } finally {
+    if (server?.listening) await new Promise(resolve => server.close(resolve));
+    rmSync(dir, { recursive: true, force: true });
+  }
 });
