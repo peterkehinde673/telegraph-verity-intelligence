@@ -69,8 +69,16 @@ function isPrivateAddress(address: string): boolean {
   // excluding documentation and transition ranges that should not be scanned.
   const firstHextet = Number.parseInt(normalized.split(":")[0] || "0", 16);
   if (!Number.isFinite(firstHextet) || firstHextet < 0x2000 || firstHextet > 0x3fff) return true;
-  return normalized.startsWith("2001:db8:") || normalized.startsWith("2001:0000:") ||
-    normalized.startsWith("2002:");
+  // Exclude special-purpose IPv6 ranges that fall inside 2000::/3.
+  // These include documentation, protocol assignment/benchmarking, ORCHID,
+  // and documentation prefixes; they are not general public scan targets.
+  return normalized.startsWith("2001:db8:") ||
+    normalized.startsWith("2001:0000:") ||
+    normalized.startsWith("2001:2:") ||
+    normalized.startsWith("2001:10:") ||
+    normalized.startsWith("2001:20:") ||
+    normalized.startsWith("2002:") ||
+    normalized.startsWith("3fff:");
 }
 
 export async function requestPinnedAddress(url: URL, address: string, timeoutMs: number): Promise<Response> {
