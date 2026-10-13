@@ -133,7 +133,9 @@ async function resolvePublicHost(
   timeoutMs: number,
   useSystemLookup: boolean
 ): Promise<string[]> {
-  const unbracketedHost = hostname.replace(/^\\[|\\]$/g, "");
+  const unbracketedHost = hostname.startsWith("[") && hostname.endsWith("]")
+    ? hostname.slice(1, -1)
+    : hostname;
   if (isIP(unbracketedHost)) {
     if (isPrivateAddress(unbracketedHost)) throw new Error("Target address is not publicly routable");
     return [unbracketedHost];
