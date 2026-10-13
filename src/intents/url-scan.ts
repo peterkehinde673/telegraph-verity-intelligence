@@ -73,7 +73,7 @@ function isPrivateAddress(address: string): boolean {
     normalized.startsWith("2002:");
 }
 
-async function requestPinnedAddress(url: URL, address: string, timeoutMs: number): Promise<Response> {
+export async function requestPinnedAddress(url: URL, address: string, timeoutMs: number): Promise<Response> {
   return await new Promise((resolve, reject) => {
     const transport = url.protocol === "https:" ? https : http;
     const pinnedLookup = ((_hostname: string, options: { all?: boolean }, callback: (error: NodeJS.ErrnoException | null, address: string | Array<{ address: string; family: number }>, family?: number) => void) => {
