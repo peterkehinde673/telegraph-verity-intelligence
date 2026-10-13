@@ -339,3 +339,23 @@ test("pinned HTTPS transport rejects a self-signed TLS certificate", async () =>
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+
+test("URL scan blocks IPv6 special-purpose and documentation ranges", async (t) => {
+  const cases = [
+    ["2001:db8::1", "documentation"],
+    ["2001:2::1", "benchmarking"],
+    ["2001:10::1", "ORCHID"],
+    ["2001:20::1", "ORCHIDv2"],
+    ["3fff::1", "documentation"]
+  ];
+  for (const [address, label] of cases) {
+    await t.test(label, async () => {
+      const result = await scanUrl(`https://[${address}]/`, {
+        fetchImpl: async () => { throw new Error("network must not be called"); }
+      });
+      assert.equal(result.verdict, "rejected");
+      assert.equal(result.uncertainty[0]?.code, "non_public_target");
+    });
+  }
+});
