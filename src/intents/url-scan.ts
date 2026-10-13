@@ -1,5 +1,5 @@
 import { promises as dns } from "node:dns";
-import { Resolver } from "node:dns";
+import { Resolver } from "node:dns/promises";
 import * as http from "node:http";
 import * as https from "node:https";
 import { isIP } from "node:net";
