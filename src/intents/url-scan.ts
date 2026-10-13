@@ -1,4 +1,5 @@
 import { promises as dns } from "node:dns";
+import { Resolver } from "node:dns/promises";
 import * as http from "node:http";
 import * as https from "node:https";
 import { isIP } from "node:net";
@@ -129,36 +130,80 @@ export async function requestPinnedAddress(url: URL, address: string, timeoutMs:
 async function resolvePublicHost(
   hostname: string,
   lookup: typeof dns.lookup,
-  timeoutMs: number
+  timeoutMs: number,
+  useSystemLookup: boolean
 ): Promise<string[]> {
-  const unbracketedHost = hostname.replace(/^\[|\]$/g, "");
+  const unbracketedHost = hostname.startsWith("[") && hostname.endsWith("]")
+    ? hostname.slice(1, -1)
+    : hostname;
   if (isIP(unbracketedHost)) {
     if (isPrivateAddress(unbracketedHost)) throw new Error("Target address is not publicly routable");
     return [unbracketedHost];
   }
 
+  if (!useSystemLookup) {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let results: Array<{ address: string; family: number }>;
+    try {
+      results = await Promise.race([
+        lookup(unbracketedHost, { all: true, verbatim: true }) as Promise<Array<{ address: string; family: number }>>,
+        new Promise<never>((_resolve, reject) => {
+          timer = setTimeout(() => reject(new Error("DNS lookup timed out")), timeoutMs);
+        })
+      ]);
+    } catch (error) {
+      if (error instanceof Error && /DNS lookup timed out/.test(error.message)) {
+        throw new Error("DNS lookup timed out");
+      }
+      throw new Error("DNS lookup failed");
+    } finally {
+      if (timer) clearTimeout(timer);
+    }
+    const addresses = results.map((entry) => entry.address);
+    if (addresses.length === 0 || addresses.some(isPrivateAddress)) {
+      throw new Error("Target hostname resolves to a non-public address");
+    }
+    return addresses;
+  }
+
+  // Resolver.cancel() actually cancels outstanding DNS queries when the
+  // deadline expires; Promise.race around dns.lookup alone only stops waiting.
+  const resolver = new Resolver();
+  const servers = dns.getServers();
+  if (servers.length > 0) resolver.setServers(servers);
   let timer: ReturnType<typeof setTimeout> | undefined;
-  let results: Array<{ address: string; family: number }>;
   try {
-    results = await Promise.race([
-      lookup(unbracketedHost, { all: true, verbatim: true }) as Promise<Array<{ address: string; family: number }>>,
+    const resolveFamily = async (family: 4 | 6): Promise<string[]> => {
+      try {
+        return family === 4
+          ? await resolver.resolve4(unbracketedHost)
+          : await resolver.resolve6(unbracketedHost);
+      } catch {
+        return [];
+      }
+    };
+    const addresses = await Promise.race([
+      Promise.all([resolveFamily(4), resolveFamily(6)]).then(([v4, v6]) => [...v4, ...v6]),
       new Promise<never>((_resolve, reject) => {
-        timer = setTimeout(() => reject(new Error("DNS lookup timed out")), timeoutMs);
+        timer = setTimeout(() => {
+          resolver.cancel();
+          reject(new Error("DNS lookup timed out"));
+        }, timeoutMs);
       })
     ]);
+    if (addresses.length === 0 || addresses.some(isPrivateAddress)) {
+      throw new Error("Target hostname resolves to a non-public address");
+    }
+    return addresses;
   } catch (error) {
     if (error instanceof Error && /DNS lookup timed out/.test(error.message)) {
       throw new Error("DNS lookup timed out");
     }
+    if (error instanceof Error && /non-public address/.test(error.message)) throw error;
     throw new Error("DNS lookup failed");
   } finally {
     if (timer) clearTimeout(timer);
   }
-  const addresses = results.map((entry) => entry.address);
-  if (addresses.length === 0 || addresses.some(isPrivateAddress)) {
-    throw new Error("Target hostname resolves to a non-public address");
-  }
-  return addresses;
 }
 
 export async function scanUrl(
@@ -229,7 +274,7 @@ export async function scanUrl(
   for (let attempt = 0; attempt <= maxRedirects; attempt += 1) {
     let resolvedAddresses: string[];
     try {
-      resolvedAddresses = await resolvePublicHost(current.hostname, lookup, timeoutMs);
+      resolvedAddresses = await resolvePublicHost(current.hostname, lookup, timeoutMs, options.lookupImpl === undefined);
     } catch (error) {
       return {
         intent: "URL_SCAN",
