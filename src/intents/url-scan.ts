@@ -82,7 +82,7 @@ function isPrivateAddress(address: string): boolean {
   return (first === 0x2001 && second === 0x0db8) ||
     (first === 0x2001 && second <= 0x01ff) ||
     first === 0x2002 ||
-    (first === 0x3fff && (second & 0xfff0) === 0x0000) ||
+    (first === 0x3fff && (second & 0xf000) === 0x0000) ||
     // Also reject transition/documentation ranges using their canonical prefixes.
     (first === 0x2001 && second === 0x0000) ||
     (first === 0x2001 && second === 0x0002) ||
