@@ -32,3 +32,43 @@ test("SSL verification rejects an invalid timeout before opening a socket", asyn
   assert.equal(result.uncertainty[0]?.code, "invalid_timeout");
   assert.equal(called, false);
 });
+
+
+test("SSL verification normalizes connection refusal to an uncertain response", async () => {
+  const { EventEmitter } = await import("node:events");
+  const { verifySsl } = await import("../dist/intents/ssl-verification.js");
+  const socket = new EventEmitter();
+  socket.setTimeout = () => socket;
+  socket.destroy = () => socket;
+  const resultPromise = verifySsl("refused.example", 443, {
+    connectImpl: () => socket
+  });
+  const error = Object.assign(new Error("connect ECONNREFUSED internal host detail"), { code: "ECONNREFUSED" });
+  socket.emit("error", error);
+  const result = await resultPromise;
+  assert.equal(result.intent, "SSL_VERIFICATION");
+  assert.equal(result.verdict, "uncertain");
+  assert.equal(result.confidence, 0);
+  assert.equal(result.uncertainty[0]?.code, "tls_connection_failed");
+  assert.doesNotMatch(result.uncertainty[0]?.message ?? "", /internal host detail|ECONNREFUSED/);
+});
+
+test("SSL verification normalizes a socket timeout and destroys the socket", async () => {
+  const { EventEmitter } = await import("node:events");
+  const { verifySsl } = await import("../dist/intents/ssl-verification.js");
+  const socket = new EventEmitter();
+  let timeoutHandler;
+  let destroyed = false;
+  socket.setTimeout = (_ms, callback) => { timeoutHandler = callback; return socket; };
+  socket.destroy = () => { destroyed = true; return socket; };
+  const resultPromise = verifySsl("slow.example", 443, {
+    timeoutMs: 5,
+    connectImpl: () => socket
+  });
+  assert.equal(typeof timeoutHandler, "function");
+  timeoutHandler();
+  const result = await resultPromise;
+  assert.equal(result.verdict, "uncertain");
+  assert.equal(result.uncertainty[0]?.code, "tls_connection_failed");
+  assert.equal(destroyed, true);
+});
