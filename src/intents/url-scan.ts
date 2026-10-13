@@ -69,16 +69,26 @@ function isPrivateAddress(address: string): boolean {
   // excluding documentation and transition ranges that should not be scanned.
   const firstHextet = Number.parseInt(normalized.split(":")[0] || "0", 16);
   if (!Number.isFinite(firstHextet) || firstHextet < 0x2000 || firstHextet > 0x3fff) return true;
-  // Exclude special-purpose IPv6 ranges that fall inside 2000::/3.
-  // These include documentation, protocol assignment/benchmarking, ORCHID,
-  // and documentation prefixes; they are not general public scan targets.
-  return normalized.startsWith("2001:db8:") ||
-    normalized.startsWith("2001:0000:") ||
-    normalized.startsWith("2001:2:") ||
-    normalized.startsWith("2001:10:") ||
-    normalized.startsWith("2001:20:") ||
-    normalized.startsWith("2002:") ||
-    normalized.startsWith("3fff:");
+  // Expand the first hextets so equivalent compressed and expanded IPv6
+  // spellings receive the same special-purpose range checks.
+  const hextets = normalized.split(":");
+  const first = Number.parseInt(hextets[0] || "0", 16);
+  const second = Number.parseInt(hextets[1] || "0", 16);
+  const third = Number.parseInt(hextets[2] || "0", 16);
+  const fourth = Number.parseInt(hextets[3] || "0", 16);
+
+  // 2001:db8::/32 documentation; 2001::/23 IETF protocol assignments
+  // (including benchmarking and ORCHID); 2002::/16 6to4; 3fff::/20 docs.
+  return (first === 0x2001 && second === 0x0db8) ||
+    (first === 0x2001 && second <= 0x01ff) ||
+    first === 0x2002 ||
+    (first === 0x3fff && (second & 0xfff0) === 0x0000) ||
+    // Also reject transition/documentation ranges using their canonical prefixes.
+    (first === 0x2001 && second === 0x0000) ||
+    (first === 0x2001 && second === 0x0002) ||
+    (first === 0x2001 && second === 0x0010) ||
+    (first === 0x2001 && second === 0x0020) ||
+    (first === 0x2001 && third === 0x0000 && fourth === 0x0000);
 }
 
 export async function requestPinnedAddress(url: URL, address: string, timeoutMs: number): Promise<Response> {
