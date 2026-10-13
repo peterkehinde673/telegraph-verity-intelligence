@@ -359,3 +359,22 @@ test("URL scan blocks IPv6 special-purpose and documentation ranges", async (t) 
     });
   }
 });
+
+
+test("URL scan blocks expanded IPv6 special-purpose prefixes", async (t) => {
+  const cases = [
+    ["2001:0db8:0000:0000:0000:0000:0000:0001", "expanded documentation prefix"],
+    ["2001:0002:0000:0000:0000:0000:0000:0001", "expanded benchmarking prefix"],
+    ["2001:0010:0000:0000:0000:0000:0000:0001", "expanded ORCHID prefix"],
+    ["3fff:0000:0000:0000:0000:0000:0000:0001", "expanded documentation prefix"]
+  ];
+  for (const [address, label] of cases) {
+    await t.test(label, async () => {
+      const result = await scanUrl(`https://[${address}]/`, {
+        fetchImpl: async () => { throw new Error("network must not be called"); }
+      });
+      assert.equal(result.verdict, "rejected");
+      assert.equal(result.uncertainty[0]?.code, "non_public_target");
+    });
+  }
+});
