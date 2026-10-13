@@ -1,0 +1,33 @@
+name: Render production smoke test
+
+on:
+  push:
+    branches:
+      - main
+      - foundation/verity-20-intents
+  workflow_dispatch:
+  schedule:
+    - cron: "17 */6 * * *"
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Verify production health, intent catalogue, and Season II response contracts
+        run: node scripts/smoke-render-api.mjs
+      - name: Validate miner.yaml with Telegraph Integrate's live validator
+        if: always()
+        run: npm run validate:miner-integrate
+      - name: Check Telegraph miner registry presence (not dashboard YAML registration)
+        if: always()
+        run: npm run verify:miner-live
