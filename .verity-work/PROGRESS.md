@@ -64,3 +64,11 @@ This file tracks execution status for the frozen `.verity-work/MASTER_PLAN.md`. 
 - If prior evaluation details are not available through public/read-only endpoints or existing project files, record that blocker and ask for a previous registration ID or rejection screenshot only after exhausting available sources. Do not fabricate candidate/champion metrics or private benchmark cases.
 - Official reference: https://docs.telegraphprotocol.com/docs/scoring/build-a-scoring-module
 - This is a strategy/log-only note. No source code, master plan, registration, deployment, or production configuration changed.
+
+## Historical experiment-branch audit — 2026-10-14
+
+- Read-only GitHub branch search found multiple older FACT_CHECK experiment branches, including `experiment/verity-fact-check-calibration-v22`, `experiment/verity-fact-check-scaled-quantities-v37`, and `experiment/verity-fact-check-eval-timeboxed-v38`, alongside many label/synonym variants. This confirms earlier iterative FACT_CHECK experimentation exists in repository history and reinforces the user's report that repeated attempts did not beat the champion.
+- The sampled branch READMEs still state that the scoring module/WASM is not built or registered; they document miner/API state, not necessarily prior external Integrate submissions. No authoritative EvalDetails, EvalScore, EvalErrorCount, RejectionReason, or candidate/champion benchmark results were found by the searches performed in this batch.
+- Do not infer that these answer-handler experiments are scorer experiments or that any particular variant failed a specific acceptance gate; the evidence is insufficient. Next read-only step is to inspect commit histories/diffs for the older FACT_CHECK branches and their evaluation/test artifacts, and search PR/CI metadata for recorded comparative results.
+- Batch E remains blocked for measured protocol-score comparison. No batch completion checkbox changed in this note because the acceptance criteria for scoring diagnosis are not yet satisfied.
+- No source code, scorer, master plan, registration, deployment, or production configuration changed; only this progress-log note was appended.
