@@ -18,7 +18,7 @@ This file tracks execution status for the frozen `.verity-work/MASTER_PLAN.md`. 
 - [x] CI #546 passed on latest progress-log commit `4f74c4cfd35cdb1831f3d6422713a326006560c5`; latest run status verified from GitHub Actions.
 - [x] Batch A complete: target handlers, response contract/dispatcher, provider adapter semantics, focused tests, and intent documentation inspected; exact test commands and baseline commit recorded.
 - [x] Batch B complete: public regression/evaluation cases now cover malformed extractor output, non-finite deepfake probability, indeterminate detector output, and DNS lookup failure without fetching; CI #549 passed on commit `081d260e41459ee4389d0a1e8e268d215562a361`. Public cases are reproducible regression tests, not private holdout data.
-- [ ] Batch D: review content extraction and URL scan for defensible, contract-supported changes; no speculative changes based only on content length.
+- [x] Batch D complete: reviewed CONTENT_EXTRACTION and URL_SCAN handlers, contracts, and regression tests. No source-code change was justified by the current contract/evidence: extraction has no completeness signal, while URL_SCAN already enforces DNS/public-address/redirect/TLS protections. Avoided speculative confidence changes and left production/source handlers unchanged. CI #551 passed for the progress-log state.
 - [ ] Batch E: compare before/after scores using the protocol's actual evaluator; no score gain or rank movement claimed yet.
 - [ ] Batch F: evaluate remaining supported intents after first three pass acceptance gates.
 - [ ] Batch G: scorer build/structural checks and authoritative leaderboard verification (read-only; no registration).
