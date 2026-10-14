@@ -58,3 +58,44 @@ test("URL_SCAN reports reachability evidence without asserting destination safet
   assert.equal(result.intent, "URL_SCAN");
   assert.ok(Array.isArray(result.evidence));
 });
+
+test("CONTENT_EXTRACTION abstains on a malformed extractor response", async () => {
+  const result = await contentExtraction("https://example.com/article", {
+    extractImpl: async () => null,
+    now: () => "2026-10-14T00:00:00.000Z"
+  });
+
+  assert.equal(result.verdict, "insufficient_evidence");
+  assert.equal(result.confidence, 0);
+  assert.equal(result.answer.content, "");
+});
+
+test("DEEPFAKE_DETECTION does not treat a non-finite probability as confidence", async () => {
+  const result = await detectDeepfake("media://malformed-score", {
+    detectImpl: async () => ({
+      media_type: "image",
+      signal: "manipulated_likely",
+      manipulation_probability: Number.NaN,
+      indicators: []
+    }),
+    now: () => "2026-10-14T00:00:00.000Z"
+  });
+
+  assert.equal(result.answer.manipulation_probability, null);
+  assert.equal(result.confidence, 0);
+});
+
+test("URL_SCAN abstains on DNS lookup failure without attempting fetch", async () => {
+  let fetched = false;
+  const result = await scanUrl("https://dns-failure.example", {
+    lookupImpl: async () => { throw new Error("fixture DNS failure"); },
+    fetchImpl: async () => {
+      fetched = true;
+      return new Response("must not fetch", { status: 200 });
+    },
+    now: () => "2026-10-14T00:00:00.000Z"
+  });
+
+  assert.notEqual(result.verdict, "confirmed");
+  assert.equal(fetched, false);
+});
