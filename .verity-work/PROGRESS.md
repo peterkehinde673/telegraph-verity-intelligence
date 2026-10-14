@@ -10,7 +10,7 @@ This file tracks execution status for the frozen `.verity-work/MASTER_PLAN.md`. 
 - [x] Recorded repository checks: `npm run typecheck`, `npm run build`, `npm test`; CI uses Node 20.
 - [x] Pinned code-review baseline to commit `9eb4dc5f56a184fcfaa2fa07fc51d23a17a9ab7a`.
 - [x] Created isolated candidate branch `verity/score-improvements-batch-1` and draft PR #48.
-- [x] Batch C: CI #542 diagnosis complete; typecheck/build passed, tests had 223 pass / 2 fail.
+- [x] Batch C complete: baseline CI #542 had typecheck/build pass and 223 tests pass / 2 fail; failures isolated to an invalid content-length assumption and indeterminate deepfake confidence semantics. After correcting the test and applying the narrow deepfake candidate, CI #549 passed on commit `081d260e41459ee4389d0a1e8e268d215562a361`. No protocol-score or leaderboard improvement is inferred from unit-test results.
 - [x] Fixed invalid content-extraction test assumption: short text alone cannot prove an extraction is incomplete.
 - [x] Implemented candidate deepfake fix: `indeterminate` signal now has zero verdict confidence while retaining normalized manipulation probability as answer data.
 - [x] CI #544 passed on code/test commit `6c76e6493790699c1d44e414ce734084c19b40ac`.
