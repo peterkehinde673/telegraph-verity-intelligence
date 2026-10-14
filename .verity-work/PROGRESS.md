@@ -16,7 +16,7 @@ This file tracks execution status for the frozen `.verity-work/MASTER_PLAN.md`. 
 - [x] CI #544 passed on code/test commit `6c76e6493790699c1d44e414ce734084c19b40ac`.
 - [x] CI #545 passed on progress-log commit `36380458d032e447a434752108efd908c40da44c`.
 - [x] CI #546 passed on latest progress-log commit `4f74c4cfd35cdb1831f3d6422713a326006560c5`; latest run status verified from GitHub Actions.
-- [ ] Batch A fully complete: provider probability calibration contracts still need stronger verification.
+- [x] Batch A complete: target handlers, response contract/dispatcher, provider adapter semantics, focused tests, and intent documentation inspected; exact test commands and baseline commit recorded.
 - [ ] Batch B fully complete: broaden adversarial coverage; true holdout cases remain outside public GitHub.
 - [ ] Batch D: review content extraction and URL scan for defensible, contract-supported changes; no speculative changes based only on content length.
 - [ ] Batch E: compare before/after scores using the protocol's actual evaluator; no score gain or rank movement claimed yet.
