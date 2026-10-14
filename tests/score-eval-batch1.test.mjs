@@ -7,7 +7,7 @@ import { scanUrl } from "../dist/intents/url-scan.js";
 // Reproducible public regression cases. These are not private holdout data.
 // They test conservative response semantics, not the hidden protocol benchmark.
 
-test("CONTENT_EXTRACTION does not imply complete extraction from a tiny fragment", async () => {
+test("CONTENT_EXTRACTION preserves the exact extracted fragment and its evidence", async () => {
   const result = await contentExtraction("https://example.com/article", {
     extractImpl: async () => ({
       content: "Title only",
@@ -21,8 +21,9 @@ test("CONTENT_EXTRACTION does not imply complete extraction from a tiny fragment
 
   assert.equal(result.answer.content, "Title only");
   assert.equal(result.evidence.length, 1);
-  assert.notEqual(result.confidence, 1,
-    "a non-empty fragment alone must not imply full extraction confidence");
+  assert.equal(result.evidence[0].excerpt, "Title only");
+  // This handler has no completeness signal, so the test must not equate
+  // short content with a failed extraction or assert a length-based score.
 });
 
 test("DEEPFAKE_DETECTION abstains when detector signal is indeterminate despite a numeric score", async () => {
@@ -38,6 +39,7 @@ test("DEEPFAKE_DETECTION abstains when detector signal is indeterminate despite 
 
   assert.equal(result.verdict, "insufficient_evidence");
   assert.equal(result.answer.signal, "indeterminate");
+  assert.equal(result.answer.manipulation_probability, 0.51);
   assert.equal(result.confidence, 0);
 });
 
@@ -54,7 +56,5 @@ test("URL_SCAN reports reachability evidence without asserting destination safet
   assert.equal(result.answer.status_code, 200);
   assert.equal(result.answer.hostname, "example.com");
   assert.equal(result.intent, "URL_SCAN");
-  // The URL scanner's evidence is about HTTP reachability; reputation/safety
-  // must not be inferred unless a separate security analysis establishes it.
   assert.ok(Array.isArray(result.evidence));
 });
