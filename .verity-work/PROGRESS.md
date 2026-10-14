@@ -54,3 +54,13 @@ This file tracks execution status for the frozen `.verity-work/MASTER_PLAN.md`. 
 - This is a legitimate route for **structural and fixture-based local evaluation** without registration. It does not expose the private live benchmark or prove actual protocol score/rank.
 - Batch E remains BLOCKED for authoritative before/after protocol scoring until a candidate scorer and a lawful, available benchmark fixture can be tested. Do not register or deploy; do not claim rank improvement.
 - No repository source, scorer binary, miner configuration, or master plan changed in this follow-up; only this progress-log note was appended.
+
+## Scoring-gap strategy reset — 2026-10-14
+
+- User reports the FACT_CHECK WASM scorer was already built and submitted repeatedly through Telegraph Integrate in earlier work, but never outranked the champion. Treat this as important prior-work context; do not repeat build/register attempts without first diagnosing historical evaluation results.
+- README's “not yet built or registered” statement describes repository state only and may not capture earlier submissions made outside this branch. Do not use it to conclude no prior submissions existed.
+- Official scoring guide explains champion acceptance hinges on benchmark comparisons: perfect-answer self-match at least 0.75, score spread above a floor, candidate good-vs-bad wins at least champion wins, average candidate margin at least champion margin, plus historical-answer agreement when sufficient traffic exists. Registration records expose `EvalScore`, `EvalDetails`, `EvalErrorCount`, and `RejectionReason`; these diagnostics are the highest-value next evidence.
+- Best next batch is **diagnose-before-build**: locate any previous FACT_CHECK WASM registration IDs/statuses or saved EvalDetails/rejection reasons, inspect scorer source and historical attempts if available, and map the exact failing acceptance gate. Do not change scorer code or register anything until this is known.
+- If prior evaluation details are not available through public/read-only endpoints or existing project files, record that blocker and ask for a previous registration ID or rejection screenshot only after exhausting available sources. Do not fabricate candidate/champion metrics or private benchmark cases.
+- Official reference: https://docs.telegraphprotocol.com/docs/scoring/build-a-scoring-module
+- This is a strategy/log-only note. No source code, master plan, registration, deployment, or production configuration changed.
