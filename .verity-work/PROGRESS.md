@@ -45,3 +45,12 @@ This file tracks execution status for the frozen `.verity-work/MASTER_PLAN.md`. 
 - CI #545 and #546 passed after progress-log-only updates.
 - No production code path, registration, deployment, on-chain transaction, or production configuration changed.
 - Next: inspect provider contract semantics and decide whether content extraction or URL scan warrants a candidate change backed by a test and evaluator evidence.
+
+## Batch E follow-up — local evaluation path identified (2026-10-14)
+
+- Read the official Telegraph scoring-module guide: https://docs.telegraphprotocol.com/docs/scoring/build-a-scoring-module
+- Confirmed the scorer is a separate WASM component with exports `alloc`, `dealloc`, and `rank_answer`; it receives question, ground-truth, and miner-answer text and returns a score in [0, 1].
+- The guide documents a registration-free local testing path using the example `go-tester` and a locally built `wasm32-unknown-unknown` binary. Required checks include empty-answer score 0, correct answer beating unrelated answer, robustness to long/non-English input, and intent-specific benchmark separation against the champion.
+- This is a legitimate route for **structural and fixture-based local evaluation** without registration. It does not expose the private live benchmark or prove actual protocol score/rank.
+- Batch E remains BLOCKED for authoritative before/after protocol scoring until a candidate scorer and a lawful, available benchmark fixture can be tested. Do not register or deploy; do not claim rank improvement.
+- No repository source, scorer binary, miner configuration, or master plan changed in this follow-up; only this progress-log note was appended.
