@@ -76,14 +76,17 @@ export async function detectDeepfake(
     const sourceId = detection.source_id ?? "deepfake-detector";
 
     return {
-      intent: "DEEPFAKE_DETECTION",
       verdict:
         detection.signal === "manipulated_likely"
           ? "likely"
           : detection.signal === "authentic_likely"
             ? "confirmed"
             : "insufficient_evidence",
-      confidence: probability ?? 0,
+      // A numeric manipulation probability is not calibrated confidence in
+      // an indeterminate verdict. Keep the raw probability in the answer,
+      // but abstentions carry zero verdict confidence.
+      confidence: detection.signal === "indeterminate" ? 0 : probability ?? 0,
+      intent: "DEEPFAKE_DETECTION",
       answer: {
         media_type: detection.media_type,
         signal: detection.signal,
