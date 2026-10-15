@@ -439,6 +439,16 @@ mod tests {
     }
 
     #[test]
+    fn real_clean_pair_fixture_keeps_terse_answer_near_verbatim() {
+        let truth = b"The submitted essay 'Coastal Erosion in Kerala' is assessed as plagiarised. Similarity to the reference corpus is 68%, derived from 7 matching passages against Journal of Coastal Research, 2019. Confidence in this assessment is 0.94.";
+        let terse = b"plagiarised; 68% similar; 7 matches; Journal of Coastal Research, 2019.";
+        let exact_score = score_bytes(b"Verify originality", truth, truth);
+        let terse_score = score_bytes(b"Verify originality", truth, terse);
+        assert!((exact_score - terse_score).abs() <= 0.05,
+            "clean-pair near-equality failed: exact={exact_score}, terse={terse_score}");
+    }
+
+    #[test]
     fn exact_answer_scores_one() {
         assert_eq!(score_bytes(b"capital?", b"Paris is the capital of France.", b"Paris is the capital of France."), 1.0);
     }
