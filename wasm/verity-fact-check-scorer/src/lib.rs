@@ -518,7 +518,7 @@ fn score_bytes(_question: &[u8], truth: &[u8], answer: &[u8]) -> f32 {
     // when lexical support is already substantial. This is an experiment to
     // reduce verbosity bias, not a claim of semantic equivalence.
     let anchors = evidence_anchor_coverage(_question, truth, answer);
-    if overlap >= 0.45 && anchors >= 0.60 {
+    if overlap >= 0.30 && anchors >= 0.60 {
         // Cap the bonus to reduce score spread caused by noisy anchor counts.
         // This deliberately tests a fixed ceiling; it is not accepted unless
         // clean-pair consistency improves without hurting adversarial ranking.
@@ -602,6 +602,15 @@ mod tests {
         let terse = b"plagiarised; 68%; 7 matches; Journal of Coastal Research, 2019.";
         let anchors = evidence_anchor_coverage(question, truth, terse);
         assert!(anchors >= 0.80, "requested-fact anchor coverage too low: {anchors}");
+    }
+
+    #[test]
+    fn wrong_source_remains_penalized_after_anchor_calibration() {
+        let q = b"Report the verdict, similarity percentage, number of matching passages, and matched source.";
+        let truth = b"The essay is plagiarised. Similarity is 68%, based on 7 matching passages from Journal of Coastal Research, 2019.";
+        let wrong_source = b"The essay is plagiarised. Similarity is 68%, based on 7 matching passages from Nature Climate Change, 2016.";
+        assert!(score_bytes(q, truth, wrong_source) < 0.10,
+            "wrong source should not receive the anchor bonus");
     }
 
     #[test]
