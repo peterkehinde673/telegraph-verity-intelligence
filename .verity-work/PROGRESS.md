@@ -294,3 +294,12 @@ This file tracks execution status for the frozen `.verity-work/MASTER_PLAN.md`. 
 
 - Created isolated branch foundation/verity-fact-check-anchor-cap-095-v33 from V32. Changed only anchor bonus cap from 0.90 to 0.95. Hypothesis: further reduce residual score spread among terse but fact-complete answers; risk is over-crediting partial answers, so the comparative probe and all hard conflict controls must be checked.
 - Candidate commit 300cc56ce3894ff2d26e13081a3c3dce9301fee6. Await Verity CI, WASM tests/build, and comparative evaluation for this exact SHA. Keep no registration/deployment/production config changes; registration only after actual rank above champion is verified. Master plan unchanged.
+
+## V33 anchor cap 0.95 — evaluated, consistency improved but still not ready (2026-10-15)
+
+- Exact V33 commit 300cc56ce3894ff2d26e13081a3c3dce9301fee6 passed all three workflows: Verity CI https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/38772861580, WASM scorer https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/38772861260, local scorer investigation https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/38772861463. Artifact 11992646456, SHA-256 5318049e21481af0a0718341ff38a423dd8ac9c30c2532b383ef5d892c4300e4.
+- V33 exact evaluation artifact inspected. Next report metrics from artifact before decision. Do not treat green workflows as proof of official rank. Continue to check actual artifact outputs and adversarial controls.
+
+## V34 anchor cap 0.98 — in progress (2026-10-15)
+
+- Created isolated branch foundation/verity-fact-check-anchor-cap-098-v34 from V33 and changed only evidence-anchor bonus cap 0.95 -> 0.98. Candidate commit b27abdf43e62e55993b00676340f3300219f5e19. Hypothesis: further narrow residual score spread among correct terse answers; risk: partial answer over-credit. Check exact-commit CI, WASM tests/build, comparative artifact, wrong source/entity/number, omission, opposite verdict, and clean-pair spread. No registration, deployment, or production config changes. Registration remains conditional on verified actual rank above champion. Master plan unchanged.
