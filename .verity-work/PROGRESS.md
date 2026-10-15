@@ -247,3 +247,9 @@ This file tracks execution status for the frozen `.verity-work/MASTER_PLAN.md`. 
 
 - Next controlled experiment: remove the generic 'when' cue from the all-numbers fallback, because it can incorrectly make any numeric reference value (including counts/confidence) mandatory for a temporal question. Instead, recognize 'when' only for year/date-like numeric tokens (4+ digits) and keep explicit count/amount/percentage/score cues tied to their relevant numeric classes. Preserve decimal confidence as optional unless requested.
 - Require clean-pair spread to improve or at least not regress, preserve exact/paraphrase at 1.0, and retain strong penalties for wrong count, omitted requested count, missing requested year, wrong entity and opposite verdict. V29 must remain isolated; no registration/deployment/production changes. Master plan frozen.
+
+### V29 implementation committed; validation queued (2026-10-15)
+
+- V29 commit c29ee3b60dc6f44a7fd8ec6a32dac28589fb19d5 on isolated branch foundation/verity-fact-check-date-specific-cues-v29. The generic 'when' cue no longer makes every numeric reference value mandatory; temporal cues apply only to year-like numeric tokens (4+ digits). Added tests for missing a requested founding year and not penalizing omission of an unrelated duration/count.
+- Latest commit workflows queued: Verity CI https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/38731339726, WASM scorer https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/38731339701, comparative evaluation https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/38731339699. Earlier V28 green runs do not validate V29.
+- V29 remains in progress. Next inspect all latest-commit workflows and artifact probes; accept only if temporal omission and irrelevant-number controls behave correctly and clean-pair metrics do not regress. No registration, deployment, or production config changes.
