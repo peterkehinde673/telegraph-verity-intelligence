@@ -408,6 +408,37 @@ mod tests {
     use super::score_bytes;
 
     #[test]
+    fn fact_equivalent_terse_answer_is_calibrated_near_verbatim() {
+        let truth = b"The essay is plagiarised. Similarity is 68%, with 7 matching passages from Journal of Coastal Research, 2019.";
+        let verbatim = b"The essay is plagiarised. Similarity is 68%, with 7 matching passages from Journal of Coastal Research, 2019.";
+        let reworded = b"The essay is plagiarised, with 68% similarity across 7 matching passages traced to Journal of Coastal Research, 2019.";
+        let terse = b"plagiarised; 68%; 7 matches; Journal of Coastal Research, 2019.";
+        let s1 = score_bytes(b"Verify originality", truth, verbatim);
+        let s2 = score_bytes(b"Verify originality", truth, reworded);
+        let s3 = score_bytes(b"Verify originality", truth, terse);
+        assert!((s1 - s2).abs() <= 0.05, "verbatim/reworded spread: {s1} vs {s2}");
+        assert!((s1 - s3).abs() <= 0.05, "verbatim/terse spread: {s1} vs {s3}");
+    }
+
+    #[test]
+    fn wrong_similarity_percentage_is_penalized() {
+        let truth = b"The essay is plagiarised. Similarity is 68%, with 7 matching passages.";
+        let wrong = b"The essay is plagiarised. Similarity is 37%, with 7 matching passages.";
+        let good_score = score_bytes(b"Verify originality", truth, truth);
+        let bad_score = score_bytes(b"Verify originality", truth, wrong);
+        assert!(bad_score < good_score * 0.25, "wrong percentage {bad_score}, exact {good_score}");
+    }
+
+    #[test]
+    fn wrong_source_entity_is_penalized() {
+        let truth = b"The essay matches Journal of Coastal Research, 2019.";
+        let wrong = b"The essay matches Nature Climate Change, 2016.";
+        let good_score = score_bytes(b"Verify source", truth, truth);
+        let bad_score = score_bytes(b"Verify source", truth, wrong);
+        assert!(bad_score < good_score * 0.25, "wrong source {bad_score}, exact {good_score}");
+    }
+
+    #[test]
     fn exact_answer_scores_one() {
         assert_eq!(score_bytes(b"capital?", b"Paris is the capital of France.", b"Paris is the capital of France."), 1.0);
     }
