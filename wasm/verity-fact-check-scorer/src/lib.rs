@@ -522,7 +522,7 @@ fn score_bytes(_question: &[u8], truth: &[u8], answer: &[u8]) -> f32 {
         // Cap the bonus to reduce score spread caused by noisy anchor counts.
         // This deliberately tests a fixed ceiling; it is not accepted unless
         // clean-pair consistency improves without hurting adversarial ranking.
-        let anchor_bonus = anchors.min(0.80);
+        let anchor_bonus = anchors.min(0.90);
         score = (score + (1.0 - score) * anchor_bonus).clamp(0.0, 1.0);
     }
 
