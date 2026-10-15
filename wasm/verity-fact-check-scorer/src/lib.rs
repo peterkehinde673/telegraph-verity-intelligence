@@ -323,6 +323,60 @@ fn has_opposite_verdict(truth: &[u8], answer: &[u8]) -> bool {
 // Experimental factual-anchor coverage: exact numeric tokens, adjacent
 // capitalized entity pairs, and explicit verdict terms present in the reference.
 // This is a deterministic lexical proxy, not semantic entailment.
+// Count numeric evidence only when the question requests the kind of fact
+// described by the nearby reference context. This avoids penalizing concise
+// answers for omitting unrequested ancillary numbers (e.g. confidence).
+fn requested_numeric_anchor(question: &[u8], truth: &[u8], start: usize, end: usize) -> bool {
+    let context_start = start.saturating_sub(64);
+    let context_end = (end + 48).min(truth.len());
+    let context = &truth[context_start..context_end];
+
+    if contains_normalized_token(context, b"confidence")
+        || contains_normalized_token(context, b"probability") {
+        return contains_normalized_token(question, b"confidence")
+            || contains_normalized_token(question, b"probability");
+    }
+
+    if contains_normalized_token(context, b"similarity")
+        || contains_normalized_token(context, b"percentage")
+        || contains_normalized_token(context, b"percent") {
+        return contains_normalized_token(question, b"similarity")
+            || contains_normalized_token(question, b"percentage")
+            || contains_normalized_token(question, b"percent");
+    }
+
+    if contains_normalized_token(context, b"passage")
+        || contains_normalized_token(context, b"matches")
+        || contains_normalized_token(context, b"matching") {
+        return contains_normalized_token(question, b"passage")
+            || contains_normalized_token(question, b"matches")
+            || contains_normalized_token(question, b"matching")
+            || contains_normalized_token(question, b"number")
+            || contains_normalized_token(question, b"count");
+    }
+
+    if contains_normalized_token(context, b"journal")
+        || contains_normalized_token(context, b"source")
+        || contains_normalized_token(context, b"reference")
+        || contains_normalized_token(context, b"published") {
+        return contains_normalized_token(question, b"source")
+            || contains_normalized_token(question, b"reference")
+            || contains_normalized_token(question, b"year")
+            || contains_normalized_token(question, b"date");
+    }
+
+    contains_normalized_token(question, b"number")
+        || contains_normalized_token(question, b"count")
+        || contains_normalized_token(question, b"amount")
+        || contains_normalized_token(question, b"year")
+        || contains_normalized_token(question, b"date")
+        || contains_normalized_token(question, b"score")
+        || contains_normalized_token(question, b"confidence")
+        || contains_normalized_token(question, b"percentage")
+        || contains_normalized_token(question, b"quantity")
+        || contains_normalized_token(question, b"value")
+}
+
 fn evidence_anchor_coverage(question: &[u8], truth: &[u8], answer: &[u8]) -> f32 {
     let mut total = 0u32;
     let mut matched = 0u32;
@@ -331,7 +385,7 @@ fn evidence_anchor_coverage(question: &[u8], truth: &[u8], answer: &[u8]) -> f32
     while let Some((start, end, next)) = next_token(truth, cursor) {
         let token = &truth[start..end];
         let numeric = !token.is_empty() && token.iter().all(|b| b.is_ascii_digit());
-        if numeric {
+        if numeric && requested_numeric_anchor(question, truth, start, end) {
             total += 1;
             if contains_normalized_token(answer, token) { matched += 1; }
         }
@@ -490,6 +544,15 @@ mod tests {
         let s3 = score_bytes(b"Verify originality", truth, terse);
         assert!((s1 - s2).abs() <= 0.05, "verbatim/reworded spread: {s1} vs {s2}");
         assert!((s1 - s3).abs() <= 0.05, "verbatim/terse spread: {s1} vs {s3}");
+    }
+
+    #[test]
+    fn unrequested_confidence_number_is_not_a_required_anchor() {
+        let question = b"Report the verdict, similarity percentage, number of matching passages, and matched source.";
+        let truth = b"The result is plagiarised. Similarity is 68%, based on 7 matching passages from Journal of Coastal Research, 2019. Confidence is 0.94.";
+        let terse = b"plagiarised; 68%; 7 matches; Journal of Coastal Research, 2019.";
+        let anchors = evidence_anchor_coverage(question, truth, terse);
+        assert!(anchors >= 0.80, "requested-fact anchor coverage too low: {anchors}");
     }
 
     #[test]
