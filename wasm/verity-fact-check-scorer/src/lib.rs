@@ -320,6 +320,59 @@ fn has_opposite_verdict(truth: &[u8], answer: &[u8]) -> bool {
     false
 }
 
+// Experimental factual-anchor coverage: exact numeric tokens, adjacent
+// capitalized entity pairs, and explicit verdict terms present in the reference.
+// This is a deterministic lexical proxy, not semantic entailment.
+fn evidence_anchor_coverage(truth: &[u8], answer: &[u8]) -> f32 {
+    let mut total = 0u32;
+    let mut matched = 0u32;
+
+    let mut cursor = 0usize;
+    while let Some((start, end, next)) = next_token(truth, cursor) {
+        let token = &truth[start..end];
+        let numeric = !token.is_empty() && token.iter().all(|b| b.is_ascii_digit());
+        if numeric {
+            total += 1;
+            if contains_normalized_token(answer, token) { matched += 1; }
+        }
+        cursor = next;
+    }
+
+    let mut truth_pairs = [EMPTY_NAME_PAIR; 128];
+    let pair_count = collect_name_pairs(truth, &mut truth_pairs);
+    for pair in truth_pairs.iter().take(pair_count) {
+        total += 1;
+        let first = &pair.first[..pair.first_len];
+        let last = &pair.last[..pair.last_len];
+        let mut found = false;
+        let mut answer_pairs = [EMPTY_NAME_PAIR; 128];
+        let answer_count = collect_name_pairs(answer, &mut answer_pairs);
+        for candidate in answer_pairs.iter().take(answer_count) {
+            if same_token(first, &candidate.first[..candidate.first_len])
+                && same_token(last, &candidate.last[..candidate.last_len]) {
+                found = true;
+                break;
+            }
+        }
+        if found { matched += 1; }
+    }
+
+    const VERDICTS: [&[u8]; 14] = [
+        b"true", b"false", b"correct", b"incorrect", b"original", b"plagiarised",
+        b"verified", b"refuted", b"confirmed", b"denied", b"approved", b"rejected",
+        b"accurate", b"misleading",
+    ];
+    for verdict in VERDICTS {
+        if contains_normalized_token(truth, verdict) {
+            total += 1;
+            if contains_normalized_token(answer, verdict) { matched += 1; }
+        }
+    }
+
+    if total == 0 { return 0.0; }
+    matched as f32 / total as f32
+}
+
 fn score_bytes(_question: &[u8], truth: &[u8], answer: &[u8]) -> f32 {
     if answer.iter().all(|b| b.is_ascii_whitespace())
         || truth.iter().all(|b| b.is_ascii_whitespace()) { return 0.0; }
@@ -371,6 +424,14 @@ fn score_bytes(_question: &[u8], truth: &[u8], answer: &[u8]) -> f32 {
     }
     let denominator = hit + miss;
     let mut score = if denominator > 0.0 { hit / denominator } else { 0.0 };
+
+    // Blend calibrated lexical overlap with exact factual-anchor coverage only
+    // when lexical support is already substantial. This is an experiment to
+    // reduce verbosity bias, not a claim of semantic equivalence.
+    let anchors = evidence_anchor_coverage(truth, answer);
+    if overlap >= 0.45 && anchors >= 0.60 {
+        score = (0.40 * score + 0.60 * anchors).clamp(0.0, 1.0);
+    }
 
     // Contradictions must remain low even when most of the reference is copied.
     // Apply strong post-calibration penalties to polarity and numeric conflicts.
