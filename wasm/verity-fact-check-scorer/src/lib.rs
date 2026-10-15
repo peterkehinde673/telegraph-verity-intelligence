@@ -329,10 +329,30 @@ fn has_opposite_verdict(truth: &[u8], answer: &[u8]) -> bool {
 fn requested_numeric_anchor(question: &[u8], truth: &[u8], start: usize, end: usize) -> bool {
     // Bound context to the containing sentence so a nearby confidence
     // value cannot inherit the preceding sentence's similarity keywords.
-    let context_start = truth[..start].iter().rposition(|b| *b == b'.' || *b == b';')
-        .map(|i| i + 1).unwrap_or(0);
-    let context_end = truth[end..].iter().position(|b| *b == b'.' || *b == b';')
-        .map(|i| end + i).unwrap_or(truth.len());
+    let mut context_start = 0usize;
+    for (i, b) in truth[..start].iter().enumerate() {
+        let decimal_point = *b == b'.'
+            && i > 0
+            && i + 1 < truth.len()
+            && truth[i - 1].is_ascii_digit()
+            && truth[i + 1].is_ascii_digit();
+        if *b == b';' || (*b == b'.' && !decimal_point) {
+            context_start = i + 1;
+        }
+    }
+    let mut context_end = truth.len();
+    for (i, b) in truth[end..].iter().enumerate() {
+        let absolute = end + i;
+        let decimal_point = *b == b'.'
+            && absolute > 0
+            && absolute + 1 < truth.len()
+            && truth[absolute - 1].is_ascii_digit()
+            && truth[absolute + 1].is_ascii_digit();
+        if *b == b';' || (*b == b'.' && !decimal_point) {
+            context_end = absolute;
+            break;
+        }
+    }
     let context = &truth[context_start..context_end];
 
     if contains_normalized_token(context, b"confidence")
