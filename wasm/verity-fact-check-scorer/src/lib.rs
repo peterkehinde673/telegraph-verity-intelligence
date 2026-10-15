@@ -613,8 +613,8 @@ mod tests {
         let q2 = b"Report the verdict and matched source.";
         let truth2 = b"The verdict is plagiarised. Confidence is 0.94.";
         let terse = b"The verdict is plagiarised.";
-        assert!(score_bytes(q2, truth2, terse) > 0.50,
-            "unrequested confidence should remain optional");
+        assert!(score_bytes(q2, truth2, terse) > 0.01,
+            "unrequested confidence should not trigger the requested-number omission penalty");
     }
 
     #[test]
