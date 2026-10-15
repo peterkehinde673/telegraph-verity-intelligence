@@ -165,3 +165,17 @@ This file tracks execution status for the frozen `.verity-work/MASTER_PLAN.md`. 
 - Diagnosis: blending raw anchor coverage into the calibrated lexical score can lower an answer score when the heuristic misses or undercounts anchors. Replaced blend with a bounded bonus: `score + (1 - score) * anchors`, still gated on overlap >= 0.45 and anchor coverage >= 0.60, with existing contradiction guards applied afterward. Candidate commit `22b0e48a5f9520b37de6fcbe6b712c797a78325b`.
 - New runs are in progress: Verity CI https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/38727299550, WASM scorer https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/38727299539, comparative evaluation https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/38727299533. Must wait for all results before judging the bounded-bonus variant.
 - Existing WASM workflow again auto-published a versioned prototype GitHub Release on experimental branch push. This is not Telegraph registration/deployment. Keep avoiding release/promotion claims; no production configuration changed. Master plan remains frozen; batch in progress.
+
+## V24 bounded evidence bonus — evaluated, not accepted (2026-10-15)
+
+- General Verity CI and WASM unit/build checks passed for commit `22b0e48a5f9520b37de6fcbe6b712c797a78325b`: https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/38727299550 and https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/38727299539.
+- Comparative run completed successfully: https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/38727299533. Artifact `fact-check-eval-investigation` ID 11969055033, SHA-256 d4c6063d936f193ae39217c8f4a187fbe6c282dcd1c875ae4380ad086616dd5d.
+- Bounded-bonus candidate proxy: 224/254 pairwise wins (88.19%, versus champion 168/254 or 66.14%), separation margin 0.569709 versus 0.538208. It satisfies the harness's proxy checks (5 pass, 0 fail, 1 skip), but the harness explicitly does not independently verify the official gate and has no real miner histories for Spearman.
+- Clean-pair consistency improved from 0/12 to 3/12 within 0.05, but remains insufficient; worst spread remains 0.776455. Therefore V24 is not accepted as submission-ready and must not be promoted/registered.
+- A prior direct blend was rejected: its fixture score was exact 1.000000 vs terse 0.727322. The bounded bonus passes the specific Rust near-equality fixture, but broader proxy confirms only partial clean-pair progress.
+
+## V25 question-aware anchor experiment — in progress (2026-10-15)
+
+- Created isolated branch `foundation/verity-fact-check-question-aware-anchors-v25` from V24 and updated anchor extraction to exclude adjacent capitalized name pairs already present in the question (e.g. the document title), since these should not be required in the answer. Reworked the detailed-vs-terse regression to use the actual full question text. Commit `d68793634fe6ccfd4df4a5ba8e7b29dfba50a5e8`.
+- Next inspect CI, WASM tests, and proxy output. Require improvement in clean-pair consistency while retaining wrong-number, wrong-source, wrong-person, and opposite-verdict penalties. Do not accept based on pairwise wins alone.
+- No registration or production changes. The existing WASM workflow auto-publishes a prototype GitHub Release on experimental branch pushes; this is an unintended existing workflow side effect and not Telegraph registration. Master plan remains frozen; V25 in progress.
