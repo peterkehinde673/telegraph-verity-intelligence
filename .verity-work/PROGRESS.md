@@ -303,3 +303,9 @@ This file tracks execution status for the frozen `.verity-work/MASTER_PLAN.md`. 
 ## V34 anchor cap 0.98 — in progress (2026-10-15)
 
 - Created isolated branch foundation/verity-fact-check-anchor-cap-098-v34 from V33 and changed only evidence-anchor bonus cap 0.95 -> 0.98. Candidate commit b27abdf43e62e55993b00676340f3300219f5e19. Hypothesis: further narrow residual score spread among correct terse answers; risk: partial answer over-credit. Check exact-commit CI, WASM tests/build, comparative artifact, wrong source/entity/number, omission, opposite verdict, and clean-pair spread. No registration, deployment, or production config changes. Registration remains conditional on verified actual rank above champion. Master plan unchanged.
+
+### V33 artifact review — verified proxy metrics (2026-10-15)
+
+- Inspected artifact 11992646456 directly. Candidate V33 proxy measured 233/254 pairwise wins (91.73%) vs champion 168/254 (66.14%); separation margin 0.633569 vs 0.538208. Crucially, clean-pair constraints improved to 12/12 within 0.05, worst spread 0.038823, versus champion 9/12. This is a measurable local-proxy improvement and clears the harness's proxy checks (5 pass, 0 fail, 1 skip).
+- Important limitation: Spearman validation is skipped because there are 0 miners with history; thresholds were not independently verified by the harness. Therefore this does not prove actual official rank above champion and is not sufficient to register. Keep V33 as the best evaluated candidate pending V34 comparison and protocol/rank verification.
+- V34 exact commit b27abdf43e62e55993b00676340f3300219f5e19: CI success, WASM and comparative workflows still in progress at the latest check. Links: https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/38773525916, https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/38773526014, https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/38773525756.
