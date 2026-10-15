@@ -214,3 +214,14 @@ This file tracks execution status for the frozen `.verity-work/MASTER_PLAN.md`. 
 
 - Created isolated branch `foundation/verity-fact-check-capped-anchor-bonus-v27` from V26. Caps the anchor bonus at 0.80 after the existing overlap/coverage thresholds, to test whether noisy anchor-count variation is causing score spread across equivalent answers. This is a controlled experiment only; it may reduce discrimination for partial answers, so adversarial tests are required.
 - Candidate commit `2357f0cb51bf2ada309b46befdf2653a0fa39b0c`. Inspect latest Verity CI, WASM tests/build, and comparative evaluation artifacts before deciding. Keep master plan frozen; no registration, deployment, or production config changes. Batch remains in progress.
+
+## V27 capped anchor bonus — evaluated, not accepted (2026-10-15)
+
+- Latest V27 Verity CI, WASM scorer, and comparative investigation all passed: https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/38729811465, https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/38729811416, https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/38729811383.
+- Investigation artifact ID 11969568506, SHA-256 3ed7f181cf2daa4de635857d460a1e8131b2d99fc8c0fb4da86aa6fcdaaaf4a1. Proxy: 232/254 pairwise wins (91.34%) vs champion 168/254 (66.14%), separation margin 0.605177 vs 0.538208. Clean-pair consistency remains only 6/12 within 0.05, worst spread 0.224183, unchanged from V26. This candidate is not accepted due to consistency failure and no miner history for real-traffic Spearman.
+- Probe table confirms strong entity-conflict guard (0.005), but requested-number omission remains 0.2609 and multi-slot partial answer remains 1.0; wrong-number conflict is 0.0440. V27 is therefore not submission-ready despite improved pairwise accuracy. The report's proxy gate is not the official gate and does not independently verify thresholds.
+
+## V28 requested-number omission guard — in progress (2026-10-15)
+
+- Created isolated branch `foundation/verity-fact-check-required-number-omission-v28` from V27. Added a post-calibration penalty when a numeric fact appears in the reference, the question requests that numeric fact class, and the answer omits the exact value. Added `when` to the generic requested-number question cues to cover questions like “who founded it and when?”. This should leave unrequested ancillary confidence numbers optional while making requested count/year/percentage omissions score lower.
+- Added tests for a missing requested count and for leaving out unrequested confidence. Candidate commit `98d957c01d694b98c0355737237cf859d4b13be7`. Await the latest CI, WASM tests/build, and comparative artifact; check clean-pair groups and wrong-number/entity/verdict controls before deciding. No registration, deployment, or production config changes. Master plan remains frozen; V28 in progress.
