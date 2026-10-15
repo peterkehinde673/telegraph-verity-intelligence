@@ -274,3 +274,12 @@ This file tracks execution status for the frozen `.verity-work/MASTER_PLAN.md`. 
 
 - Created isolated branch foundation/verity-fact-check-reduced-anchor-weight-v31 from V30. Reduced the evidence-anchor bonus cap from 0.80 to 0.40 while retaining the 0.30 overlap gate and 0.60 coverage threshold. Hypothesis: reducing bonus amplification may narrow score spread across equivalent terse answers; risk is lower separation and worse partial-answer discrimination. Candidate commit efa6b1dc312b550b51798d3b65ca884e4e2c30bf.
 - Inspect latest Verity CI, WASM tests/build, and comparative artifact for this exact SHA. Accept only with measured improvement in clean-pair consistency and no material regression in wrong-source/entity, wrong-number, or verdict probes. No registration, deployment, or production configuration changes. Master plan unchanged.
+
+## V31 reduced anchor bonus — rejected after regression (2026-10-15)
+
+- V31 Verity CI passed, but WASM scorer tests and comparative investigation failed: https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/38771455629, https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/38771455607, https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/38771455693. Unit test `real_clean_pair_fixture_keeps_terse_answer_near_verbatim` measured exact=1.0 vs terse=0.9284827, exceeding its allowed gap. Do not accept V31; lower cap harmed required near-equivalent calibration.
+
+## V32 anchor cap 0.90 — in progress (2026-10-15)
+
+- Created isolated branch foundation/verity-fact-check-anchor-cap-090-v32 from V30 (known-green parent) and raised only the anchor bonus cap from 0.80 to 0.90. Hypothesis: higher calibration brings valid terse answers closer to exact answers; risk: partial or wrong answers may receive too much bonus. Candidate commit c96c46995287ce88cd5e8c81e4a28f0c0e75012d.
+- Latest-commit Verity CI, WASM scorer tests/build, and comparative evaluation must all be checked before decision. Required adversarial controls include partial answers, wrong source/entity, wrong number, omitted requested fact, and opposite verdict. No registration, deployment, or production config changes; registration only after actual champion-beating rank is verified. Master plan unchanged.
