@@ -218,6 +218,54 @@ fn contains_normalized_token(bytes: &[u8], wanted: &[u8]) -> bool {
     false
 }
 
+// Conservative guard for a leading two-token proper-name substitution such as
+// "Maria Chen ..." -> "David Chen ...". Both first tokens must be ASCII
+// capitalized, the shared second token must match, and the first token must
+// differ. This deliberately does not attempt general NER or alias resolution.
+fn has_leading_entity_conflict(truth: &[u8], answer: &[u8]) -> bool {
+    fn first_two_capitalized(bytes: &[u8]) -> Option<([u8; 64], usize, [u8; 64], usize)> {
+        let mut cursor = 0usize;
+        let mut tokens = [([0u8; 64], 0usize); 2];
+        let mut count = 0usize;
+        while let Some((start, end, next)) = next_token(bytes, cursor) {
+            let token = &bytes[start..end];
+            if token.len() > 64 { return None; }
+            if count == 0 || count == 1 {
+                if token.first().map_or(false, |b| *b >= b'A' && *b <= b'Z') {
+                    let mut copy = [0u8; 64];
+                    copy[..token.len()].copy_from_slice(token);
+                    tokens[count] = (copy, token.len());
+                    count += 1;
+                } else {
+                    return None;
+                }
+            }
+            if count == 2 { break; }
+            cursor = next;
+        }
+        if count != 2 { return None; }
+        Some((tokens[0].0, tokens[0].1, tokens[1].0, tokens[1].1))
+    }
+
+    let (tf, tfl, ts, tsl) = match first_two_capitalized(truth) {
+        Some(parts) => parts,
+        None => return false,
+    };
+    let (af, afl, a_s, asl) = match first_two_capitalized(answer) {
+        Some(parts) => parts,
+        None => return false,
+    };
+    if tsl != asl || tfl == afl { return false; }
+    let mut first_same = tfl == afl;
+    if !first_same {
+        first_same = tf[..tfl].iter().zip(af[..afl].iter())
+            .all(|(left, right)| lower_ascii(*left) == lower_ascii(*right)) && tfl == afl;
+    }
+    let second_same = ts[..tsl].iter().zip(a_s[..asl].iter())
+        .all(|(left, right)| lower_ascii(*left) == lower_ascii(*right));
+    !first_same && second_same
+}
+
 // Only penalize an opposite verdict when the reference contains one side
 // exclusively and the answer contains the other side exclusively. This avoids
 // false positives when both labels are discussed as context.
@@ -303,6 +351,9 @@ fn score_bytes(_question: &[u8], truth: &[u8], answer: &[u8]) -> f32 {
         score *= 0.05;
     }
     if has_opposite_verdict(truth, answer) {
+        score *= 0.005;
+    }
+    if has_leading_entity_conflict(truth, answer) {
         score *= 0.005;
     }
     score.clamp(0.0, 1.0)
@@ -402,6 +453,30 @@ mod tests {
     fn verdict_guard_does_not_fire_when_reference_mentions_both_labels() {
         let text = b"The report says the essay is plagiarised rather than original.";
         assert_eq!(score_bytes(b"q", text, text), 1.0);
+    }
+
+    #[test]
+    fn leading_wrong_person_name_is_heavily_penalized() {
+        let truth = b"Maria Chen won the election";
+        let answer = b"David Chen won the election";
+        let score = score_bytes(b"Who won the election?", truth, answer);
+        assert!(score < 0.01, "wrong-person answer scored {score}");
+    }
+
+    #[test]
+    fn leading_same_person_name_is_not_penalized() {
+        let truth = b"Maria Chen won the election";
+        let answer = b"Maria Chen was elected";
+        let score = score_bytes(b"Who won the election?", truth, answer);
+        assert!(score > 0.5, "same-person paraphrase scored {score}");
+    }
+
+    #[test]
+    fn different_leading_capitalized_phrase_without_shared_second_token_is_not_entity_conflict() {
+        let truth = b"The United States signed the agreement";
+        let answer = b"The USA signed the agreement";
+        let score = score_bytes(b"q", truth, answer);
+        assert!(score > 0.5, "possible alias was over-penalized: {score}");
     }
 
     #[test]
