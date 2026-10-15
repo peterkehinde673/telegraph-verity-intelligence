@@ -255,12 +255,9 @@ fn has_leading_entity_conflict(truth: &[u8], answer: &[u8]) -> bool {
         Some(parts) => parts,
         None => return false,
     };
-    if tsl != asl || tfl == afl { return false; }
-    let mut first_same = tfl == afl;
-    if !first_same {
-        first_same = tf[..tfl].iter().zip(af[..afl].iter())
-            .all(|(left, right)| lower_ascii(*left) == lower_ascii(*right)) && tfl == afl;
-    }
+    if tsl != asl { return false; }
+    let first_same = tfl == afl && tf[..tfl].iter().zip(af[..afl].iter())
+        .all(|(left, right)| lower_ascii(*left) == lower_ascii(*right));
     let second_same = ts[..tsl].iter().zip(a_s[..asl].iter())
         .all(|(left, right)| lower_ascii(*left) == lower_ascii(*right));
     !first_same && second_same
