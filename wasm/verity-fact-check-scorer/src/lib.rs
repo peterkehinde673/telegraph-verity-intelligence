@@ -389,17 +389,19 @@ fn requested_numeric_anchor(question: &[u8], truth: &[u8], start: usize, end: us
             || contains_normalized_token(question, b"date");
     }
 
-    contains_normalized_token(question, b"number")
+    let temporal_question = contains_normalized_token(question, b"when")
+        || contains_normalized_token(question, b"year")
+        || contains_normalized_token(question, b"date");
+    let year_like = end.saturating_sub(start) >= 4;
+    (temporal_question && year_like)
+        || contains_normalized_token(question, b"number")
         || contains_normalized_token(question, b"count")
         || contains_normalized_token(question, b"amount")
-        || contains_normalized_token(question, b"year")
-        || contains_normalized_token(question, b"date")
         || contains_normalized_token(question, b"score")
         || contains_normalized_token(question, b"confidence")
         || contains_normalized_token(question, b"percentage")
         || contains_normalized_token(question, b"quantity")
         || contains_normalized_token(question, b"value")
-        || contains_normalized_token(question, b"when")
 }
 
 fn evidence_anchor_coverage(question: &[u8], truth: &[u8], answer: &[u8]) -> f32 {
@@ -600,6 +602,21 @@ mod tests {
         let terse = b"plagiarised; 68%; 7 matches; Journal of Coastal Research, 2019.";
         let anchors = evidence_anchor_coverage(question, truth, terse);
         assert!(anchors >= 0.80, "requested-fact anchor coverage too low: {anchors}");
+    }
+
+    #[test]
+    fn when_question_requires_year_but_not_unrelated_count() {
+        let q = b"Who founded the company and when?";
+        let truth = b"Ada Lovelace founded the company in 1843 after 12 years of research.";
+        let answer = b"Ada Lovelace founded the company.";
+        assert!(score_bytes(q, truth, answer) < 0.10,
+            "omitted requested year should be penalized");
+
+        let q2 = b"When was the company founded?";
+        let truth2 = b"The company was founded in 1843 after 12 years of research.";
+        let answer2 = b"The company was founded in 1843.";
+        assert!(score_bytes(q2, truth2, answer2) > 0.50,
+            "unrequested duration/count should not trigger numeric omission penalty");
     }
 
     #[test]
