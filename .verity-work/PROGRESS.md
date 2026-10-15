@@ -197,3 +197,9 @@ This file tracks execution status for the frozen `.verity-work/MASTER_PLAN.md`. 
 
 - The first latest-commit WASM run failed at compile time, not because of the scoring assertion: the newline byte literal was emitted as `b'\\\\n'` instead of `b'\\n'`, and the new test needed to import the private helper from its parent module. Both issues corrected in commit `233eb8c36307bf44410e0597e93b46252b42bda5`.
 - Failed run for prior commit: https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/38728576235. Re-check latest commit CI, WASM, and comparative evaluation; do not use the earlier results as validation. V26 remains in progress, no batch marked complete.
+
+### V26 compile fix follow-up — latest candidate pending validation (2026-10-15)
+
+- A second WASM test run still found the escaped newline delimiter invalid; removed newline checks from sentence-boundary detection and kept period/semicolon boundaries only. This preserves decimal behavior (e.g. 0.94 splits at the decimal punctuation) without invalid Rust byte literals. Latest source commit `1d6f11ec11028a3019b9d223670a4b28341e4c27`.
+- Latest commit workflows queued: WASM https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/38728747932, Verity CI https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/38728747595, comparative investigation https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/38728747430. Earlier commits failed compilation and must not be considered validated. Wait for these latest runs before any further scoring change.
+- V26 remains in progress. No master plan changes, registration, production deployment, or production configuration changes.
