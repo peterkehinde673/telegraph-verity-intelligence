@@ -430,7 +430,10 @@ fn score_bytes(_question: &[u8], truth: &[u8], answer: &[u8]) -> f32 {
     // reduce verbosity bias, not a claim of semantic equivalence.
     let anchors = evidence_anchor_coverage(truth, answer);
     if overlap >= 0.45 && anchors >= 0.60 {
-        score = (0.40 * score + 0.60 * anchors).clamp(0.0, 1.0);
+        // Use anchor coverage as a bounded bonus, never as a replacement
+        // score: noisy/incomplete anchor extraction must not lower a strong
+        // lexical match. Contradiction guards below still apply afterward.
+        score = (score + (1.0 - score) * anchors).clamp(0.0, 1.0);
     }
 
     // Contradictions must remain low even when most of the reference is copied.
