@@ -379,6 +379,7 @@ fn requested_numeric_anchor(question: &[u8], truth: &[u8], start: usize, end: us
         || contains_normalized_token(question, b"percentage")
         || contains_normalized_token(question, b"quantity")
         || contains_normalized_token(question, b"value")
+        || contains_normalized_token(question, b"when")
 }
 
 fn evidence_anchor_coverage(question: &[u8], truth: &[u8], answer: &[u8]) -> f32 {
@@ -503,6 +504,27 @@ fn score_bytes(_question: &[u8], truth: &[u8], answer: &[u8]) -> f32 {
         score = (score + (1.0 - score) * anchor_bonus).clamp(0.0, 1.0);
     }
 
+    // Penalize omission of numeric facts only when the question asks for
+    // that fact class. Ancillary reference numbers (e.g. unrequested confidence)
+    // remain optional; wrong numbers are handled by the conflict guard below.
+    let mut cursor = 0usize;
+    let mut omitted_requested_number = false;
+    while let Some((start, end, next)) = next_token(truth, cursor) {
+        let token = &truth[start..end];
+        let numeric = !token.is_empty() && token.iter().all(|b| b.is_ascii_digit());
+        if numeric
+            && requested_numeric_anchor(_question, truth, start, end)
+            && !contains_normalized_token(answer, token)
+        {
+            omitted_requested_number = true;
+            break;
+        }
+        cursor = next;
+    }
+    if omitted_requested_number {
+        score *= 0.05;
+    }
+
     // Contradictions must remain low even when most of the reference is copied.
     // Apply strong post-calibration penalties to polarity and numeric conflicts.
     if has_negation(truth) != has_negation(answer) {
@@ -558,6 +580,21 @@ mod tests {
         let terse = b"plagiarised; 68%; 7 matches; Journal of Coastal Research, 2019.";
         let anchors = evidence_anchor_coverage(question, truth, terse);
         assert!(anchors >= 0.80, "requested-fact anchor coverage too low: {anchors}");
+    }
+
+    #[test]
+    fn requested_number_omission_is_penalized_but_unrequested_confidence_is_optional() {
+        let q = b"What was the reported count?";
+        let truth = b"The report recorded 120 cases.";
+        let omitted = b"The report discussed the cases.";
+        assert!(score_bytes(q, truth, omitted) < 0.10,
+            "requested count omission not penalized enough");
+
+        let q2 = b"Report the verdict and matched source.";
+        let truth2 = b"The verdict is plagiarised. Confidence is 0.94.";
+        let terse = b"The verdict is plagiarised.";
+        assert!(score_bytes(q2, truth2, terse) > 0.50,
+            "unrequested confidence should remain optional");
     }
 
     #[test]
