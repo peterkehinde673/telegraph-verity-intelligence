@@ -535,7 +535,7 @@ pub unsafe extern "C" fn rank_answer(
 
 #[cfg(test)]
 mod tests {
-    use super::score_bytes;
+    use super::{evidence_anchor_coverage, score_bytes};
 
     #[test]
     fn fact_equivalent_terse_answer_is_calibrated_near_verbatim() {
