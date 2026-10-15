@@ -218,49 +218,82 @@ fn contains_normalized_token(bytes: &[u8], wanted: &[u8]) -> bool {
     false
 }
 
-// Conservative guard for a leading two-token proper-name substitution such as
-// "Maria Chen ..." -> "David Chen ...". Both first tokens must be ASCII
-// capitalized, the shared second token must match, and the first token must
-// differ. This deliberately does not attempt general NER or alias resolution.
+// Conservative guard for two-token capitalized names anywhere in the text.
+// It only flags a changed first name when the same second token appears in both
+// answers and the candidate does not contain that exact name from the reference.
+// Fixed-size buffers bound work for adversarially long inputs.
+#[derive(Clone, Copy)]
+struct NamePair {
+    first: [u8; 64],
+    first_len: usize,
+    last: [u8; 64],
+    last_len: usize,
+}
+const EMPTY_NAME_PAIR: NamePair = NamePair {
+    first: [0; 64], first_len: 0, last: [0; 64], last_len: 0,
+};
+
+fn collect_name_pairs(bytes: &[u8], out: &mut [NamePair; 128]) -> usize {
+    let mut count = 0usize;
+    let mut previous: Option<(usize, usize)> = None;
+    let mut cursor = 0usize;
+    while let Some((start, end, next)) = next_token(bytes, cursor) {
+        if let Some((prev_start, prev_end)) = previous {
+            let first = &bytes[prev_start..prev_end];
+            let last = &bytes[start..end];
+            let capitalized = |token: &[u8]| token.first()
+                .map_or(false, |b| *b >= b'A' && *b <= b'Z');
+            if capitalized(first) && capitalized(last)
+                && first.len() <= 64 && last.len() <= 64 && count < out.len() {
+                let mut pair = EMPTY_NAME_PAIR;
+                pair.first[..first.len()].copy_from_slice(first);
+                pair.first_len = first.len();
+                pair.last[..last.len()].copy_from_slice(last);
+                pair.last_len = last.len();
+                out[count] = pair;
+                count += 1;
+            }
+        }
+        previous = Some((start, end));
+        cursor = next;
+    }
+    count
+}
+
+fn same_token(left: &[u8], right: &[u8]) -> bool {
+    left.len() == right.len() && left.iter().zip(right.iter())
+        .all(|(a, b)| lower_ascii(*a) == lower_ascii(*b))
+}
+
 fn has_leading_entity_conflict(truth: &[u8], answer: &[u8]) -> bool {
-    fn first_two_capitalized(bytes: &[u8]) -> Option<([u8; 64], usize, [u8; 64], usize)> {
-        let mut cursor = 0usize;
-        let mut tokens = [([0u8; 64], 0usize); 2];
-        let mut count = 0usize;
-        while let Some((start, end, next)) = next_token(bytes, cursor) {
-            let token = &bytes[start..end];
-            if token.len() > 64 { return None; }
-            if count == 0 || count == 1 {
-                if token.first().map_or(false, |b| *b >= b'A' && *b <= b'Z') {
-                    let mut copy = [0u8; 64];
-                    copy[..token.len()].copy_from_slice(token);
-                    tokens[count] = (copy, token.len());
-                    count += 1;
-                } else {
-                    return None;
+    let mut truth_pairs = [EMPTY_NAME_PAIR; 128];
+    let mut answer_pairs = [EMPTY_NAME_PAIR; 128];
+    let truth_count = collect_name_pairs(truth, &mut truth_pairs);
+    let answer_count = collect_name_pairs(answer, &mut answer_pairs);
+
+    for answer_index in 0..answer_count {
+        let candidate = answer_pairs[answer_index];
+        let candidate_first = &candidate.first[..candidate.first_len];
+        let candidate_last = &candidate.last[..candidate.last_len];
+        let mut same_last_seen = false;
+        let mut exact_name_seen = false;
+        for truth_index in 0..truth_count {
+            let reference = truth_pairs[truth_index];
+            let reference_first = &reference.first[..reference.first_len];
+            let reference_last = &reference.last[..reference.last_len];
+            if same_token(candidate_last, reference_last) {
+                same_last_seen = true;
+                if same_token(candidate_first, reference_first) {
+                    exact_name_seen = true;
+                    break;
                 }
             }
-            if count == 2 { break; }
-            cursor = next;
         }
-        if count != 2 { return None; }
-        Some((tokens[0].0, tokens[0].1, tokens[1].0, tokens[1].1))
+        if same_last_seen && !exact_name_seen {
+            return true;
+        }
     }
-
-    let (tf, tfl, ts, tsl) = match first_two_capitalized(truth) {
-        Some(parts) => parts,
-        None => return false,
-    };
-    let (af, afl, a_s, asl) = match first_two_capitalized(answer) {
-        Some(parts) => parts,
-        None => return false,
-    };
-    if tsl != asl { return false; }
-    let first_same = tfl == afl && tf[..tfl].iter().zip(af[..afl].iter())
-        .all(|(left, right)| lower_ascii(*left) == lower_ascii(*right));
-    let second_same = ts[..tsl].iter().zip(a_s[..asl].iter())
-        .all(|(left, right)| lower_ascii(*left) == lower_ascii(*right));
-    !first_same && second_same
+    false
 }
 
 // Only penalize an opposite verdict when the reference contains one side
@@ -474,6 +507,22 @@ mod tests {
         let answer = b"The USA signed the agreement";
         let score = score_bytes(b"q", truth, answer);
         assert!(score > 0.5, "possible alias was over-penalized: {score}");
+    }
+
+    #[test]
+    fn wrong_person_name_inside_sentence_is_penalized() {
+        let truth = b"According to the report, Maria Chen won the election";
+        let answer = b"According to the report, David Chen won the election";
+        let score = score_bytes(b"Who won?", truth, answer);
+        assert!(score < 0.01, "sentence-internal wrong person scored {score}");
+    }
+
+    #[test]
+    fn multi_person_reference_does_not_penalize_a_name_that_is_present() {
+        let truth = b"Maria Chen and David Chen both addressed the conference";
+        let answer = b"David Chen addressed the conference";
+        let score = score_bytes(b"Who addressed the conference?", truth, answer);
+        assert!(score > 0.5, "valid entity in multi-person reference scored {score}");
     }
 
     #[test]
