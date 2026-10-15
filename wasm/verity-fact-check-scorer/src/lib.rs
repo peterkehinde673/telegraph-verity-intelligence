@@ -329,9 +329,9 @@ fn has_opposite_verdict(truth: &[u8], answer: &[u8]) -> bool {
 fn requested_numeric_anchor(question: &[u8], truth: &[u8], start: usize, end: usize) -> bool {
     // Bound context to the containing sentence so a nearby confidence
     // value cannot inherit the preceding sentence's similarity keywords.
-    let context_start = truth[..start].iter().rposition(|b| *b == b'.' || *b == b';' || *b == b'\\n')
+    let context_start = truth[..start].iter().rposition(|b| *b == b'.' || *b == b';')
         .map(|i| i + 1).unwrap_or(0);
-    let context_end = truth[end..].iter().position(|b| *b == b'.' || *b == b';' || *b == b'\\n')
+    let context_end = truth[end..].iter().position(|b| *b == b'.' || *b == b';')
         .map(|i| end + i).unwrap_or(truth.len());
     let context = &truth[context_start..context_end];
 
