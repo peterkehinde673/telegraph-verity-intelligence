@@ -283,3 +283,14 @@ This file tracks execution status for the frozen `.verity-work/MASTER_PLAN.md`. 
 
 - Created isolated branch foundation/verity-fact-check-anchor-cap-090-v32 from V30 (known-green parent) and raised only the anchor bonus cap from 0.80 to 0.90. Hypothesis: higher calibration brings valid terse answers closer to exact answers; risk: partial or wrong answers may receive too much bonus. Candidate commit c96c46995287ce88cd5e8c81e4a28f0c0e75012d.
 - Latest-commit Verity CI, WASM scorer tests/build, and comparative evaluation must all be checked before decision. Required adversarial controls include partial answers, wrong source/entity, wrong number, omitted requested fact, and opposite verdict. No registration, deployment, or production config changes; registration only after actual champion-beating rank is verified. Master plan unchanged.
+
+## V32 anchor cap 0.90 — evaluated, best consistency so far but not accepted (2026-10-15)
+
+- V32 commit c96c46995287ce88cd5e8c81e4a28f0c0e75012d passed Verity CI, WASM scorer tests/build, and comparative investigation: https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/38771870549, https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/38771870594, https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/38771870324. Artifact 11991019732, SHA-256 98cf322c366e87f3367858814a9c2df13e789b8a030b3e5632044cf2707f50ab.
+- V32 proxy: 233/254 pairwise wins (91.73%) vs champion 168/254 (66.14%); margin 0.630369 vs 0.538208; clean-pair consistency improved to 8/12 within 0.05, worst spread 0.077646 (V30 was 6/12, worst 0.155291). Still fails perfect near-equality consistency; real-traffic Spearman skipped due to 0 miners with history, and gate thresholds not independently verified. Not registered/accepted.
+- Probe controls remain strong: exact/paraphrase/same-meaning 1.0, unrelated/empty 0, negation 0.0200, wrong number 0.0022, requested number omission 0.0130, missing requested year 0.0500, wrong entity 0.0050. Candidate self-match beats unrelated cross-match 32/32; adversarial large inputs pass.
+
+## V33 anchor cap 0.95 — in progress (2026-10-15)
+
+- Created isolated branch foundation/verity-fact-check-anchor-cap-095-v33 from V32. Changed only anchor bonus cap from 0.90 to 0.95. Hypothesis: further reduce residual score spread among terse but fact-complete answers; risk is over-crediting partial answers, so the comparative probe and all hard conflict controls must be checked.
+- Candidate commit 300cc56ce3894ff2d26e13081a3c3dce9301fee6. Await Verity CI, WASM tests/build, and comparative evaluation for this exact SHA. Keep no registration/deployment/production config changes; registration only after actual rank above champion is verified. Master plan unchanged.
