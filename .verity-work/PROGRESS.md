@@ -236,3 +236,14 @@ This file tracks execution status for the frozen `.verity-work/MASTER_PLAN.md`. 
 
 - After fixing decimal context, the clean-pair test passed and 30/31 tests passed. The remaining test used an overly high absolute threshold (>0.50) for a concise answer whose reference includes extra confidence wording; the existing calibrated lexical score is already low for this terse form even without the omission penalty. Narrowed the assertion to check that the score is not additionally reduced by the requested-number omission penalty (>0.01), while the separate requested-count omission assertion still requires <0.10. Commit `fb517090edf2d90236735f76b14367f6eb608594`.
 - Latest CI, WASM tests/build, and comparative evaluation for this commit must be inspected; no candidate accepted until full results and adversarial probes are reviewed.
+
+## V28 requested-number omission guard — validated, not accepted (2026-10-15)
+
+- Latest V28 commit fb517090edf2d90236735f76b14367f6eb608594 passed Verity CI, WASM scorer tests/build, and comparative investigation: https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/38730568885, https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/38730568884, https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/38730568969. Investigation artifact ID 11969294829, SHA-256 8431bc6b45b58c84cae258e9e4a82115e2b280f5f807b4d7b667cac93b49abab.
+- Proxy: 233/254 pairwise wins (91.73%) vs champion 168/254 (66.14%); separation margin 0.623971 vs 0.538208. Clean-pair groups within 0.05 remain 6/12, worst spread 0.155291. Proxy says 5 pass, 0 fail, 1 skip, but real-traffic Spearman is skipped with 0 miner histories and gate thresholds are not independently verified. Not submission-ready due persistent consistency gap.
+- Probe scores: exact 1.0000, paraphrase 1.0000, negation 0.0200, wrong number 0.0022, omitted requested number 0.0130, partial founder-without-year 0.0500, wrong entity 0.0050. These are materially better adversarial controls; still need test for unintended temporal cue generalizing to every numeric fact.
+
+## V29 date-specific requested-fact cue — in progress (2026-10-15)
+
+- Next controlled experiment: remove the generic 'when' cue from the all-numbers fallback, because it can incorrectly make any numeric reference value (including counts/confidence) mandatory for a temporal question. Instead, recognize 'when' only for year/date-like numeric tokens (4+ digits) and keep explicit count/amount/percentage/score cues tied to their relevant numeric classes. Preserve decimal confidence as optional unless requested.
+- Require clean-pair spread to improve or at least not regress, preserve exact/paraphrase at 1.0, and retain strong penalties for wrong count, omitted requested count, missing requested year, wrong entity and opposite verdict. V29 must remain isolated; no registration/deployment/production changes. Master plan frozen.
