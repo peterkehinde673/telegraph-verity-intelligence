@@ -323,7 +323,7 @@ fn has_opposite_verdict(truth: &[u8], answer: &[u8]) -> bool {
 // Experimental factual-anchor coverage: exact numeric tokens, adjacent
 // capitalized entity pairs, and explicit verdict terms present in the reference.
 // This is a deterministic lexical proxy, not semantic entailment.
-fn evidence_anchor_coverage(truth: &[u8], answer: &[u8]) -> f32 {
+fn evidence_anchor_coverage(question: &[u8], truth: &[u8], answer: &[u8]) -> f32 {
     let mut total = 0u32;
     let mut matched = 0u32;
 
@@ -340,20 +340,28 @@ fn evidence_anchor_coverage(truth: &[u8], answer: &[u8]) -> f32 {
 
     let mut truth_pairs = [EMPTY_NAME_PAIR; 128];
     let pair_count = collect_name_pairs(truth, &mut truth_pairs);
+    let mut question_pairs = [EMPTY_NAME_PAIR; 128];
+    let question_count = collect_name_pairs(question, &mut question_pairs);
+    let mut answer_pairs = [EMPTY_NAME_PAIR; 128];
+    let answer_count = collect_name_pairs(answer, &mut answer_pairs);
     for pair in truth_pairs.iter().take(pair_count) {
-        total += 1;
         let first = &pair.first[..pair.first_len];
         let last = &pair.last[..pair.last_len];
-        let mut found = false;
-        let mut answer_pairs = [EMPTY_NAME_PAIR; 128];
-        let answer_count = collect_name_pairs(answer, &mut answer_pairs);
-        for candidate in answer_pairs.iter().take(answer_count) {
-            if same_token(first, &candidate.first[..candidate.first_len])
-                && same_token(last, &candidate.last[..candidate.last_len]) {
-                found = true;
-                break;
-            }
-        }
+
+        // Do not treat a proper-name pair copied from the question (often a
+        // document title) as a required answer fact. Keep names found only in
+        // the reference as candidate evidence anchors.
+        let asked_in_question = question_pairs.iter().take(question_count).any(|qpair| {
+            same_token(first, &qpair.first[..qpair.first_len])
+                && same_token(last, &qpair.last[..qpair.last_len])
+        });
+        if asked_in_question { continue; }
+
+        total += 1;
+        let found = answer_pairs.iter().take(answer_count).any(|candidate| {
+            same_token(first, &candidate.first[..candidate.first_len])
+                && same_token(last, &candidate.last[..candidate.last_len])
+        });
         if found { matched += 1; }
     }
 
@@ -428,7 +436,7 @@ fn score_bytes(_question: &[u8], truth: &[u8], answer: &[u8]) -> f32 {
     // Blend calibrated lexical overlap with exact factual-anchor coverage only
     // when lexical support is already substantial. This is an experiment to
     // reduce verbosity bias, not a claim of semantic equivalence.
-    let anchors = evidence_anchor_coverage(truth, answer);
+    let anchors = evidence_anchor_coverage(_question, truth, answer);
     if overlap >= 0.45 && anchors >= 0.60 {
         // Use anchor coverage as a bounded bonus, never as a replacement
         // score: noisy/incomplete anchor extraction must not lower a strong
@@ -506,8 +514,9 @@ mod tests {
     fn real_clean_pair_fixture_keeps_terse_answer_near_verbatim() {
         let truth = b"The submitted essay 'Coastal Erosion in Kerala' is assessed as plagiarised. Similarity to the reference corpus is 68%, derived from 7 matching passages against Journal of Coastal Research, 2019. Confidence in this assessment is 0.94.";
         let terse = b"plagiarised; 68% similar; 7 matches; Journal of Coastal Research, 2019.";
-        let exact_score = score_bytes(b"Verify originality", truth, truth);
-        let terse_score = score_bytes(b"Verify originality", truth, terse);
+        let question = b"Verify the originality of the submitted essay 'Coastal Erosion in Kerala'. Report the verdict, the similarity percentage, the number of matching passages, and the matched source.";
+        let exact_score = score_bytes(question, truth, truth);
+        let terse_score = score_bytes(question, truth, terse);
         assert!((exact_score - terse_score).abs() <= 0.05,
             "clean-pair near-equality failed: exact={exact_score}, terse={terse_score}");
     }
