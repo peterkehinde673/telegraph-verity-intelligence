@@ -835,4 +835,17 @@ mod tests {
         let answer = "correct answer ".repeat(5000);
         assert_eq!(score_bytes(b"q", truth.as_bytes(), answer.as_bytes()), 1.0);
     }
+
+    #[test]
+    fn scorer_handles_answers_above_runtime_limit_when_invoked_directly() {
+        // Telegraph rejected registration #3232 before scoring because one
+        // benchmark miner_answer was 275,351 bytes (> 131,072-byte host limit).
+        // This test only establishes that the scorer logic itself handles a
+        // similarly sized input; it cannot override a host-side input limit.
+        let truth = b"correct answer";
+        let answer = "correct answer ".repeat(18_357);
+        assert!(answer.len() > 131_072);
+        let score = score_bytes(b"q", truth, answer.as_bytes());
+        assert!(score.is_finite() && (0.0..=1.0).contains(&score));
+    }
 }
