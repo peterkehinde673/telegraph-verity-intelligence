@@ -416,3 +416,13 @@ This file tracks execution status for the frozen `.verity-work/MASTER_PLAN.md`. 
 - Candidate source commit `01c4d7b5a4ef637e89b79edaa40a6df585757de8` replaces the raw error with a stable generic message while preserving `insufficient_evidence`, zero confidence, empty evidence, and `content_extraction_failed`.
 - Regression test commit `ab60f002c81c4b2f6b1391c63cb0f40426baf34a` verifies a fake secret-bearing extractor error is not exposed. Candidate CI remains pending; do not mark this candidate validated until green CI is confirmed.
 - No master-plan edit, registration, deployment, on-chain transaction, or production configuration change.
+
+
+## Batch D follow-up — content extraction sanitized; URL_SCAN reviewed (2026-10-17)
+
+- Confirmed Content Extraction regression CI green: Verity CI run #645, conclusion `success`, on test commit `ab60f002c81c4b2f6b1391c63cb0f40426baf34a`. Run: https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39005915523
+- Continued the first-intent sequence with a focused review of `URL_SCAN` source and existing tests. The handler already treats successful HTTP responses as reachability evidence, records status/content type, and does not make a URL reputation verdict; failed fetches/timeouts yield zero-confidence uncertainty.
+- Security controls are already extensive and regression-tested: only HTTP(S), public-address checks for IPv4/IPv6, mixed DNS-answer rejection, address pinning for the native request path, bounded redirects, revalidation of each redirect target, credential-bearing redirect rejection, timeouts, and TLS certificate/hostname verification.
+- No new URL_SCAN source change is justified from this review: a speculative verdict/confidence change would alter existing semantics without a defined evaluation oracle. Preserve the existing SSRF/TLS protections.
+- This completes the current review of the original first-three intent sequence (DEEPFAKE_DETECTION, CONTENT_EXTRACTION, URL_SCAN) at code-review/regression level, but does **not** satisfy Batch E's before/after protocol-score measurement. Do not mark scoring acceptance or leaderboard improvement complete.
+- Next: continue with remaining-intent triage under Batch F, while Batch E remains blocked for authoritative protocol score comparison. No master-plan edit, registration, deployment, on-chain transaction, or production configuration change.
