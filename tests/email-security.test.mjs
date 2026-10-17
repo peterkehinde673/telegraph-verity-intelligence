@@ -130,3 +130,21 @@ test("email security treats ENOTFOUND on optional TXT lookup as DNS failure, not
   assert.equal(result.uncertainty[0]?.code, "dns_lookup_failed");
   assert.deepEqual(result.evidence, []);
 });
+
+
+test("email security abstains when DNS provider returns malformed MX records", async () => {
+  const result = await checkEmailSecurity("example.com", {
+    resolveImpl: async (_name, type) => {
+      if (type === "MX") return [{ exchange: "", priority: "high" }];
+      return [["v=spf1 -all"]];
+    },
+    now: () => "2026-10-18T00:00:00.000Z"
+  });
+
+  assert.equal(result.intent, "EMAIL_SECURITY");
+  assert.equal(result.verdict, "insufficient_evidence");
+  assert.equal(result.confidence, 0);
+  assert.equal(result.uncertainty[0]?.code, "invalid_dns_response");
+  assert.deepEqual(result.evidence, []);
+  assert.deepEqual(result.answer.mx_records, []);
+});
