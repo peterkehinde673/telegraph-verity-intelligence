@@ -435,3 +435,12 @@ This file tracks execution status for the frozen `.verity-work/MASTER_PLAN.md`. 
 - Regression test commit `f6b367ff4be88505c19b779b1a5181396b5117e6` injects a fake private endpoint/token in the thrown error and verifies it is not exposed.
 - CI for this candidate has not yet been confirmed; leave pending until green CI is reported or observed. No scoring claim is made.
 - No master-plan change, registration, deployment, on-chain transaction, or production configuration change.
+
+
+## Batch F follow-up — deepfake sanitization validated; malware provider error sanitization pending (2026-10-17)
+
+- Confirmed DEEPFAKE_DETECTION regression CI green: Verity CI run #649, conclusion `success`, on test commit `f6b367ff4be88505c19b779b1a5181396b5117e6`. Run: https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39006390468
+- Continued remaining-intent review and inspected `MALWARE_DETECTION`. Its reputation-provider catch returned raw `error.message` in the public uncertainty response, potentially exposing internal endpoint URLs, diagnostic text, or secret-bearing strings.
+- Candidate source commit `8233f1c7af803d6f58bd7a44e69714a379faff17` replaces that raw message with a stable generic error while preserving `insufficient_evidence`, confidence 0, empty evidence, and the existing `reputation_lookup_failed` code.
+- Regression test commit `0ea4f8fbcdad1239e37b938cf1f652b4ee1cfcb8` injects a fake private endpoint/token in the provider error and asserts that it is not exposed. Candidate CI remains pending until confirmed green.
+- No master-plan change, registration, deployment, on-chain transaction, or production configuration change.
