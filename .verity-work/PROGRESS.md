@@ -596,5 +596,15 @@ This file tracks execution status for the frozen `.verity-work/MASTER_PLAN.md`. 
 - Found the DMARC policy parser accepted `v=DMARC1 p=reject` because it treated whitespace as a valid separator before the `p=` tag. DMARC tags are semicolon-delimited; malformed syntax must not be interpreted as an enforceable policy.
 - Candidate source commit `f60e7bdfa060f75ed6f91a5ec76f9c9df2635ed7` now recognizes policy tags only when preceded by the required semicolon and followed by a valid tag boundary. A malformed record is retained for diagnostics but yields `dmarc_policy: "unknown"`, `dmarc_policy_invalid`, and an `uncertain` verdict.
 - Regression test commit `66bccc07ae3dcc4ffca331ce3806195c07543c2e` supplies `v=DMARC1 p=reject` and asserts the handler does not treat it as a valid policy.
-- Candidate CI is pending. Wait for green CI confirmation before starting another code batch.
+- User confirmed CI is green for the DMARC tag delimiter validation candidate. Status recorded as user-confirmed; workflow lookup was not independently verified in this turn.
+- No master-plan change, registration, deployment, on-chain transaction, or production configuration change.
+
+
+## Batch F follow-up — duplicate DMARC policy-tag validation candidate pending CI (2026-10-18)
+
+- User confirmed CI is green for the prior DMARC tag-delimiter validation batch.
+- Continued review found the parser could accept a record with duplicate policy tags such as `v=DMARC1; p=reject; p=none` by extracting the first recognized value. Duplicate DMARC tags make the record invalid/ambiguous and should not be represented as a valid enforceable policy.
+- Candidate source commit `3fae6e405c7f701c0113aa5b1d88dba50516c213` requires exactly one `p=` tag before interpreting the policy. Duplicate tags now leave `dmarc_policy: "unknown"` and surface `dmarc_policy_invalid`, producing an `uncertain` verdict.
+- Regression test commit `0aa1360d3fbee96b84235d1e82b67139cf0a5e24` covers a record containing both `p=reject` and `p=none`.
+- Candidate CI is pending; wait for user confirmation before continuing to the next batch.
 - No master-plan change, registration, deployment, on-chain transaction, or production configuration change.
