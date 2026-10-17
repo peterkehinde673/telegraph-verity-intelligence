@@ -148,3 +148,32 @@ test("email security abstains when DNS provider returns malformed MX records", a
   assert.deepEqual(result.evidence, []);
   assert.deepEqual(result.answer.mx_records, []);
 });
+
+
+test("email security flags multiple SPF and DMARC policy records as misconfiguration", async () => {
+  const result = await checkEmailSecurity("example.com", {
+    resolveImpl: async (name, type) => {
+      if (type === "MX") return [{ exchange: "mail.example.com", priority: 10 }];
+      if (name === "example.com" && type === "TXT") {
+        return [
+          ["v=spf1 -all"],
+          ["v=spf1 include:mail.example.com -all"]
+        ];
+      }
+      if (name === "_dmarc.example.com" && type === "TXT") {
+        return [
+          ["v=DMARC1; p=reject"],
+          ["v=DMARC1; p=none"]
+        ];
+      }
+      throw Object.assign(new Error("no data"), { code: "ENODATA" });
+    },
+    now: () => "2026-10-18T00:00:00.000Z"
+  });
+
+  assert.equal(result.verdict, "uncertain");
+  assert.equal(result.answer.spf_records.length, 2);
+  assert.equal(result.answer.dmarc_records.length, 2);
+  assert.equal(result.uncertainty.some((item) => item.code === "spf_multiple_records"), true);
+  assert.equal(result.uncertainty.some((item) => item.code === "dmarc_multiple_records"), true);
+});
