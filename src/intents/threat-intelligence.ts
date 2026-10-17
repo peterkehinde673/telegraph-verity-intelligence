@@ -156,7 +156,7 @@ export async function lookupThreatIntelligence(
       confidence: 0,
       answer: { indicator: normalized, indicator_type: type, pulse_count: 0, pulses: [], provider: "alienvault-otx" },
       evidence: [],
-      uncertainty: [{ code: "threat_feed_lookup_failed", message: error instanceof Error ? error.message : "Threat intelligence lookup failed." }],
+      uncertainty: [{ code: "threat_feed_lookup_failed", message: "The configured threat-intelligence source could not be reached or returned an invalid response." }],
       retrieved_at: retrievedAt
     };
   }
