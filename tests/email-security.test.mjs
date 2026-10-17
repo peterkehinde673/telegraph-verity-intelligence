@@ -302,3 +302,37 @@ test("email security does not treat a null MX record as a mail-capable domain", 
   assert.equal(result.answer.mx_records[0]?.exchange, ".");
   assert.equal(result.uncertainty.some((item) => item.code === "null_mx_record"), true);
 });
+
+
+test("email security rejects malformed MX exchange hostnames", async () => {
+  const result = await checkEmailSecurity("example.com", {
+    resolveImpl: async (name, type) => {
+      if (type === "MX") return [{ exchange: "mail..example.com", priority: 10 }];
+      if (name === "example.com" && type === "TXT") return [["v=spf1 -all"]];
+      if (name === "_dmarc.example.com" && type === "TXT") return [["v=DMARC1; p=reject"]];
+      throw Object.assign(new Error("no data"), { code: "ENODATA" });
+    },
+    now: () => "2026-10-18T00:00:00.000Z"
+  });
+
+  assert.equal(result.verdict, "insufficient_evidence");
+  assert.equal(result.confidence, 0);
+  assert.equal(result.uncertainty[0]?.code, "invalid_dns_response");
+  assert.deepEqual(result.evidence, []);
+  assert.deepEqual(result.answer.mx_records, []);
+});
+
+test("email security accepts fully qualified MX hostnames with a trailing dot", async () => {
+  const result = await checkEmailSecurity("example.com", {
+    resolveImpl: async (name, type) => {
+      if (type === "MX") return [{ exchange: "mail.example.com.", priority: 10 }];
+      if (name === "example.com" && type === "TXT") return [["v=spf1 -all"]];
+      if (name === "_dmarc.example.com" && type === "TXT") return [["v=DMARC1; p=reject"]];
+      throw Object.assign(new Error("no data"), { code: "ENODATA" });
+    },
+    now: () => "2026-10-18T00:00:00.000Z"
+  });
+
+  assert.equal(result.verdict, "confirmed");
+  assert.equal(result.answer.mx_records[0]?.exchange, "mail.example.com.");
+});
