@@ -618,9 +618,9 @@ This file tracks execution status for the frozen `.verity-work/MASTER_PLAN.md`. 
 - No production configuration, registration, deployment, or on-chain transaction changed.
 
 
-## Batch F follow-up — email-security domain syntax validation candidate pending CI (2026-10-18)
+## Batch F follow-up — email-security domain syntax validation user-confirmed green (2026-10-18)
 
-- Candidate source commit `26ae96cc7ec99421233aa82118aa1d86d4467d10` normalizes valid internationalized domain names to ASCII using Node's IDNA conversion and validates total domain length, label lengths, empty labels, and label syntax before DNS lookups.
+- User confirmed the domain syntax validation candidate passed CI; this status is user-confirmed and was not independently verified through workflow lookup.
+- Source commit `26ae96cc7ec99421233aa82118aa1d86d4467d10` normalizes valid internationalized domain names to ASCII using Node's IDNA conversion and validates total domain length, label lengths, empty labels, and label syntax before DNS lookups.
 - Regression test commit `f895f567ef941c2ad6078f895fb2608382d90f58` checks that `example..com` is rejected without any DNS query and that `bücher.example` is converted to `xn--bcher-kva.example` for lookup.
-- Candidate CI is pending. Wait for user confirmation before continuing to another code batch.
 - No master-plan change, registration, deployment, on-chain transaction, or production configuration change.
