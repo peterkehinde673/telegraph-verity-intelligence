@@ -624,3 +624,13 @@ This file tracks execution status for the frozen `.verity-work/MASTER_PLAN.md`. 
 - Source commit `26ae96cc7ec99421233aa82118aa1d86d4467d10` normalizes valid internationalized domain names to ASCII using Node's IDNA conversion and validates total domain length, label lengths, empty labels, and label syntax before DNS lookups.
 - Regression test commit `f895f567ef941c2ad6078f895fb2608382d90f58` checks that `example..com` is rejected without any DNS query and that `bücher.example` is converted to `xn--bcher-kva.example` for lookup.
 - No master-plan change, registration, deployment, on-chain transaction, or production configuration change.
+
+
+## Batch F follow-up — TXT resolver response-shape validation candidate pending CI (2026-10-18)
+
+- User confirmed the prior domain syntax validation candidate passed CI; recorded as user-confirmed, without independent workflow verification.
+- Continued review found `resolveTxt` called `record.join("")` before validating resolver data. A malformed TXT response (such as a string instead of an array of TXT chunks) therefore fell into the generic DNS-failure path and was mislabeled as `dns_lookup_failed` rather than an invalid provider response.
+- Candidate source commit `cadc8d98f9874dd31f03c8392abf21d7acb62bab` validates TXT results as arrays of arrays containing only strings before joining chunks. Malformed TXT data now safely abstains with `invalid_dns_response`.
+- Regression test commit `a2cd4928f64aa2df94f0a15abd96f2dc16b889e1` supplies a malformed TXT payload and verifies zero confidence, no evidence, and the specific invalid-response uncertainty.
+- Candidate CI is pending user confirmation; do not treat this batch as green yet.
+- No master-plan change, registration, deployment, on-chain transaction, or production configuration change.
