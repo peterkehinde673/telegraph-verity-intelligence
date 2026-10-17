@@ -634,3 +634,13 @@ This file tracks execution status for the frozen `.verity-work/MASTER_PLAN.md`. 
 - Regression test commit `a2cd4928f64aa2df94f0a15abd96f2dc16b889e1` supplies a malformed TXT payload and verifies zero confidence, no evidence, and the specific invalid-response uncertainty.
 - Candidate CI is pending user confirmation; do not treat this batch as green yet.
 - No master-plan change, registration, deployment, on-chain transaction, or production configuration change.
+
+
+## Batch G — null MX semantics candidate pending CI (2026-10-18)
+
+- User authorized continuation after the TXT resolver response-shape candidate, but did not explicitly confirm that candidate's CI is green. Its status remains pending; this new batch is tracked separately.
+- Continued semantic review found that an MX record with exchange `.` (null MX) passed the non-empty exchange check. If SPF and DMARC records were also present, the handler could report `confirmed` even though the domain explicitly declares that it does not accept email.
+- Candidate source commit `56e6af3ace2f79071acd591017ce88a17a664c1e` recognizes null MX and adds the `null_mx_record` uncertainty finding, preventing a confirmed mail-capability assessment.
+- Regression test commit `f27c9409ccba44f01adde9cba4f55d792c76a1ae` verifies a null MX domain remains uncertain even when SPF and DMARC records exist.
+- Candidate CI is pending user confirmation. No workflow result was independently checked.
+- No master-plan change, registration, deployment, on-chain transaction, or production configuration change.
