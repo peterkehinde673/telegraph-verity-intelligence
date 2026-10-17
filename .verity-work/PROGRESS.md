@@ -489,3 +489,12 @@ This file tracks execution status for the frozen `.verity-work/MASTER_PLAN.md`. 
 - Corrective source commit `b1b0c1853680093b505fa4013c476fb317bc1bea` adds an explicit missing-record guard after the legitimate `totalResults === 0` not-found branch. This both narrows TypeScript's type and correctly returns `insufficient_evidence` / `invalid_nvd_response` rather than falsely claiming absence.
 - Regression test commit `e6d6355fc0d224d2a06aecd416e775453eda90d1` covers `totalResults: 1` with an empty vulnerabilities array.
 - Awaiting CI confirmation for this correction. No master-plan change, registration, deployment, on-chain transaction, or production configuration change.
+
+
+## Batch F follow-up — CVE malformed-response guard CI validated; contradictory NVD count candidate pending (2026-10-17)
+
+- Confirmed CI #667 passed on test commit `e6d6355fc0d224d2a06aecd416e775453eda90d1`: typecheck/build/test workflow conclusion `success`. Run: https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39026535197
+- Continued CVE response-validation review. The prior fix correctly handled `totalResults > 0` with no usable first CVE record. A second inconsistent shape remained possible: `totalResults === 0` while the vulnerabilities array is non-empty. The previous branch would have returned a high-confidence `not_found` despite contradictory payload data.
+- Candidate source commit `f1f3b394fd13b43ab70fcdd165814d6c3ccfcf63` now rejects the contradictory zero-count/non-empty-array response as `insufficient_evidence` with `invalid_nvd_response`; legitimate zero-count/empty-array results still return `not_found`.
+- Regression test commit `b6ea4ef8535319e0f884b383b7c24bb11e886869` covers the contradictory response. Candidate CI is pending; wait for green CI before further batch changes.
+- No master-plan change, registration, deployment, on-chain transaction, or production configuration change.
