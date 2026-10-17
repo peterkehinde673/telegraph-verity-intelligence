@@ -528,3 +528,13 @@ This file tracks execution status for the frozen `.verity-work/MASTER_PLAN.md`. 
 - Regression test commit `55eae51528ef7d9616a8ef1e72ae8f108ec3bf1a` supplies malformed runtime data and checks that the handler abstains.
 - Candidate CI is pending; wait for green CI before continuing.
 - No master-plan change, registration, deployment, on-chain transaction, or production configuration change.
+
+
+## Batch F follow-up — threat-feed top-level validation CI user-confirmed green; pulse-entry validation pending (2026-10-17)
+
+- User confirmed the threat-feed top-level response-shape validation CI is green.
+- Continued inspection found that validating `pulses` as an array alone still allowed malformed elements through, e.g. an object whose `tags` contains non-string values. Such provider data could be returned to consumers despite not matching the declared pulse contract.
+- Candidate source commit `ea8ceeb9f9dff16da06706d98b6b2737b275920c` now validates each pulse as an object with a string name, a string-array tags field, and string-valued optional description/created/modified fields before assigning a verdict.
+- Regression test commit `27f765bbcaff906246597b39377d378013b55ee4` checks that a pulse with a numeric tag causes a safe abstention (`insufficient_evidence`, confidence 0, no evidence, `invalid_threat_feed_response`).
+- Candidate CI is pending; wait for user confirmation before continuing.
+- No master-plan change, registration, deployment, on-chain transaction, or production configuration change.
