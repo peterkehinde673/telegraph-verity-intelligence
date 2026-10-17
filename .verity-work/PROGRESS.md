@@ -548,3 +548,13 @@ This file tracks execution status for the frozen `.verity-work/MASTER_PLAN.md`. 
 - Regression test commit `6bfcdec1e85f4d1a2c71a3c63412ed76fcdc421f` verifies malformed match fields cause abstention instead of a confirmed verdict.
 - Candidate CI is pending; wait for user confirmation before continuing.
 - No master-plan change, registration, deployment, on-chain transaction, or production configuration change.
+
+
+## Batch F follow-up — malware record validation user-confirmed green; optional TXT NXDOMAIN handling pending (2026-10-17)
+
+- User confirmed CI is green for malware reputation record validation.
+- Continued review of `EMAIL_SECURITY`. The optional TXT lookup helper treated both `ENODATA` and `ENOTFOUND` as absence of an SPF/DMARC TXT RRset. DNS `ENODATA` indicates the name exists but has no record of that type; `ENOTFOUND` can indicate the DNS name itself does not exist (NXDOMAIN). Conflating these states can incorrectly report a missing policy rather than abstaining on a DNS failure.
+- Candidate source commit `957e9fa1b9fef864c6ccdd6cc422facc4287a11e` now treats only `ENODATA` as absence; other resolver failures propagate to the existing `insufficient_evidence` response.
+- Regression test commit `0acd062276edca0a7459067e9ca02e318a4225cc` verifies an `ENOTFOUND` DMARC lookup causes `dns_lookup_failed` with confidence 0 and no evidence, rather than a missing-DMARC policy conclusion.
+- Candidate CI is pending; wait for user confirmation before continuing.
+- No master-plan change, registration, deployment, on-chain transaction, or production configuration change.
