@@ -538,3 +538,13 @@ This file tracks execution status for the frozen `.verity-work/MASTER_PLAN.md`. 
 - Regression test commit `27f765bbcaff906246597b39377d378013b55ee4` checks that a pulse with a numeric tag causes a safe abstention (`insufficient_evidence`, confidence 0, no evidence, `invalid_threat_feed_response`).
 - Candidate CI is pending; wait for user confirmation before continuing.
 - No master-plan change, registration, deployment, on-chain transaction, or production configuration change.
+
+
+## Batch F follow-up — threat pulse-entry validation user-confirmed green; malware reputation record validation pending (2026-10-17)
+
+- User confirmed CI is green for the threat pulse-entry validation candidate.
+- Continued review of `MALWARE_DETECTION`. The handler treated any non-empty lookup result as a confirmed malicious match and immediately mapped its fields into evidence. It did not validate the runtime shape of individual match records; malformed source IDs, labels, or optional metadata could therefore be accepted as reputation evidence.
+- Candidate source commit `a0b8b3a04f9b60a66683ce2c8d216da391365c3c` validates that lookup output is an array of records with non-empty string `source_id` and `label`, plus string-valued optional `family` and `first_seen`. Invalid records return `insufficient_evidence`, confidence 0, empty matches/evidence, and uncertainty code `invalid_reputation_response`.
+- Regression test commit `6bfcdec1e85f4d1a2c71a3c63412ed76fcdc421f` verifies malformed match fields cause abstention instead of a confirmed verdict.
+- Candidate CI is pending; wait for user confirmation before continuing.
+- No master-plan change, registration, deployment, on-chain transaction, or production configuration change.
