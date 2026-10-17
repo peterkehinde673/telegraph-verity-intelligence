@@ -471,3 +471,12 @@ This file tracks execution status for the frozen `.verity-work/MASTER_PLAN.md`. 
 - Candidate source commit `44b2344b787f0d5910b4356ca438f8654e7db13d` now returns a structured `rejected` response with uncertainty code `invalid_timeout`, confidence 1, empty evidence, and the normalized CVE ID; no network call is made.
 - Regression test commit `1a07e2d38c329492b24a1040feb3ce82b0ec368d` checks that timeout 0 is rejected structurally and fetch is not invoked. Candidate CI is pending; do not mark this change validated until green CI is confirmed.
 - No master-plan edit, registration, deployment, on-chain transaction, or production configuration change.
+
+
+## Batch F follow-up — CVE timeout validation confirmed green; malformed NVD payload handling pending CI (2026-10-17)
+
+- User confirmed the CVE timeout validation CI is green. The GitHub workflow wrapper did not expose a matching run for test commit `1a07e2d38c329492b24a1040feb3ce82b0ec368d`; status is recorded as user-confirmed.
+- Continued `CVE_LOOKUP` review and found malformed HTTP-200 JSON objects (for example, `{ "unexpected": true }`) were interpreted as a missing CVE record and could yield a high-confidence `not_found` verdict. That confuses invalid provider data with evidence of absence.
+- Candidate source commit `0c3c1d1b0cff4c158d9198b0de59bde2914807e8` now requires a non-negative integer `totalResults` and an array `vulnerabilities` before interpreting the response. Invalid shapes return `insufficient_evidence`, confidence 0, no evidence, and uncertainty code `invalid_nvd_response`. Valid zero-result responses still return `not_found`.
+- Regression test commit `870f0a7c6d989dafdb2fd2d1e9010c90b00bcdb7` supplies malformed JSON shape with HTTP 200 and verifies it does not imply CVE absence. Candidate CI is pending; do not mark validated until green CI is confirmed.
+- No master-plan change, registration, deployment, on-chain transaction, or production configuration change.
