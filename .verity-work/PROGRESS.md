@@ -407,3 +407,12 @@ This file tracks execution status for the frozen `.verity-work/MASTER_PLAN.md`. 
 - Candidate source now uses the generic message `The configured academic search source could not be reached or returned an invalid response.` and preserves `insufficient_evidence`, confidence 0, empty evidence, and the existing `academic_search_failed` code. Source commit is discoverable in branch history; a stale-blob conflict occurred during update, then a refreshed read confirmed the intended generic message is present.
 - Added a regression test in commit `6dd1988914436d040295cd5c730966668d9a0cf3` that throws a fake secret-bearing provider error and asserts it is not exposed. CI for this candidate remains pending; do not mark validated until green CI is observed.
 - No master-plan edit, registration, deployment, on-chain transaction, or production configuration change.
+
+
+## Batch F follow-up — academic search validated; content extraction error sanitization pending (2026-10-17)
+
+- User confirmed the ACADEMIC_SEARCH provider-error sanitization CI is green. The workflow-run lookup for test commit `6dd1988914436d040295cd5c730966668d9a0cf3` returned no run metadata, so this is recorded as user-confirmed rather than independently re-verified by the GitHub API.
+- Continued in the frozen plan's original first-three-intent sequence and reviewed `CONTENT_EXTRACTION`. The catch handler returned raw `error.message` in its public uncertainty message, potentially disclosing internal diagnostics or secret-bearing strings.
+- Candidate source commit `01c4d7b5a4ef637e89b79edaa40a6df585757de8` replaces the raw error with a stable generic message while preserving `insufficient_evidence`, zero confidence, empty evidence, and `content_extraction_failed`.
+- Regression test commit `ab60f002c81c4b2f6b1391c63cb0f40426baf34a` verifies a fake secret-bearing extractor error is not exposed. Candidate CI remains pending; do not mark this candidate validated until green CI is confirmed.
+- No master-plan edit, registration, deployment, on-chain transaction, or production configuration change.
