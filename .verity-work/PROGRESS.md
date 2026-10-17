@@ -426,3 +426,12 @@ This file tracks execution status for the frozen `.verity-work/MASTER_PLAN.md`. 
 - No new URL_SCAN source change is justified from this review: a speculative verdict/confidence change would alter existing semantics without a defined evaluation oracle. Preserve the existing SSRF/TLS protections.
 - This completes the current review of the original first-three intent sequence (DEEPFAKE_DETECTION, CONTENT_EXTRACTION, URL_SCAN) at code-review/regression level, but does **not** satisfy Batch E's before/after protocol-score measurement. Do not mark scoring acceptance or leaderboard improvement complete.
 - Next: continue with remaining-intent triage under Batch F, while Batch E remains blocked for authoritative protocol score comparison. No master-plan edit, registration, deployment, on-chain transaction, or production configuration change.
+
+
+## Batch F follow-up — deepfake detector error sanitization pending CI (2026-10-17)
+
+- Continued the remaining-intent triage after the user confirmed the prior Content Extraction CI is green. Reviewed `DEEPFAKE_DETECTION` and found its detector-failure handler returned raw `error.message` in the public uncertainty field, potentially disclosing internal endpoints, diagnostics, or secret-bearing strings.
+- Candidate source commit `45bdd935216588d941474577e9278198bdf6bdc2` replaces the raw message with `The configured deepfake detector could not process the media reference.` It preserves the existing `insufficient_evidence` verdict, confidence 0, empty evidence, and `deepfake_detector_failed` code.
+- Regression test commit `f6b367ff4be88505c19b779b1a5181396b5117e6` injects a fake private endpoint/token in the thrown error and verifies it is not exposed.
+- CI for this candidate has not yet been confirmed; leave pending until green CI is reported or observed. No scoring claim is made.
+- No master-plan change, registration, deployment, on-chain transaction, or production configuration change.
