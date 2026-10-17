@@ -109,7 +109,7 @@ export async function academicSearch(
       evidence: [],
       uncertainty: [{
         code: "academic_search_failed",
-        message: error instanceof Error ? error.message : "Academic search failed."
+        message: "The configured academic search source could not be reached or returned an invalid response."
       }],
       retrieved_at: retrievedAt
     };

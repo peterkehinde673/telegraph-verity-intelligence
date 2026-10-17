@@ -59,3 +59,21 @@ test("news headlines abstains without a configured source", async () => {
   const result = await newsHeadlines("technology");
   assert.equal(result.verdict, "insufficient_evidence");
 });
+
+
+test("news headlines does not expose raw provider errors", async () => {
+  const result = await newsHeadlines("technology", {
+    fetchImpl: async () => { throw new Error("secret token abc123 upstream stack trace"); },
+    now: () => "2026-10-17T00:00:00.000Z"
+  });
+
+  assert.equal(result.verdict, "insufficient_evidence");
+  assert.equal(result.confidence, 0);
+  assert.equal(result.uncertainty[0]?.code, "news_fetch_failed");
+  assert.equal(
+    result.uncertainty[0]?.message,
+    "The configured news source could not be reached or returned an invalid response."
+  );
+  assert.equal(result.uncertainty[0]?.message.includes("abc123"), false);
+  assert.deepEqual(result.evidence, []);
+});
