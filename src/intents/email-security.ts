@@ -109,7 +109,7 @@ export async function checkEmailSecurity(
       evidence: [],
       uncertainty: [{
         code: "dns_lookup_failed",
-        message: error instanceof Error ? error.message : "DNS lookup failed."
+        message: "The domain DNS records could not be retrieved because the lookup failed."
       }],
       retrieved_at: retrievedAt
     };
