@@ -231,3 +231,38 @@ test("email security does not accept duplicate DMARC policy tags as a valid poli
   assert.equal(result.answer.dmarc_policy, "unknown");
   assert.equal(result.uncertainty.some((item) => item.code === "dmarc_policy_invalid"), true);
 });
+
+
+test("email security rejects malformed domain labels before DNS lookup", async () => {
+  let lookups = 0;
+  const result = await checkEmailSecurity("example..com", {
+    resolveImpl: async () => {
+      lookups += 1;
+      return [];
+    },
+    now: () => "2026-10-18T00:00:00.000Z"
+  });
+
+  assert.equal(result.verdict, "rejected");
+  assert.equal(result.uncertainty[0]?.code, "invalid_domain");
+  assert.equal(lookups, 0);
+});
+
+test("email security converts internationalized domain names to ASCII before DNS lookup", async () => {
+  const queriedNames = [];
+  const result = await checkEmailSecurity("bücher.example", {
+    resolveImpl: async (name, type) => {
+      queriedNames.push(name);
+      if (type === "MX") return [{ exchange: "mail.example", priority: 10 }];
+      if (name === "xn--bcher-kva.example" && type === "TXT") return [["v=spf1 -all"]];
+      if (name === "_dmarc.xn--bcher-kva.example" && type === "TXT") return [["v=DMARC1; p=reject"]];
+      throw Object.assign(new Error("no data"), { code: "ENODATA" });
+    },
+    now: () => "2026-10-18T00:00:00.000Z"
+  });
+
+  assert.equal(result.answer.domain, "xn--bcher-kva.example");
+  assert.equal(result.verdict, "confirmed");
+  assert.equal(queriedNames.includes("xn--bcher-kva.example"), true);
+  assert.equal(queriedNames.includes("_dmarc.xn--bcher-kva.example"), true);
+});
