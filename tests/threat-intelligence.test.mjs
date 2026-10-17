@@ -66,3 +66,24 @@ test("THREAT_INTELLIGENCE abstains when provider returns malformed pulse data", 
   assert.deepEqual(result.evidence, []);
   assert.deepEqual(result.answer.pulses, []);
 });
+
+
+test("THREAT_INTELLIGENCE abstains when a pulse entry has an invalid runtime shape", async () => {
+  const result = await lookupThreatIntelligence(
+    { indicator: "203.0.113.8", indicator_type: "ip" },
+    {
+      now: () => "2026-10-17T00:00:00.000Z",
+      lookupImpl: async () => ({
+        pulse_count: 1,
+        pulses: [{ name: "Malformed pulse", tags: ["phishing", 42] }]
+      })
+    }
+  );
+
+  assert.equal(result.intent, "THREAT_INTELLIGENCE");
+  assert.equal(result.verdict, "insufficient_evidence");
+  assert.equal(result.confidence, 0);
+  assert.equal(result.uncertainty[0]?.code, "invalid_threat_feed_response");
+  assert.deepEqual(result.evidence, []);
+  assert.deepEqual(result.answer.pulses, []);
+});
