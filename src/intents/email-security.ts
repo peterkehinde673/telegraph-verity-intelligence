@@ -30,7 +30,7 @@ async function resolveOptionalTxt(resolve: typeof dns.resolve, name: string): Pr
       ? String((error as { code?: unknown }).code)
       : "";
     // A missing TXT RRset is evidence of absence; resolver outages are not.
-    if (code === "ENODATA" || code === "ENOTFOUND") return [];
+    if (code === "ENODATA") return [];
     throw error;
   }
 }
