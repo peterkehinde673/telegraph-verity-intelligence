@@ -285,3 +285,20 @@ test("email security classifies malformed TXT resolver records as invalid DNS re
   assert.deepEqual(result.evidence, []);
   assert.deepEqual(result.answer.spf_records, []);
 });
+
+
+test("email security does not treat a null MX record as a mail-capable domain", async () => {
+  const result = await checkEmailSecurity("example.com", {
+    resolveImpl: async (name, type) => {
+      if (type === "MX") return [{ exchange: ".", priority: 0 }];
+      if (name === "example.com" && type === "TXT") return [["v=spf1 -all"]];
+      if (name === "_dmarc.example.com" && type === "TXT") return [["v=DMARC1; p=reject"]];
+      throw Object.assign(new Error("no data"), { code: "ENODATA" });
+    },
+    now: () => "2026-10-18T00:00:00.000Z"
+  });
+
+  assert.equal(result.verdict, "uncertain");
+  assert.equal(result.answer.mx_records[0]?.exchange, ".");
+  assert.equal(result.uncertainty.some((item) => item.code === "null_mx_record"), true);
+});
