@@ -1,4 +1,5 @@
 import { promises as dns } from "node:dns";
+import { domainToASCII } from "node:url";
 import type { VerityResponse } from "../contracts/verity-response.js";
 import { normalizeEvidence } from "../evidence/normalize.js";
 
@@ -39,11 +40,15 @@ export async function checkEmailSecurity(
   domain: string,
   options: EmailSecurityOptions = {}
 ): Promise<VerityResponse<EmailSecurityAnswer>> {
-  const normalizedDomain = domain.trim().toLowerCase().replace(/\.$/, "");
+  const inputDomain = domain.trim().toLowerCase().replace(/\.$/, "");
+  const normalizedDomain = domainToASCII(inputDomain);
   const retrievedAt = options.now?.() ?? new Date().toISOString();
   const resolve = options.resolveImpl ?? dns.resolve;
 
-  if (!normalizedDomain || normalizedDomain.includes("@") || normalizedDomain.includes(" ")) {
+  const labels = normalizedDomain.split(".");
+  const validDomain = normalizedDomain.length <= 253 && labels.length >= 2 && labels.every((label) => label.length >= 1 && label.length <= 63 && /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/i.test(label));
+
+  if (!validDomain || normalizedDomain.includes("@") || normalizedDomain.includes(" ")) {
     return {
       intent: "EMAIL_SECURITY",
       verdict: "rejected",
