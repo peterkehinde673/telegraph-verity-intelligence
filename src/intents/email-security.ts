@@ -19,8 +19,14 @@ export interface EmailSecurityOptions {
 }
 
 async function resolveTxt(resolve: typeof dns.resolve, name: string): Promise<string[]> {
-  const records = await resolve(name, "TXT") as string[][];
-  return records.map((record) => record.join(""));
+  const records: unknown = await resolve(name, "TXT");
+  if (
+    !Array.isArray(records) ||
+    !records.every((record) => Array.isArray(record) && record.every((part) => typeof part === "string"))
+  ) {
+    throw Object.assign(new Error("Malformed TXT response"), { code: "INVALID_DNS_RESPONSE" });
+  }
+  return records.map((record: string[]) => record.join(""));
 }
 
 async function resolveOptionalTxt(resolve: typeof dns.resolve, name: string): Promise<string[]> {
@@ -147,6 +153,10 @@ export async function checkEmailSecurity(
       retrieved_at: retrievedAt
     };
   } catch (error) {
+    const code = error && typeof error === "object" && "code" in error
+      ? String((error as { code?: unknown }).code)
+      : "";
+    const invalidDnsResponse = code === "INVALID_DNS_RESPONSE";
     return {
       intent: "EMAIL_SECURITY",
       verdict: "insufficient_evidence",
@@ -154,8 +164,10 @@ export async function checkEmailSecurity(
       answer: { domain: normalizedDomain, mx_records: [], spf_present: false, spf_records: [], dmarc_present: false, dmarc_records: [] },
       evidence: [],
       uncertainty: [{
-        code: "dns_lookup_failed",
-        message: "The domain DNS records could not be retrieved because the lookup failed."
+        code: invalidDnsResponse ? "invalid_dns_response" : "dns_lookup_failed",
+        message: invalidDnsResponse
+          ? "The domain DNS service returned records in an invalid format."
+          : "The domain DNS records could not be retrieved because the lookup failed."
       }],
       retrieved_at: retrievedAt
     };
