@@ -107,3 +107,26 @@ test("email security does not expose raw DNS resolver errors", async () => {
   assert.equal(result.uncertainty[0]?.message.includes("secret-email-88"), false);
   assert.deepEqual(result.evidence, []);
 });
+
+
+test("email security treats ENOTFOUND on optional TXT lookup as DNS failure, not missing policy", async () => {
+  const result = await checkEmailSecurity("example.com", {
+    resolveImpl: async (name, type) => {
+      if (type === "MX") return [{ exchange: "mail.example.com", priority: 10 }];
+      if (name === "example.com" && type === "TXT") {
+        return [["v=spf1 -all"]];
+      }
+      if (name === "_dmarc.example.com" && type === "TXT") {
+        throw Object.assign(new Error("DNS name does not exist"), { code: "ENOTFOUND" });
+      }
+      throw Object.assign(new Error("no data"), { code: "ENODATA" });
+    },
+    now: () => "2026-10-17T00:00:00.000Z"
+  });
+
+  assert.equal(result.intent, "EMAIL_SECURITY");
+  assert.equal(result.verdict, "insufficient_evidence");
+  assert.equal(result.confidence, 0);
+  assert.equal(result.uncertainty[0]?.code, "dns_lookup_failed");
+  assert.deepEqual(result.evidence, []);
+});
