@@ -498,3 +498,13 @@ This file tracks execution status for the frozen `.verity-work/MASTER_PLAN.md`. 
 - Candidate source commit `f1f3b394fd13b43ab70fcdd165814d6c3ccfcf63` now rejects the contradictory zero-count/non-empty-array response as `insufficient_evidence` with `invalid_nvd_response`; legitimate zero-count/empty-array results still return `not_found`.
 - Regression test commit `b6ea4ef8535319e0f884b383b7c24bb11e886869` covers the contradictory response. Candidate CI is pending; wait for green CI before further batch changes.
 - No master-plan change, registration, deployment, on-chain transaction, or production configuration change.
+
+
+## Batch F follow-up — contradictory NVD count CI user-confirmed green; CVE identifier-match candidate pending (2026-10-17)
+
+- User confirmed the contradictory NVD count regression candidate CI is green.
+- Continued CVE lookup review and found that a structurally valid NVD payload could still contain a CVE record whose `cve.id` differs from the requested identifier. The handler previously returned the mismatched record under a response whose evidence/source ID referenced the requested CVE, creating an attribution error.
+- Candidate source commit `a1e2fa710589b145cce2ea23bb19f9b97a558f08` now requires the returned `record.id` to match the normalized requested ID before accepting the record. A missing or mismatched ID returns `insufficient_evidence`, confidence 0, no evidence, and `cve_id_mismatch`.
+- Regression test commit `a986d2fb8f23f43d5e8893e5478e55f27caf5c2e` returns a different CVE ID in an HTTP-200 NVD payload and asserts the handler abstains.
+- Candidate CI is pending. Wait for user confirmation of green CI before further edits.
+- No master-plan change, registration, deployment, on-chain transaction, or production configuration change.
