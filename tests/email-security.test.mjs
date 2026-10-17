@@ -213,3 +213,21 @@ test("email security does not accept a DMARC policy tag separated from the versi
   assert.equal(result.answer.dmarc_policy, "unknown");
   assert.equal(result.uncertainty.some((item) => item.code === "dmarc_policy_invalid"), true);
 });
+
+
+test("email security does not accept duplicate DMARC policy tags as a valid policy", async () => {
+  const result = await checkEmailSecurity("example.com", {
+    resolveImpl: async (name, type) => {
+      if (type === "MX") return [{ exchange: "mail.example.com", priority: 10 }];
+      if (name === "example.com" && type === "TXT") return [["v=spf1 -all"]];
+      if (name === "_dmarc.example.com" && type === "TXT") return [["v=DMARC1; p=reject; p=none"]];
+      throw Object.assign(new Error("no data"), { code: "ENODATA" });
+    },
+    now: () => "2026-10-18T00:00:00.000Z"
+  });
+
+  assert.equal(result.verdict, "uncertain");
+  assert.equal(result.answer.dmarc_present, true);
+  assert.equal(result.answer.dmarc_policy, "unknown");
+  assert.equal(result.uncertainty.some((item) => item.code === "dmarc_policy_invalid"), true);
+});
