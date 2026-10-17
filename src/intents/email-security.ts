@@ -125,7 +125,15 @@ export async function checkEmailSecurity(
     };
 
     const issues: Array<{ code: string; message: string }> = [];
-    if (answer.mx_records.length === 0) issues.push({ code: "no_mx_records", message: "No MX records were returned for the domain." });
+    const hasNullMx = answer.mx_records.some((record) => record.exchange.trim() === ".");
+    if (answer.mx_records.length === 0) {
+      issues.push({ code: "no_mx_records", message: "No MX records were returned for the domain." });
+    } else if (hasNullMx) {
+      issues.push({
+        code: "null_mx_record",
+        message: "The domain publishes a null MX record, indicating that it does not accept email."
+      });
+    }
     if (!answer.spf_present) issues.push({ code: "spf_missing", message: "No SPF record was found." });
     if (spfRecords.length > 1) issues.push({ code: "spf_multiple_records", message: "Multiple SPF records were found; SPF evaluation may fail until the records are consolidated." });
     if (!answer.dmarc_present) issues.push({ code: "dmarc_missing", message: "No DMARC record was found." });
