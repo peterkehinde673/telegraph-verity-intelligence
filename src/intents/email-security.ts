@@ -116,6 +116,12 @@ export async function checkEmailSecurity(
     if (spfRecords.length > 1) issues.push({ code: "spf_multiple_records", message: "Multiple SPF records were found; SPF evaluation may fail until the records are consolidated." });
     if (!answer.dmarc_present) issues.push({ code: "dmarc_missing", message: "No DMARC record was found." });
     if (dmarcRecords.length > 1) issues.push({ code: "dmarc_multiple_records", message: "Multiple DMARC records were found; DMARC evaluation may fail until a single record remains." });
+    if (dmarcRecords.length === 1 && dmarcPolicy === "unknown") {
+      issues.push({
+        code: "dmarc_policy_invalid",
+        message: "The DMARC record does not contain a recognized policy value; policy enforcement could not be verified."
+      });
+    }
 
     return {
       intent: "EMAIL_SECURITY",
