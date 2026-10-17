@@ -518,3 +518,13 @@ This file tracks execution status for the frozen `.verity-work/MASTER_PLAN.md`. 
 - Regression test commit `6a502c4e4a7461400ce018f9454c44d4f6e15afc` injects a fake private authorization diagnostic into an unauthorized secure connection and asserts it is not returned.
 - Candidate CI is pending. Do not continue to another code batch until this candidate is green.
 - No master-plan change, registration, deployment, on-chain transaction, or production configuration change.
+
+
+## Batch F follow-up — TLS diagnostic sanitization user-confirmed green; threat-feed payload validation pending (2026-10-17)
+
+- User confirmed the SSL_VERIFICATION authorization-diagnostic sanitization CI is green.
+- Continued review of `THREAT_INTELLIGENCE`. The handler trusted the provider result shape at runtime and compared `pulse_count > 0` to choose `likely`; a malformed provider response (for example, a string count and non-array pulses) could be treated as valid data and leak into the answer rather than abstaining.
+- Candidate source commit `0ce8059fa13ead8bc10105e419cde0fe7b570152` validates that the result exists, `pulse_count` is a non-negative integer, and `pulses` is an array before assigning a verdict. Invalid shapes return `insufficient_evidence`, confidence 0, empty evidence, and `invalid_threat_feed_response`.
+- Regression test commit `55eae51528ef7d9616a8ef1e72ae8f108ec3bf1a` supplies malformed runtime data and checks that the handler abstains.
+- Candidate CI is pending; wait for green CI before continuing.
+- No master-plan change, registration, deployment, on-chain transaction, or production configuration change.
