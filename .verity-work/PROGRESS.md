@@ -380,3 +380,12 @@ This file tracks execution status for the frozen `.verity-work/MASTER_PLAN.md`. 
 - Added a regression test for transient resolver failure in test commit `992ac074ef2500c8069edad94300b94f1e33a580`; it checks contract fields and verifies the raw internal error message is not exposed.
 - CI for the DNS_RECORD_LOOKUP candidate has not yet appeared in workflow-run lookup; validation remains pending. Do not mark this sub-batch complete until green CI is confirmed.
 - No master-plan change, registration, deployment, on-chain transaction, or production configuration change.
+
+
+## Batch F follow-up — DNS lookup validated; news provider error sanitization pending (2026-10-17)
+
+- Confirmed `DNS_RECORD_LOOKUP` regression candidate CI green: Verity CI run #635, conclusion `success`, for test commit `992ac074ef2500c8069edad94300b94f1e33a580`. Run: https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/38986085959
+- Continued inspection of `NEWS_HEADLINES`. Its provider-error catch returned `error.message` directly in the public uncertainty message, which can disclose internal URLs, provider response details, or secret-bearing error strings.
+- Candidate source commit `a28253f4dfcb89d381118c139545736ed73187d8` replaces the raw provider error with a stable generic message while preserving `insufficient_evidence`, zero confidence, empty evidence, and the existing `news_fetch_failed` code.
+- Added a regression test in `d3f375802b365a01279ad4a41145575d8a23c7bc` using a deliberately secret-bearing thrown error and asserting that it is not returned. CI for this candidate is not yet confirmed; keep this sub-batch pending until the workflow is green.
+- No master-plan change, registration, deployment, on-chain transaction, or production configuration change.
