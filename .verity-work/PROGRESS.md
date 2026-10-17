@@ -663,10 +663,17 @@ This file tracks execution status for the frozen `.verity-work/MASTER_PLAN.md`. 
 - No master-plan change, registration, deployment, on-chain transaction, or production configuration change.
 
 
-## Batch I — conflicting null MX records workflow-verified green; null MX preference candidate pending CI (2026-10-18)
+## Batch I — conflicting null MX records workflow-verified green (2026-10-18)
 
-- Independently checked the latest GitHub Actions runs: source fix [#721](https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39080395449), regression test [#722](https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39080401349), and progress log [#723](https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39080409433) all completed successfully.
-- Batch I distinguishes a sole null MX from a null MX returned alongside ordinary MX records; the mixed configuration now yields `null_mx_conflict`. Source commit `546d344baa54394bb65bcf6f39e820d70639d9c8`, regression test `f5b9801a5e7a283ff46b6c029aabd9689e644188`.
-- Follow-up review found another MX semantic edge case: a null MX is only valid with preference 0. A record with exchange `.` and a nonzero preference is now rejected as an invalid DNS response, with a regression test.
-- Batch J source commit `2a51967b97c119b59ab78809624afc27ea1aa751`; regression test commit `99d5ac29cb4ca999370e4f4713fff56b4858f779`. CI is pending for these commits; wait for completion before starting another code batch.
+- Independently checked GitHub Actions source run [#721](https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39080395449), regression-test run [#722](https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39080401349), and progress-log run [#723](https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39080409433); all completed successfully.
+- Batch I distinguishes a sole null MX from a null MX returned alongside ordinary MX records; the mixed configuration yields `null_mx_conflict`. Source commit `546d344baa54394bb65bcf6f39e820d70639d9c8`, regression test `f5b9801a5e7a283ff46b6c029aabd9689e644188`.
+- No master-plan change, registration, deployment, on-chain transaction, or production configuration change.
+
+## Batch J — null MX preference validation workflow-verified green (2026-10-18)
+
+- Source commit `2a51967b97c119b59ab78809624afc27ea1aa751` enforces the DNS null-MX rule that exchange `.` must have preference 0; a nonzero preference is classified as `invalid_dns_response`.
+- Regression-test commit `99d5ac29cb4ca999370e4f4713fff56b4858f779` verifies safe abstention, zero confidence, no evidence, and an empty normalized MX answer for a null MX record with preference 10.
+- Workflow verification: source run [#724](https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39080699372), regression-test run [#725](https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39080704785), and progress-log run [#726](https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39080712723) all completed successfully. Typecheck, build, test, integration tooling, and miner-template preflight steps passed.
+- Batch J is complete as a code/test batch. This does not demonstrate a protocol-score or leaderboard improvement.
+- Plan gate before further scope expansion: the frozen master plan requires measured acceptance work on the initial target intents before expanding to remaining intents. The progress log still records protocol-score measurement as unresolved and Batch E's acceptance gate as blocked; resume that planned gate rather than treating further unrelated DNS fixes as a substitute.
 - No master-plan change, registration, deployment, on-chain transaction, or production configuration change.
