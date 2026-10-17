@@ -120,7 +120,7 @@ export async function detectDeepfake(
       evidence: [],
       uncertainty: [{
         code: "deepfake_detector_failed",
-        message: error instanceof Error ? error.message : "Deepfake detection failed."
+        message: "The configured deepfake detector could not process the media reference."
       }],
       retrieved_at: retrievedAt
     };
