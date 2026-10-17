@@ -351,3 +351,13 @@ This file tracks execution status for the frozen `.verity-work/MASTER_PLAN.md`. 
 - Read-only inspection of `src/intents/cve-lookup.ts` found a concrete reliability concern: invalid IDs return a structured response, and KEV enrichment failures are swallowed, but NVD timeout/network errors, non-2xx responses, and JSON parsing failures escape the handler as thrown errors. The HTTP server then returns generic 500 `internal_error` instead of a contract-shaped `CVE_LOOKUP` response with explicit uncertainty. This is a candidate issue, not yet changed or test-verified.
 - Also inspected `src/intents/ssl-verification.ts`; it already distinguishes recognized certificate-validation errors from general TLS connection failures. No additional change justified from source inspection alone.
 - Next: inspect existing CVE-focused tests and dispatcher/response-contract expectations, then add a narrow regression and candidate fix only if the existing contract supports returning `insufficient_evidence` for provider failures. Run focused tests plus full typecheck/build/test. No source code, deployment, registration, transaction, production configuration, or master plan changed in this triage step.
+
+
+## Batch F follow-up — CVE provider failure handling (2026-10-17)
+
+- Implemented a narrow candidate fix in `src/intents/cve-lookup.ts`: NVD fetch/network errors, non-2xx responses, and JSON parse failures now return a contract-shaped `CVE_LOOKUP` response with `verdict: "insufficient_evidence"`, `confidence: 0`, no evidence, and uncertainty code `nvd_request_failed`. The error message is generic and does not expose provider/internal details.
+- Added three regression tests to existing `tests/cve-lookup.test.mjs` for network failure, HTTP 503, and malformed JSON. Existing invalid-ID, not-found, successful-record normalization, and abort-signal tests remain in place.
+- Candidate source commit: `815fa380fcc2a5049fc253a2970d2d42240af7a5`; test commit: `1313929ecc395c18eb01efbf0450f5e5bb7cdb1e`.
+- CI run 629 succeeded: https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/38985196083. Observed Typecheck, Build, Test, Telegraph integration tooling, and miner-template preflight steps all completed successfully.
+- This confirms the focused reliability correction passes repository CI; it does not establish protocol scoring or leaderboard impact. Batch F remains in progress because remaining supported intents still need evidence-based triage, and Batch E's authoritative scorer comparison remains blocked.
+- No master-plan edit, registration, deployment, on-chain transaction, or production configuration change was made. Only the candidate source, focused test, and progress log changed.
