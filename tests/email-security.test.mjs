@@ -266,3 +266,22 @@ test("email security converts internationalized domain names to ASCII before DNS
   assert.equal(queriedNames.includes("xn--bcher-kva.example"), true);
   assert.equal(queriedNames.includes("_dmarc.xn--bcher-kva.example"), true);
 });
+
+
+test("email security classifies malformed TXT resolver records as invalid DNS responses", async () => {
+  const result = await checkEmailSecurity("example.com", {
+    resolveImpl: async (name, type) => {
+      if (type === "MX") return [{ exchange: "mail.example.com", priority: 10 }];
+      if (name === "example.com" && type === "TXT") return ["v=spf1 -all"];
+      if (name === "_dmarc.example.com" && type === "TXT") return [["v=DMARC1; p=reject"]];
+      throw Object.assign(new Error("no data"), { code: "ENODATA" });
+    },
+    now: () => "2026-10-18T00:00:00.000Z"
+  });
+
+  assert.equal(result.verdict, "insufficient_evidence");
+  assert.equal(result.confidence, 0);
+  assert.equal(result.uncertainty[0]?.code, "invalid_dns_response");
+  assert.deepEqual(result.evidence, []);
+  assert.deepEqual(result.answer.spf_records, []);
+});
