@@ -398,3 +398,12 @@ This file tracks execution status for the frozen `.verity-work/MASTER_PLAN.md`. 
 - Candidate source commit `d1306b9f500f09da258ee580eddcff53b2db419d` replaces raw error text with a stable generic message and preserves `insufficient_evidence`, confidence 0, empty evidence, and existing `academic_search_failed` code.
 - Added regression test in `4fbd451609d3ccc998cada532f34d43c2b559058` using a private endpoint URL with a fake token, asserting it is not returned. Academic candidate CI is not yet confirmed; leave validation pending.
 - No master-plan change, registration, deployment, on-chain transaction, or production configuration change.
+
+
+## Batch F follow-up — news sanitization validated; academic provider error sanitization pending (2026-10-17)
+
+- Confirmed NEWS_HEADLINES candidate CI green: Verity CI run #638, conclusion `success`, on test commit `d3f375802b365a01279ad4a41145575d8a23c7bc`. Run: https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/38986383337
+- Continued review of ACADEMIC_SEARCH. Its provider-error catch returned the raw `error.message` to the public uncertainty response, risking disclosure of internal URLs, diagnostic details, or secret-bearing strings.
+- Candidate source now uses the generic message `The configured academic search source could not be reached or returned an invalid response.` and preserves `insufficient_evidence`, confidence 0, empty evidence, and the existing `academic_search_failed` code. Source commit is discoverable in branch history; a stale-blob conflict occurred during update, then a refreshed read confirmed the intended generic message is present.
+- Added a regression test in commit `6dd1988914436d040295cd5c730966668d9a0cf3` that throws a fake secret-bearing provider error and asserts it is not exposed. CI for this candidate remains pending; do not mark validated until green CI is observed.
+- No master-plan edit, registration, deployment, on-chain transaction, or production configuration change.
