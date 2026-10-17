@@ -29,6 +29,19 @@ async function resolveTxt(resolve: typeof dns.resolve, name: string): Promise<st
   return records.map((record: string[]) => record.join(""));
 }
 
+function isValidMxExchange(exchange: string): boolean {
+  if (exchange === ".") return true;
+  if (exchange.trim() !== exchange || exchange.length === 0) return false;
+  const hostname = domainToASCII(exchange.toLowerCase().replace(/\\.$/, ""));
+  if (!hostname || hostname.length > 253) return false;
+  const labels = hostname.split(".");
+  return labels.length >= 2 && labels.every((label) =>
+    label.length >= 1 &&
+    label.length <= 63 &&
+    /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/i.test(label)
+  );
+}
+
 async function resolveOptionalTxt(resolve: typeof dns.resolve, name: string): Promise<string[]> {
   try {
     return await resolveTxt(resolve, name);
@@ -79,7 +92,7 @@ export async function checkEmailSecurity(
         record !== null &&
         typeof record === "object" &&
         typeof record.exchange === "string" &&
-        record.exchange.trim().length > 0 &&
+        isValidMxExchange(record.exchange) &&
         Number.isInteger(record.priority) &&
         record.priority >= 0 &&
         record.priority <= 65535
