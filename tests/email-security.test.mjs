@@ -336,3 +336,26 @@ test("email security accepts fully qualified MX hostnames with a trailing dot", 
   assert.equal(result.verdict, "confirmed");
   assert.equal(result.answer.mx_records[0]?.exchange, "mail.example.com.");
 });
+
+
+test("email security flags a null MX record that conflicts with ordinary MX records", async () => {
+  const result = await checkEmailSecurity("example.com", {
+    resolveImpl: async (name, type) => {
+      if (type === "MX") {
+        return [
+          { exchange: ".", priority: 0 },
+          { exchange: "mail.example.com", priority: 10 }
+        ];
+      }
+      if (name === "example.com" && type === "TXT") return [["v=spf1 -all"]];
+      if (name === "_dmarc.example.com" && type === "TXT") return [["v=DMARC1; p=reject"]];
+      throw Object.assign(new Error("no data"), { code: "ENODATA" });
+    },
+    now: () => "2026-10-18T00:00:00.000Z"
+  });
+
+  assert.equal(result.verdict, "uncertain");
+  assert.equal(result.answer.mx_records.length, 2);
+  assert.equal(result.uncertainty.some((item) => item.code === "null_mx_conflict"), true);
+  assert.equal(result.uncertainty.some((item) => item.code === "null_mx_record"), false);
+});
