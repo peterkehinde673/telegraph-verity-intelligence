@@ -480,3 +480,12 @@ This file tracks execution status for the frozen `.verity-work/MASTER_PLAN.md`. 
 - Candidate source commit `0c3c1d1b0cff4c158d9198b0de59bde2914807e8` now requires a non-negative integer `totalResults` and an array `vulnerabilities` before interpreting the response. Invalid shapes return `insufficient_evidence`, confidence 0, no evidence, and uncertainty code `invalid_nvd_response`. Valid zero-result responses still return `not_found`.
 - Regression test commit `870f0a7c6d989dafdb2fd2d1e9010c90b00bcdb7` supplies malformed JSON shape with HTTP 200 and verifies it does not imply CVE absence. Candidate CI is pending; do not mark validated until green CI is confirmed.
 - No master-plan change, registration, deployment, on-chain transaction, or production configuration change.
+
+
+## Batch F correction — CVE malformed-response typecheck failure fixed; CI pending (2026-10-17)
+
+- User reported CI runs 663–665 failed TypeScript typecheck because `payload.vulnerabilities[0]?.cve` can be undefined when `totalResults > 0`, leaving `record` possibly undefined.
+- Root cause confirmed in `CVE_LOOKUP`: response-shape validation checked that `vulnerabilities` was an array but did not ensure a record existed when NVD claimed nonzero results.
+- Corrective source commit `b1b0c1853680093b505fa4013c476fb317bc1bea` adds an explicit missing-record guard after the legitimate `totalResults === 0` not-found branch. This both narrows TypeScript's type and correctly returns `insufficient_evidence` / `invalid_nvd_response` rather than falsely claiming absence.
+- Regression test commit `e6d6355fc0d224d2a06aecd416e775453eda90d1` covers `totalResults: 1` with an empty vulnerabilities array.
+- Awaiting CI confirmation for this correction. No master-plan change, registration, deployment, on-chain transaction, or production configuration change.
