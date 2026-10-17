@@ -558,3 +558,13 @@ This file tracks execution status for the frozen `.verity-work/MASTER_PLAN.md`. 
 - Regression test commit `0acd062276edca0a7459067e9ca02e318a4225cc` verifies an `ENOTFOUND` DMARC lookup causes `dns_lookup_failed` with confidence 0 and no evidence, rather than a missing-DMARC policy conclusion.
 - Candidate CI is pending; wait for user confirmation before continuing.
 - No master-plan change, registration, deployment, on-chain transaction, or production configuration change.
+
+
+## Batch F follow-up — optional TXT NXDOMAIN fix user-authorized continuation; email DNS record-shape validation pending (2026-10-18)
+
+- User said to continue after the optional TXT `ENOTFOUND`/NXDOMAIN handling candidate; this was treated as permission to proceed, not as a claim that CI was green.
+- Continued inspection of `EMAIL_SECURITY`: the handler assumed runtime DNS resolver results matched TypeScript declarations. A malformed MX record (for example, an empty exchange and non-numeric priority) could be mapped into a normal answer and produce a confident security assessment.
+- Candidate source commit `9527f7856f73bda6dfa598e17551464d0dbe8a78` validates MX records (non-empty exchange, integer priority in range 0–65535) and validates SPF/DMARC TXT results as arrays of strings. Malformed payloads return `insufficient_evidence`, confidence 0, no evidence, and `invalid_dns_response`.
+- Regression test commit `e33dccddfca0d0084cdf57b32f1ab6fa82a96068` supplies an empty MX exchange and string priority and verifies safe abstention.
+- Candidate CI is pending. User has not yet explicitly confirmed the preceding NXDOMAIN candidate CI; track both statuses independently and do not claim either is green without observed CI evidence or user confirmation.
+- No master-plan change, registration, deployment, on-chain transaction, or production configuration change.
