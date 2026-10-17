@@ -48,3 +48,21 @@ test("THREAT_INTELLIGENCE does not expose raw provider errors", async () => {
   assert.equal(result.uncertainty[0]?.message.includes("secret-threat-77"), false);
   assert.deepEqual(result.evidence, []);
 });
+
+
+test("THREAT_INTELLIGENCE abstains when provider returns malformed pulse data", async () => {
+  const result = await lookupThreatIntelligence(
+    { indicator: "203.0.113.8", indicator_type: "ip" },
+    {
+      now: () => "2026-10-17T00:00:00.000Z",
+      lookupImpl: async () => ({ pulse_count: "many", pulses: "not-an-array" })
+    }
+  );
+
+  assert.equal(result.intent, "THREAT_INTELLIGENCE");
+  assert.equal(result.verdict, "insufficient_evidence");
+  assert.equal(result.confidence, 0);
+  assert.equal(result.uncertainty[0]?.code, "invalid_threat_feed_response");
+  assert.deepEqual(result.evidence, []);
+  assert.deepEqual(result.answer.pulses, []);
+});
