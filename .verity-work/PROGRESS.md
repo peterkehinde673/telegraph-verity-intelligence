@@ -462,3 +462,12 @@ This file tracks execution status for the frozen `.verity-work/MASTER_PLAN.md`. 
 - Candidate source commit `4a567301f424eb14bd8c5f9eec8b4624cd664d74` replaces raw DNS resolver text with a generic stable message while preserving `insufficient_evidence`, confidence 0, empty evidence, and `dns_lookup_failed`.
 - Regression test commit `47ac26cfedb8ea0fbff793c9f579899a276a98a1` injects a fake secret-bearing resolver error and checks it is not exposed.
 - Candidate CI is pending. No master-plan edit, registration, deployment, on-chain transaction, or production configuration change.
+
+
+## Batch F follow-up — email DNS sanitization validated; CVE timeout validation candidate pending (2026-10-17)
+
+- User confirmed EMAIL_SECURITY resolver-error sanitization CI is green. The current tool wrapper did not provide a matching workflow-run record for test commit `47ac26cfedb8ea0fbff793c9f579899a276a98a1`; this is recorded as user-confirmed.
+- Continued review of `CVE_LOOKUP`. The handler threw an uncaught exception when its configured `timeoutMs` was zero, negative, non-integer, or otherwise invalid. This bypassed the standard structured response contract and could become an unhandled error at the caller.
+- Candidate source commit `44b2344b787f0d5910b4356ca438f8654e7db13d` now returns a structured `rejected` response with uncertainty code `invalid_timeout`, confidence 1, empty evidence, and the normalized CVE ID; no network call is made.
+- Regression test commit `1a07e2d38c329492b24a1040feb3ce82b0ec368d` checks that timeout 0 is rejected structurally and fetch is not invoked. Candidate CI is pending; do not mark this change validated until green CI is confirmed.
+- No master-plan edit, registration, deployment, on-chain transaction, or production configuration change.
