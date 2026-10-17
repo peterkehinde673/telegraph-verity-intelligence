@@ -95,7 +95,10 @@ export async function checkEmailSecurity(
     const spfRecords = spf.filter((record) => /^v=spf1(?:\s|$)/i.test(record));
     const dmarcRecords = dmarc.filter((record) => /^v=dmarc1(?:[;\s]|$)/i.test(record));
     const dmarcRecord = dmarcRecords[0];
-    const policyMatch = dmarcRecord?.match(/(?:^|;)\s*p=(none|quarantine|reject)(?=\s*(?:;|$))/i);
+    const policyTags = dmarcRecord?.match(/(?:^|;)\s*p\s*=/gi) ?? [];
+    const policyMatch = policyTags.length === 1
+      ? dmarcRecord?.match(/(?:^|;)\s*p=(none|quarantine|reject)(?=\s*(?:;|$))/i)
+      : undefined;
     const dmarcPolicy = dmarcRecord
       ? (policyMatch?.[1]?.toLowerCase() as EmailSecurityAnswer["dmarc_policy"] ?? "unknown")
       : undefined;
