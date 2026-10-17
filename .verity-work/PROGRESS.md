@@ -642,3 +642,13 @@ This file tracks execution status for the frozen `.verity-work/MASTER_PLAN.md`. 
 - Regression test commit `f27c9409ccba44f01adde9cba4f55d792c76a1ae` passed run [#714](https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39079991591). The latest workflow run, for progress-log commit `a85e155621f9609dfc09bafd54d7d8cd225edae1`, is [#715](https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39079998564), completed successfully. Its Typecheck, Build, Test, Telegraph integration tooling, and miner-template preflight steps all succeeded.
 - Null MX is now surfaced as `null_mx_record` uncertainty rather than allowing a confirmed mail-capability assessment.
 - No master-plan change, registration, deployment, on-chain transaction, or production configuration change.
+
+
+## Batch H — MX exchange hostname validation candidate pending CI (2026-10-18)
+
+- User confirmed all prior CI is green. Independently inspected the latest 10 GitHub Actions runs on branch `verity/score-improvements-batch-1`: runs #706–#715 all completed successfully. The latest run, [#715](https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39079998564), passed Typecheck, Build, Test, Telegraph integration tooling, and miner-template preflight. The source/test runs for TXT response validation (#710–#711) and null MX handling (#713–#714) also completed successfully.
+- Continued review found MX exchange validation only checked that the exchange was a non-empty string. A malformed exchange such as `mail..example.com` could pass through and be returned as a valid MX answer.
+- Candidate source commits `193ad0122faeb9f0dd4ff40ebd72984d13ba335f` and `0c7b8e9a6baae02687c50888cc8e20e44e595515` validate MX exchange hostnames, label syntax, and lengths while preserving the special null MX value `.` and valid fully-qualified hostnames ending in a dot.
+- Regression test commit `a268b269cb76e1a3e521800200f116160bf20724` verifies malformed MX hostnames safely abstain with `invalid_dns_response` and that valid trailing-dot hostnames remain accepted.
+- This new candidate is pending CI; the previously checked runs predate these commits.
+- No master-plan change, registration, deployment, on-chain transaction, or production configuration change.
