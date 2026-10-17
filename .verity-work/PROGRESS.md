@@ -444,3 +444,12 @@ This file tracks execution status for the frozen `.verity-work/MASTER_PLAN.md`. 
 - Candidate source commit `8233f1c7af803d6f58bd7a44e69714a379faff17` replaces that raw message with a stable generic error while preserving `insufficient_evidence`, confidence 0, empty evidence, and the existing `reputation_lookup_failed` code.
 - Regression test commit `0ea4f8fbcdad1239e37b938cf1f652b4ee1cfcb8` injects a fake private endpoint/token in the provider error and asserts that it is not exposed. Candidate CI remains pending until confirmed green.
 - No master-plan change, registration, deployment, on-chain transaction, or production configuration change.
+
+
+## Batch F follow-up — malware sanitization validated; threat-intelligence provider error sanitization pending (2026-10-17)
+
+- Confirmed MALWARE_DETECTION regression CI green: Verity CI run #652, conclusion `success`, on test commit `0ea4f8fbcdad1239e37b938cf1f652b4ee1cfcb8`. Run: https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39006868480
+- Continued remaining-intent review and inspected `THREAT_INTELLIGENCE`. Its provider-failure path returned raw `error.message` in the public uncertainty field, potentially exposing internal endpoint URLs, diagnostics, or secret-bearing strings.
+- Candidate source commit `6294d7047ae4fd3af0a0f053d3f783c3d71b7ac0` replaces the raw provider error with a stable generic message while preserving `insufficient_evidence`, confidence 0, empty evidence, and the existing `threat_feed_lookup_failed` code.
+- Regression test commit `0e6abc02d9a131a067e648e193c8b3f00dc9990f` injects a fake private endpoint/token into the provider error and asserts that it is not exposed. CI remains pending; do not mark the candidate validated until green CI is confirmed.
+- No master-plan change, registration, deployment, on-chain transaction, or production configuration change.
