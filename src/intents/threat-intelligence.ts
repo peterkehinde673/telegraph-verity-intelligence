@@ -134,7 +134,17 @@ export async function lookupThreatIntelligence(
       !result ||
       !Number.isInteger(result.pulse_count) ||
       result.pulse_count < 0 ||
-      !Array.isArray(result.pulses)
+      !Array.isArray(result.pulses) ||
+      !result.pulses.every((pulse) =>
+        pulse !== null &&
+        typeof pulse === "object" &&
+        typeof pulse.name === "string" &&
+        Array.isArray(pulse.tags) &&
+        pulse.tags.every((tag) => typeof tag === "string") &&
+        (pulse.description === undefined || typeof pulse.description === "string") &&
+        (pulse.created === undefined || typeof pulse.created === "string") &&
+        (pulse.modified === undefined || typeof pulse.modified === "string")
+      )
     ) {
       return {
         intent: "THREAT_INTELLIGENCE",
