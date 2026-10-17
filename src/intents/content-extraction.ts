@@ -109,7 +109,7 @@ export async function contentExtraction(
       evidence: [],
       uncertainty: [{
         code: "content_extraction_failed",
-        message: error instanceof Error ? error.message : "Content extraction failed."
+        message: "The configured content source could not be reached or returned an invalid response."
       }],
       retrieved_at: retrievedAt
     };
