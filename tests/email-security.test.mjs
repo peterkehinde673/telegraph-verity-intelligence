@@ -83,3 +83,27 @@ test("email security still treats ENODATA for SPF and DMARC TXT as absence", asy
   assert.equal(result.uncertainty.some((item) => item.code === "spf_missing"), true);
   assert.equal(result.uncertainty.some((item) => item.code === "dmarc_missing"), true);
 });
+
+
+test("email security does not expose raw DNS resolver errors", async () => {
+  const result = await checkEmailSecurity("example.com", {
+    resolveImpl: async (_name, type) => {
+      if (type === "MX") {
+        throw new Error("private resolver https://dns.internal/?token=secret-email-88");
+      }
+      return [];
+    },
+    now: () => "2026-10-17T00:00:00.000Z"
+  });
+
+  assert.equal(result.intent, "EMAIL_SECURITY");
+  assert.equal(result.verdict, "insufficient_evidence");
+  assert.equal(result.confidence, 0);
+  assert.equal(result.uncertainty[0]?.code, "dns_lookup_failed");
+  assert.equal(
+    result.uncertainty[0]?.message,
+    "The domain DNS records could not be retrieved because the lookup failed."
+  );
+  assert.equal(result.uncertainty[0]?.message.includes("secret-email-88"), false);
+  assert.deepEqual(result.evidence, []);
+});
