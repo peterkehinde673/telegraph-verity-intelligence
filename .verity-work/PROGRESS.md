@@ -578,3 +578,13 @@ This file tracks execution status for the frozen `.verity-work/MASTER_PLAN.md`. 
 - Regression test commit `2342e985ac33fbe8cf168aeeda030aff68d6157a` returns duplicate SPF and DMARC TXT values and asserts both issues are surfaced.
 - Candidate CI is pending; wait for user confirmation before further changes.
 - No master-plan change, registration, deployment, on-chain transaction, or production configuration change.
+
+
+## Batch F follow-up — duplicate SPF/DMARC detection user-confirmed green; unrecognized DMARC policy validation pending (2026-10-18)
+
+- User confirmed CI is green for duplicate SPF/DMARC record detection.
+- Continued semantic review found that a single TXT string beginning with `v=DMARC1` was treated as a present policy even if it lacked a recognized `p=none|quarantine|reject` tag. The answer set `dmarc_policy: "unknown"`, but no uncertainty was added; with MX and SPF present this could still produce `verdict: "confirmed"`.
+- Candidate source commit `7f9975f464ef1c6ad0f39ac3d273d684ed91e608` adds `dmarc_policy_invalid` uncertainty when exactly one DMARC record is present but its policy is unrecognized. This prevents a fully confirmed assessment on that input.
+- Regression test commit `5f472d5fcbd3e787e29839f5e6dc18517371bf2f` verifies an apparent DMARC record without a recognized policy yields `uncertain` and exposes the specific issue.
+- Candidate CI is pending; wait for user confirmation before continuing.
+- No master-plan change, registration, deployment, on-chain transaction, or production configuration change.
