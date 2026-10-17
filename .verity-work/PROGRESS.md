@@ -576,7 +576,7 @@ This file tracks execution status for the frozen `.verity-work/MASTER_PLAN.md`. 
 - Continued semantic review of the email-security result. The handler filtered TXT values to SPF/DMARC records but only inspected the first DMARC record and considered any non-empty SPF/DMARC set present. Multiple SPF records for one owner name cause SPF PermError; multiple DMARC records can make policy discovery invalid/ambiguous. Reporting the domain as `confirmed` solely because records are present would miss these material misconfigurations.
 - Candidate source commit `e8c97bd917625cd05dc5745f1c5c873a13e74ce7` adds `spf_multiple_records` and `dmarc_multiple_records` uncertainty findings; such cases now return `uncertain` while preserving the discovered records for diagnostics.
 - Regression test commit `2342e985ac33fbe8cf168aeeda030aff68d6157a` returns duplicate SPF and DMARC TXT values and asserts both issues are surfaced.
-- Candidate CI is pending; wait for user confirmation before further changes.
+- User confirmed CI is green for this duplicate SPF/DMARC detection batch. Marked validated by user confirmation.
 - No master-plan change, registration, deployment, on-chain transaction, or production configuration change.
 
 
