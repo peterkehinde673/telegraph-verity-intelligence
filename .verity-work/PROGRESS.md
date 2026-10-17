@@ -361,3 +361,12 @@ This file tracks execution status for the frozen `.verity-work/MASTER_PLAN.md`. 
 - CI run 629 succeeded: https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/38985196083. Observed Typecheck, Build, Test, Telegraph integration tooling, and miner-template preflight steps all completed successfully.
 - This confirms the focused reliability correction passes repository CI; it does not establish protocol scoring or leaderboard impact. Batch F remains in progress because remaining supported intents still need evidence-based triage, and Batch E's authoritative scorer comparison remains blocked.
 - No master-plan edit, registration, deployment, on-chain transaction, or production configuration change was made. Only the candidate source, focused test, and progress log changed.
+
+
+## Batch F — email DNS failure semantics candidate (2026-10-17, validation pending)
+
+- Inspected additional supported intents and focused tests. Found a concrete issue in `EMAIL_SECURITY`: SPF and DMARC TXT lookups used `.catch(() => [])`, treating every resolver failure (including transient `EAI_AGAIN` outages) as evidence that SPF/DMARC records are absent. This can produce false missing-record warnings during DNS outages.
+- Candidate fix commit: `8686fe23117dcf1d77ceaa47cb7e50e728821046`. Added `resolveOptionalTxt`, which treats only `ENODATA` and `ENOTFOUND` as absence and propagates other resolver failures to the existing `insufficient_evidence` response path.
+- Regression tests commit: `f8648b674b1a7d92a19ea4810dcac17b19c24ff6`. Added coverage for transient SPF TXT resolver failure and preserved behavior for genuine `ENODATA` responses.
+- Validation is **pending**: GitHub workflow lookup did not return a run for this commit yet. Do not claim the tests or build have passed until a CI run is observed. Source change remains isolated to `EMAIL_SECURITY`; no registration, deployment, production configuration, or master-plan edit.
+- Next: obtain CI evidence for this candidate. If it passes, continue Batch F by selecting the next supported intent based on demonstrable reliability/correctness findings, not speculative score estimates.
