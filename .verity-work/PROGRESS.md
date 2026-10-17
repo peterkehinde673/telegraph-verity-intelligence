@@ -626,21 +626,19 @@ This file tracks execution status for the frozen `.verity-work/MASTER_PLAN.md`. 
 - No master-plan change, registration, deployment, on-chain transaction, or production configuration change.
 
 
-## Batch F follow-up — TXT resolver response-shape validation candidate pending CI (2026-10-18)
+## Batch F follow-up — TXT resolver response-shape validation user-confirmed and workflow-verified green (2026-10-18)
 
-- User confirmed the prior domain syntax validation candidate passed CI; recorded as user-confirmed, without independent workflow verification.
-- Continued review found `resolveTxt` called `record.join("")` before validating resolver data. A malformed TXT response (such as a string instead of an array of TXT chunks) therefore fell into the generic DNS-failure path and was mislabeled as `dns_lookup_failed` rather than an invalid provider response.
-- Candidate source commit `cadc8d98f9874dd31f03c8392abf21d7acb62bab` validates TXT results as arrays of arrays containing only strings before joining chunks. Malformed TXT data now safely abstains with `invalid_dns_response`.
-- Regression test commit `a2cd4928f64aa2df94f0a15abd96f2dc16b889e1` supplies a malformed TXT payload and verifies zero confidence, no evidence, and the specific invalid-response uncertainty.
-- Candidate CI is pending user confirmation; do not treat this batch as green yet.
+- User confirmed all CI is green. Independently checked GitHub Actions workflow runs for the latest branch commits.
+- Source commit `cadc8d98f9874dd31f03c8392abf21d7acb62bab` passed Verity CI run [#710](https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39079830108); the job's Typecheck, Build, Test, Telegraph integration tooling, and miner-template preflight steps all succeeded.
+- Regression test commit `a2cd4928f64aa2df94f0a15abd96f2dc16b889e1` passed run [#711](https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39079835738). Progress-log commit `0afae28b2f132e04ec5a25cbbf397463f82e69ff` passed run [#712](https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39079846211).
+- `resolveTxt` now validates TXT results as arrays of arrays containing only strings before joining chunks. Malformed TXT data safely abstains with `invalid_dns_response`.
 - No master-plan change, registration, deployment, on-chain transaction, or production configuration change.
 
 
-## Batch G — null MX semantics candidate pending CI (2026-10-18)
+## Batch G — null MX semantics user-confirmed and workflow-verified green (2026-10-18)
 
-- User authorized continuation after the TXT resolver response-shape candidate, but did not explicitly confirm that candidate's CI is green. Its status remains pending; this new batch is tracked separately.
-- Continued semantic review found that an MX record with exchange `.` (null MX) passed the non-empty exchange check. If SPF and DMARC records were also present, the handler could report `confirmed` even though the domain explicitly declares that it does not accept email.
-- Candidate source commit `56e6af3ace2f79071acd591017ce88a17a664c1e` recognizes null MX and adds the `null_mx_record` uncertainty finding, preventing a confirmed mail-capability assessment.
-- Regression test commit `f27c9409ccba44f01adde9cba4f55d792c76a1ae` verifies a null MX domain remains uncertain even when SPF and DMARC records exist.
-- Candidate CI is pending user confirmation. No workflow result was independently checked.
+- User confirmed all CI is green. Independently checked the latest GitHub Actions runs on this branch, including the latest workflow run.
+- Source commit `56e6af3ace2f79071acd591017ce88a17a664c1e` passed Verity CI run [#713](https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39079987127).
+- Regression test commit `f27c9409ccba44f01adde9cba4f55d792c76a1ae` passed run [#714](https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39079991591). The latest workflow run, for progress-log commit `a85e155621f9609dfc09bafd54d7d8cd225edae1`, is [#715](https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39079998564), completed successfully. Its Typecheck, Build, Test, Telegraph integration tooling, and miner-template preflight steps all succeeded.
+- Null MX is now surfaced as `null_mx_record` uncertainty rather than allowing a confirmed mail-capability assessment.
 - No master-plan change, registration, deployment, on-chain transaction, or production configuration change.
