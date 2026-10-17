@@ -652,3 +652,12 @@ This file tracks execution status for the frozen `.verity-work/MASTER_PLAN.md`. 
 - Regression test commit `a268b269cb76e1a3e521800200f116160bf20724` verifies malformed MX hostnames safely abstain with `invalid_dns_response` and that valid trailing-dot hostnames remain accepted.
 - This new candidate is pending CI; the previously checked runs predate these commits.
 - No master-plan change, registration, deployment, on-chain transaction, or production configuration change.
+
+
+## Batch H — MX exchange hostname validation workflow-verified green; null MX conflict candidate pending CI (2026-10-18)
+
+- Independently checked latest GitHub Actions runs on this branch. Verity CI run [#719](https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39080285419) passed for MX exchange hostname regression tests; run [#720](https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39080304716), the latest run at the time of this update, also completed successfully with Typecheck, Build, Test, Telegraph integration tooling, and miner-template preflight all green.
+- The MX hostname validator now rejects malformed exchange labels and accepts valid fully qualified names with a trailing dot. Source commits `193ad0122faeb9f0dd4ff40ebd72984d13ba335f` and `0c7b8e9a6baae02687c50888cc8e20e44e595515`; regression test commit `a268b269cb76e1a3e521800200f116160bf20724`.
+- Follow-up review found a set-level semantic gap: a null MX (`.`) alongside ordinary MX exchanges is a conflicting MX configuration, not a clean declaration that the domain does not accept mail. Batch I adds `null_mx_conflict` uncertainty for mixed null/ordinary MX sets while preserving `null_mx_record` for a sole null MX.
+- Batch I source commit `546d344baa54394bb65bcf6f39e820d70639d9c8`; regression test commit `f5b9801a5e7a283ff46b6c029aabd9689e644188`. CI for this candidate is pending; wait for its workflow to complete before further code changes.
+- No master-plan change, registration, deployment, on-chain transaction, or production configuration change.
