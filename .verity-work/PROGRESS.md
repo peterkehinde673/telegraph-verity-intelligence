@@ -508,3 +508,13 @@ This file tracks execution status for the frozen `.verity-work/MASTER_PLAN.md`. 
 - Regression test commit `a986d2fb8f23f43d5e8893e5478e55f27caf5c2e` returns a different CVE ID in an HTTP-200 NVD payload and asserts the handler abstains.
 - Candidate CI is pending. Wait for user confirmation of green CI before further edits.
 - No master-plan change, registration, deployment, on-chain transaction, or production configuration change.
+
+
+## Batch F follow-up — CVE identifier-match CI user-confirmed green; TLS authorization diagnostic sanitization pending (2026-10-17)
+
+- User confirmed the CVE identifier-match candidate CI is green.
+- Continued review of `SSL_VERIFICATION`: on a completed TLS handshake with an unauthorized certificate, the handler copied raw `socket.authorizationError` into both `answer.authorization_error` and the public uncertainty message. Raw diagnostic text may contain hostname or implementation details and is inconsistent with the generic failure messages used elsewhere in this handler.
+- Candidate source commit `63a5bc6b2ed61e6fe7de27f145160563ed5fd619` restricts the answer field to a stable error code when the value is uppercase-code shaped, otherwise uses `CERTIFICATE_NOT_AUTHORIZED`; the uncertainty message is generic.
+- Regression test commit `6a502c4e4a7461400ce018f9454c44d4f6e15afc` injects a fake private authorization diagnostic into an unauthorized secure connection and asserts it is not returned.
+- Candidate CI is pending. Do not continue to another code batch until this candidate is green.
+- No master-plan change, registration, deployment, on-chain transaction, or production configuration change.
