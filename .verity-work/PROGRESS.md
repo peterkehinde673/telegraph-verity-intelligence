@@ -536,7 +536,7 @@ This file tracks execution status for the frozen `.verity-work/MASTER_PLAN.md`. 
 - Continued inspection found that validating `pulses` as an array alone still allowed malformed elements through, e.g. an object whose `tags` contains non-string values. Such provider data could be returned to consumers despite not matching the declared pulse contract.
 - Candidate source commit `ea8ceeb9f9dff16da06706d98b6b2737b275920c` now validates each pulse as an object with a string name, a string-array tags field, and string-valued optional description/created/modified fields before assigning a verdict.
 - Regression test commit `27f765bbcaff906246597b39377d378013b55ee4` checks that a pulse with a numeric tag causes a safe abstention (`insufficient_evidence`, confidence 0, no evidence, `invalid_threat_feed_response`).
-- Candidate CI is pending; wait for user confirmation before continuing.
+- User confirmed CI is green for the invalid DMARC policy validation candidate. Status recorded as user-confirmed; workflow lookup was not independently verified in this turn.
 - No master-plan change, registration, deployment, on-chain transaction, or production configuration change.
 
 
@@ -587,4 +587,14 @@ This file tracks execution status for the frozen `.verity-work/MASTER_PLAN.md`. 
 - Candidate source commit `7f9975f464ef1c6ad0f39ac3d273d684ed91e608` adds `dmarc_policy_invalid` uncertainty when exactly one DMARC record is present but its policy is unrecognized. This prevents a fully confirmed assessment on that input.
 - Regression test commit `5f472d5fcbd3e787e29839f5e6dc18517371bf2f` verifies an apparent DMARC record without a recognized policy yields `uncertain` and exposes the specific issue.
 - Candidate CI is pending; wait for user confirmation before continuing.
+- No master-plan change, registration, deployment, on-chain transaction, or production configuration change.
+
+
+## Batch F follow-up — DMARC tag delimiter validation candidate pending CI (2026-10-18)
+
+- Continued review of `EMAIL_SECURITY` after the invalid-policy candidate was user-confirmed green.
+- Found the DMARC policy parser accepted `v=DMARC1 p=reject` because it treated whitespace as a valid separator before the `p=` tag. DMARC tags are semicolon-delimited; malformed syntax must not be interpreted as an enforceable policy.
+- Candidate source commit `f60e7bdfa060f75ed6f91a5ec76f9c9df2635ed7` now recognizes policy tags only when preceded by the required semicolon and followed by a valid tag boundary. A malformed record is retained for diagnostics but yields `dmarc_policy: "unknown"`, `dmarc_policy_invalid`, and an `uncertain` verdict.
+- Regression test commit `66bccc07ae3dcc4ffca331ce3806195c07543c2e` supplies `v=DMARC1 p=reject` and asserts the handler does not treat it as a valid policy.
+- Candidate CI is pending. Wait for green CI confirmation before starting another code batch.
 - No master-plan change, registration, deployment, on-chain transaction, or production configuration change.
