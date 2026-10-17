@@ -95,7 +95,8 @@ export async function checkEmailSecurity(
         isValidMxExchange(record.exchange) &&
         Number.isInteger(record.priority) &&
         record.priority >= 0 &&
-        record.priority <= 65535
+        record.priority <= 65535 &&
+        (record.exchange !== "." || record.priority === 0)
       ) ||
       !Array.isArray(spf) ||
       !spf.every((record) => typeof record === "string") ||
