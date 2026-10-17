@@ -62,6 +62,36 @@ export async function checkEmailSecurity(
       resolveOptionalTxt(resolve, "_dmarc." + normalizedDomain)
     ]);
 
+    if (
+      !Array.isArray(mx) ||
+      !mx.every((record) =>
+        record !== null &&
+        typeof record === "object" &&
+        typeof record.exchange === "string" &&
+        record.exchange.trim().length > 0 &&
+        Number.isInteger(record.priority) &&
+        record.priority >= 0 &&
+        record.priority <= 65535
+      ) ||
+      !Array.isArray(spf) ||
+      !spf.every((record) => typeof record === "string") ||
+      !Array.isArray(dmarc) ||
+      !dmarc.every((record) => typeof record === "string")
+    ) {
+      return {
+        intent: "EMAIL_SECURITY",
+        verdict: "insufficient_evidence",
+        confidence: 0,
+        answer: { domain: normalizedDomain, mx_records: [], spf_present: false, spf_records: [], dmarc_present: false, dmarc_records: [] },
+        evidence: [],
+        uncertainty: [{
+          code: "invalid_dns_response",
+          message: "The domain DNS service returned records in an invalid format."
+        }],
+        retrieved_at: retrievedAt
+      };
+    }
+
     const spfRecords = spf.filter((record) => /^v=spf1(?:\s|$)/i.test(record));
     const dmarcRecords = dmarc.filter((record) => /^v=dmarc1(?:[;\s]|$)/i.test(record));
     const dmarcRecord = dmarcRecords[0];
