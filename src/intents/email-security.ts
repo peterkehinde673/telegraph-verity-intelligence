@@ -141,6 +141,11 @@ export async function checkEmailSecurity(
     const hasNullMx = answer.mx_records.some((record) => record.exchange.trim() === ".");
     if (answer.mx_records.length === 0) {
       issues.push({ code: "no_mx_records", message: "No MX records were returned for the domain." });
+    } else if (hasNullMx && answer.mx_records.length > 1) {
+      issues.push({
+        code: "null_mx_conflict",
+        message: "The domain publishes a null MX record alongside other MX records; this is a conflicting MX configuration."
+      });
     } else if (hasNullMx) {
       issues.push({
         code: "null_mx_record",
