@@ -608,3 +608,11 @@ This file tracks execution status for the frozen `.verity-work/MASTER_PLAN.md`. 
 - Regression test commit `0aa1360d3fbee96b84235d1e82b67139cf0a5e24` covers a record containing both `p=reject` and `p=none`.
 - Candidate CI is pending; wait for user confirmation before continuing to the next batch.
 - No master-plan change, registration, deployment, on-chain transaction, or production configuration change.
+
+
+## Batch F follow-up — DMARC duplicate policy-tag validation user-confirmed green; domain syntax validation pending (2026-10-18)
+
+- User confirmed CI is green for the duplicate DMARC policy-tag validation candidate. Status recorded as user-confirmed; workflow lookup was not independently verified in this turn.
+- Next candidate under review: validate domain-name syntax before issuing DNS queries. Current handler only rejects blank input, email-address syntax, and spaces; malformed labels such as `example..com` can reach the resolver.
+- Proposed behavior: reject malformed DNS labels before lookup and convert valid internationalized domain names to their ASCII IDNA form before DNS queries.
+- No production configuration, registration, deployment, or on-chain transaction changed.
