@@ -130,6 +130,26 @@ export async function lookupThreatIntelligence(
 
   try {
     const result = await lookup(normalized, type);
+    if (
+      !result ||
+      !Number.isInteger(result.pulse_count) ||
+      result.pulse_count < 0 ||
+      !Array.isArray(result.pulses)
+    ) {
+      return {
+        intent: "THREAT_INTELLIGENCE",
+        verdict: "insufficient_evidence",
+        confidence: 0,
+        answer: { indicator: normalized, indicator_type: type, pulse_count: 0, pulses: [], provider: "alienvault-otx" },
+        evidence: [],
+        uncertainty: [{
+          code: "invalid_threat_feed_response",
+          message: "The threat-intelligence source returned an invalid response."
+        }],
+        retrieved_at: retrievedAt
+      };
+    }
+
     return {
       intent: "THREAT_INTELLIGENCE",
       verdict: result.pulse_count > 0 ? "likely" : "not_found",
