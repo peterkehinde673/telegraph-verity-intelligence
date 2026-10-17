@@ -22,6 +22,19 @@ async function resolveTxt(resolve: typeof dns.resolve, name: string): Promise<st
   return records.map((record) => record.join(""));
 }
 
+async function resolveOptionalTxt(resolve: typeof dns.resolve, name: string): Promise<string[]> {
+  try {
+    return await resolveTxt(resolve, name);
+  } catch (error) {
+    const code = error && typeof error === "object" && "code" in error
+      ? String((error as { code?: unknown }).code)
+      : "";
+    // A missing TXT RRset is evidence of absence; resolver outages are not.
+    if (code === "ENODATA" || code === "ENOTFOUND") return [];
+    throw error;
+  }
+}
+
 export async function checkEmailSecurity(
   domain: string,
   options: EmailSecurityOptions = {}
@@ -45,8 +58,8 @@ export async function checkEmailSecurity(
   try {
     const [mx, spf, dmarc] = await Promise.all([
       resolve(normalizedDomain, "MX") as Promise<Array<{ exchange: string; priority: number }>>,
-      resolveTxt(resolve, normalizedDomain).catch(() => []),
-      resolveTxt(resolve, "_dmarc." + normalizedDomain).catch(() => [])
+      resolveOptionalTxt(resolve, normalizedDomain),
+      resolveOptionalTxt(resolve, "_dmarc." + normalizedDomain)
     ]);
 
     const spfRecords = spf.filter((record) => /^v=spf1(?:\s|$)/i.test(record));
