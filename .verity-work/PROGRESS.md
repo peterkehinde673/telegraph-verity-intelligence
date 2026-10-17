@@ -370,3 +370,13 @@ This file tracks execution status for the frozen `.verity-work/MASTER_PLAN.md`. 
 - Regression tests commit: `f8648b674b1a7d92a19ea4810dcac17b19c24ff6`. Added coverage for transient SPF TXT resolver failure and preserved behavior for genuine `ENODATA` responses.
 - Validation is **pending**: GitHub workflow lookup did not return a run for this commit yet. Do not claim the tests or build have passed until a CI run is observed. Source change remains isolated to `EMAIL_SECURITY`; no registration, deployment, production configuration, or master-plan edit.
 - Next: obtain CI evidence for this candidate. If it passes, continue Batch F by selecting the next supported intent based on demonstrable reliability/correctness findings, not speculative score estimates.
+
+
+## Batch F follow-up — email DNS semantics validated; DNS lookup candidate pending (2026-10-17)
+
+- Confirmed CI green for the EMAIL_SECURITY DNS semantics candidate: Verity CI run #632, conclusion `success`, on test commit `f8648b674b1a7d92a19ea4810dcac17b19c24ff6`. Run: https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/38985765478
+- Continued review of `DNS_RECORD_LOOKUP`. Observed that `ENODATA` / `ENOTFOUND` are already represented as `not_found`, but other resolver failures (for example transient `EAI_AGAIN`) were rethrown and could become generic server errors rather than contract-shaped uncertainty.
+- Candidate source commit `9d2cddb01bf172f712cfe7027708fcef3d5dab20` now returns `insufficient_evidence`, confidence 0, empty evidence, and a generic `dns_lookup_failed` uncertainty for other resolver errors. It does not expose raw provider error messages.
+- Added a regression test for transient resolver failure in test commit `992ac074ef2500c8069edad94300b94f1e33a580`; it checks contract fields and verifies the raw internal error message is not exposed.
+- CI for the DNS_RECORD_LOOKUP candidate has not yet appeared in workflow-run lookup; validation remains pending. Do not mark this sub-batch complete until green CI is confirmed.
+- No master-plan change, registration, deployment, on-chain transaction, or production configuration change.
