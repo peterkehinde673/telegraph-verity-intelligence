@@ -44,3 +44,42 @@ test("email security rejects an email address instead of a domain", async () => 
   assert.equal(result.verdict, "rejected");
   assert.equal(result.uncertainty[0]?.code, "invalid_domain");
 });
+
+
+test("email security abstains on transient SPF TXT resolver failures instead of reporting SPF missing", async () => {
+  const result = await checkEmailSecurity("example.com", {
+    resolveImpl: async (name, type) => {
+      if (name === "example.com" && type === "MX") {
+        return [{ exchange: "mail.example.com", priority: 10 }];
+      }
+      if (name === "example.com" && type === "TXT") {
+        throw Object.assign(new Error("temporary resolver failure"), { code: "EAI_AGAIN" });
+      }
+      if (name === "_dmarc.example.com" && type === "TXT") {
+        return [["v=DMARC1; p=reject"]];
+      }
+      throw Object.assign(new Error("no data"), { code: "ENODATA" });
+    },
+    now: () => "2026-10-17T00:00:00.000Z"
+  });
+
+  assert.equal(result.verdict, "insufficient_evidence");
+  assert.equal(result.confidence, 0);
+  assert.equal(result.uncertainty[0]?.code, "dns_lookup_failed");
+  assert.deepEqual(result.evidence, []);
+  assert.equal(result.answer.spf_present, false);
+  assert.equal(result.answer.dmarc_present, false);
+});
+
+test("email security still treats ENODATA for SPF and DMARC TXT as absence", async () => {
+  const result = await checkEmailSecurity("example.com", {
+    resolveImpl: async (name, type) => {
+      if (type === "MX") return [{ exchange: "mail.example.com", priority: 10 }];
+      throw Object.assign(new Error("no data"), { code: "ENODATA" });
+    }
+  });
+
+  assert.equal(result.verdict, "uncertain");
+  assert.equal(result.uncertainty.some((item) => item.code === "spf_missing"), true);
+  assert.equal(result.uncertainty.some((item) => item.code === "dmarc_missing"), true);
+});
