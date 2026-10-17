@@ -79,3 +79,22 @@ test("academic search does not expose raw provider errors", async () => {
   assert.equal(result.uncertainty[0]?.message.includes("secret-123"), false);
   assert.deepEqual(result.evidence, []);
 });
+
+
+test("academic search does not expose raw provider errors", async () => {
+  const result = await academicSearch("quantum error correction", {
+    searchImpl: async () => { throw new Error("secret token xyz987 upstream stack trace"); },
+    now: () => "2026-10-17T00:00:00.000Z"
+  });
+
+  assert.equal(result.intent, "ACADEMIC_SEARCH");
+  assert.equal(result.verdict, "insufficient_evidence");
+  assert.equal(result.confidence, 0);
+  assert.equal(result.uncertainty[0]?.code, "academic_search_failed");
+  assert.equal(
+    result.uncertainty[0]?.message,
+    "The configured academic search source could not be reached or returned an invalid response."
+  );
+  assert.equal(result.uncertainty[0]?.message.includes("xyz987"), false);
+  assert.deepEqual(result.evidence, []);
+});
