@@ -32,7 +32,7 @@ async function resolveTxt(resolve: typeof dns.resolve, name: string): Promise<st
 function isValidMxExchange(exchange: string): boolean {
   if (exchange === ".") return true;
   if (exchange.trim() !== exchange || exchange.length === 0) return false;
-  const hostname = domainToASCII(exchange.toLowerCase().replace(/\\.$/, ""));
+  const hostname = domainToASCII(exchange.toLowerCase().replace(/\.$/, ""));
   if (!hostname || hostname.length > 253) return false;
   const labels = hostname.split(".");
   return labels.length >= 2 && labels.every((label) =>
