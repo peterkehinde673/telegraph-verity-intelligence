@@ -389,3 +389,12 @@ This file tracks execution status for the frozen `.verity-work/MASTER_PLAN.md`. 
 - Candidate source commit `a28253f4dfcb89d381118c139545736ed73187d8` replaces the raw provider error with a stable generic message while preserving `insufficient_evidence`, zero confidence, empty evidence, and the existing `news_fetch_failed` code.
 - Added a regression test in `d3f375802b365a01279ad4a41145575d8a23c7bc` using a deliberately secret-bearing thrown error and asserting that it is not returned. CI for this candidate is not yet confirmed; keep this sub-batch pending until the workflow is green.
 - No master-plan change, registration, deployment, on-chain transaction, or production configuration change.
+
+
+## Batch F follow-up — news sanitization validated; academic-search sanitization pending (2026-10-17)
+
+- Confirmed `NEWS_HEADLINES` error-sanitization candidate CI green: Verity CI run #638, conclusion `success`, on test commit `d3f375802b365a01279ad4a41145575d8a23c7bc`. Run: https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/38986383337
+- Continued inspection of `ACADEMIC_SEARCH`. Its provider-error catch returned raw `error.message` in the public uncertainty field, potentially disclosing internal endpoint URLs or secret-bearing provider errors.
+- Candidate source commit `d1306b9f500f09da258ee580eddcff53b2db419d` replaces raw error text with a stable generic message and preserves `insufficient_evidence`, confidence 0, empty evidence, and existing `academic_search_failed` code.
+- Added regression test in `4fbd451609d3ccc998cada532f34d43c2b559058` using a private endpoint URL with a fake token, asserting it is not returned. Academic candidate CI is not yet confirmed; leave validation pending.
+- No master-plan change, registration, deployment, on-chain transaction, or production configuration change.
