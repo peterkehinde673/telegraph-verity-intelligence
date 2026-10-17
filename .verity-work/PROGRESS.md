@@ -616,3 +616,11 @@ This file tracks execution status for the frozen `.verity-work/MASTER_PLAN.md`. 
 - Next candidate under review: validate domain-name syntax before issuing DNS queries. Current handler only rejects blank input, email-address syntax, and spaces; malformed labels such as `example..com` can reach the resolver.
 - Proposed behavior: reject malformed DNS labels before lookup and convert valid internationalized domain names to their ASCII IDNA form before DNS queries.
 - No production configuration, registration, deployment, or on-chain transaction changed.
+
+
+## Batch F follow-up — email-security domain syntax validation candidate pending CI (2026-10-18)
+
+- Candidate source commit `26ae96cc7ec99421233aa82118aa1d86d4467d10` normalizes valid internationalized domain names to ASCII using Node's IDNA conversion and validates total domain length, label lengths, empty labels, and label syntax before DNS lookups.
+- Regression test commit `f895f567ef941c2ad6078f895fb2608382d90f58` checks that `example..com` is rejected without any DNS query and that `bücher.example` is converted to `xn--bcher-kva.example` for lookup.
+- Candidate CI is pending. Wait for user confirmation before continuing to another code batch.
+- No master-plan change, registration, deployment, on-chain transaction, or production configuration change.
