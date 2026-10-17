@@ -453,3 +453,12 @@ This file tracks execution status for the frozen `.verity-work/MASTER_PLAN.md`. 
 - Candidate source commit `6294d7047ae4fd3af0a0f053d3f783c3d71b7ac0` replaces the raw provider error with a stable generic message while preserving `insufficient_evidence`, confidence 0, empty evidence, and the existing `threat_feed_lookup_failed` code.
 - Regression test commit `0e6abc02d9a131a067e648e193c8b3f00dc9990f` injects a fake private endpoint/token into the provider error and asserts that it is not exposed. CI remains pending; do not mark the candidate validated until green CI is confirmed.
 - No master-plan change, registration, deployment, on-chain transaction, or production configuration change.
+
+
+## Batch F follow-up — threat-intelligence sanitization pending CI; email DNS resolver error sanitization pending (2026-10-17)
+
+- User confirmed THREAT_INTELLIGENCE provider-error sanitization CI is green. Workflow-run lookup for test commit `0e6abc02d9a131a067e648e193c8b3f00dc9990f` was not available in the current GitHub tool response, so this is recorded as user-confirmed.
+- Continued inspection of `EMAIL_SECURITY`. Its outer DNS failure handler still returned raw `error.message`, even though transient TXT lookup failures were correctly treated as insufficient evidence and missing RRsets as absence. This could expose internal resolver URLs/details.
+- Candidate source commit `4a567301f424eb14bd8c5f9eec8b4624cd664d74` replaces raw DNS resolver text with a generic stable message while preserving `insufficient_evidence`, confidence 0, empty evidence, and `dns_lookup_failed`.
+- Regression test commit `47ac26cfedb8ea0fbff793c9f579899a276a98a1` injects a fake secret-bearing resolver error and checks it is not exposed.
+- Candidate CI is pending. No master-plan edit, registration, deployment, on-chain transaction, or production configuration change.
