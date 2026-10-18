@@ -88,3 +88,19 @@ test("content verification abstains without a configured verifier", async () => 
   const result = await contentVerification("Sample content");
   assert.equal(result.verdict, "insufficient_evidence");
 });
+
+
+test("content verification does not expose raw verifier exceptions", async () => {
+  const result = await contentVerification("Sample content", {
+    verifyImpl: async () => {
+      throw new Error("private verifier URL https://verifier.invalid/?token=content-secret-42");
+    }
+  });
+
+  assert.equal(result.verdict, "insufficient_evidence");
+  assert.equal(result.confidence, 0);
+  assert.equal(result.uncertainty[0]?.code, "content_verifier_failed");
+  assert.equal(result.uncertainty[0]?.message, "The configured content verification source failed or returned an invalid response.");
+  assert.equal(result.uncertainty[0]?.message.includes("content-secret-42"), false);
+  assert.deepEqual(result.evidence, []);
+});
