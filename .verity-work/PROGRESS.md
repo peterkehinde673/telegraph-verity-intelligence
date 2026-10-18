@@ -10,9 +10,9 @@ Active plan: `.verity-work/MASTER_PLAN.md` (frozen Season 2 scope). Work in smal
 - [x] Deepfake correctness fix: `authentic_likely` returns `likely`; verdict confidence is direction-adjusted. Do not interpret this as a protocol-score gain.
 - [x] Catalogue inventory: 29 intents wired in `src/intents/catalogue.ts` and `src/intent-handlers.ts`.
 - [x] Protected first ten confirmed from canonical catalogue order: FACT_CHECK, RESEARCH_QUERY, RESEARCH_SYNTHESIS, NEWS_HEADLINES, ACADEMIC_SEARCH, CONTENT_EXTRACTION, CONTENT_VERIFICATION, TEXT_AUTHENTICITY_CHECK, AI_TEXT_DETECTION, DEEPFAKE_DETECTION. Do not intentionally modify them.
-- [x] Batch 1 selection: first inspect catalogue positions 20–22 — DNS_RECORD_LOOKUP, CODE_REVIEW, URL_SAFE. No source change made in this inspection batch.
+- [x] Batch 1 inspection: DNS_RECORD_LOOKUP, CODE_REVIEW, URL_SAFE and their tests reviewed. Existing tests cover key malformed/unconfigured cases; no reproducible source defect was established, so no handler change was made.
 - [ ] Complete screenshot score transcription; clearly visible zero scores include DEEPFAKE_DETECTION rank #10, FACT_CHECK rank #15, CONTENT_EXTRACTION rank #17. Other subscript digits need careful reading; don't guess.
-- [ ] Batch 2: inspect the selected three handlers and their tests for reproducible correctness gaps, then make only evidence-backed changes with regression tests.
+- [x] Batch 2 initial review: selected three handlers inspected; no evidence-backed change justified yet. Continue to positions 23–29 and revisit only when a concrete regression is found.
 - [ ] Batch 3: review remaining catalogue positions 23–29 in small batches.
 - [ ] Batch 4: propose and implement additional evidence-capable intents.
 - [ ] Batch 5: validate miner YAML/manifest and dashboard integration readiness; no live changes yet.
