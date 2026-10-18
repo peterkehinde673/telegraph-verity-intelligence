@@ -28,3 +28,6 @@ Active plan: `.verity-work/MASTER_PLAN.md`. The user's exact target is the ten i
 - Preserve every non-target intent, especially current ranks #1–#5. Shared changes require regression tests.
 - No WASM/scorer changes, score manipulation, weakened security controls, deployment, registration, on-chain transaction, release publication, or production config changes without separate explicit approval.
 - Do not add new intents until all target-ten intents are reviewed and fixed or explicitly blocked.
+
+- [ ] `CONTENT_VERIFICATION` candidate: raw verifier exception text could expose provider URLs/details. Replaced it with a stable generic failure message and added a regression test with a fake token-bearing exception. Source `84f72520f87f3a48d704e3d56031d6eaab9cdc23`; test `4476fa55aa1465334cb7031af3af1a14c0e3e713`. CI run #752 queued: https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39130770372.
+- [x] Master-plan scope correction CI green: run #750 https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39130718734; progress-log reset CI green: run #751 https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39130735043.
