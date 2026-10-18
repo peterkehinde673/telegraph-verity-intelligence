@@ -28,3 +28,7 @@ No WASM/scorer changes, score manipulation, unsupported claims, weakening securi
 
 - [x] Batch 2 first evidence-backed fix committed: `THREAT_IP_REPUTATION` now returns a generic provider-failure message instead of exposing raw provider exception text; regression test checks a token-bearing fake error is not returned. Source commit `ff9fa8400e2abaf804ffb90f1eea03a9faa7a0be`; test commit `37ea76b67b8d19c5378916adbb971ccc22b619f9`.
 - [ ] CI for code/test run #743 is still in progress: https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39129001210. Do not treat the fix as accepted until green.
+
+- [x] Prior fix validated: CI run #743 passed for the IP reputation provider-error redaction and regression test: https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39129001210
+- [x] Next Batch 2 finding: `VULNERABILITY_TRIAGE` could emit a contradictory severity when numeric CVSS conflicted with supplied text (e.g. CVSS 9.8 plus severity `low`). Numeric CVSS now determines normalized severity; a regression test covers the conflict. Source commit `33e1e36231d5d6a30aed09d365528688475133bc`; test commit `388dd7bd798faac20a59d89503b6dd49e648df1a`.
+- [ ] CI run #745 for the vulnerability triage fix is in progress: https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39129372021. Do not mark accepted until green.
