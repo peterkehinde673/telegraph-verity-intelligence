@@ -16,15 +16,15 @@
 - Never commit credentials or private evaluation answers. The public repository is not a secret store.
 
 ## Batch 0 — Replace prior-phase plan and establish current baseline
-- [ ] Replace the previous phase plan with this Season 2 plan; do not resume the old A–H sequence.
-- [ ] Keep only important current state in the progress log and remove stale narrative/repeated historical detail.
-- [ ] Capture current repository/CI baseline and transcribe visible Explorer scores with subscript notation handled correctly.
-- [ ] Confirm the exact first-ten protected intents from the live/canonical registration manifest before changing intent code.
+- [x] Replace the previous phase plan with this Season 2 plan; do not resume the old A–H sequence.
+- [x] Keep only important current state in the progress log and remove stale narrative/repeated historical detail.
+- [ ] Complete score transcription for the screenshot; preserve raw subscript notation and mark unclear digits instead of guessing. Current snapshot records the clearly legible ranks/zero scores only.
+- [x] Confirm the first-ten protected intents from the repository's canonical `src/intents/catalogue.ts`; verify live registration separately before any external update.
 
 ## Batch 1 — Rank the unprotected intents
-- [ ] Build a concise inventory of currently supported intents, their latest visible scores/ranks, source handlers, tests, and known failures.
-- [ ] Exclude the protected first ten from optimization work.
-- [ ] Select a small first batch from the lowest-scoring unprotected intents, using reproducible tests and evidence of a real gap.
+- [x] Inventory all 29 catalogue intents, handler wiring, and available intent-focused tests; score transcription remains partial where screenshot digits are ambiguous.
+- [x] Exclude the protected first ten (catalogue positions 1–10) from optimization work.
+- [x] Select the first inspection batch from catalogue positions 20–22: `DNS_RECORD_LOOKUP`, `CODE_REVIEW`, and `URL_SAFE`; validate actual code/test gaps before modifying handlers.
 - [ ] Do not alter an intent just because its score is low; identify whether the cause is handler behavior, evidence quality, response schema, availability, or evaluator behavior.
 
 ## Batch 2 — Improve the lowest-performing intent batch
