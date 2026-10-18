@@ -687,3 +687,11 @@ This file tracks execution status for the frozen `.verity-work/MASTER_PLAN.md`. 
 - Diagnosis: the current tenth-power overlap calibration still penalizes terse answers that preserve the key verdict, percentage, count, source, and year. Do not simply raise/lower the calibration exponent without testing effects on partial answers, unsupported claims, wrong numbers, wrong entities, negation, unrelated answers, and clean-pair spread. Existing contradiction guards must continue to win on adversarial controls.
 - Next batch: make a narrowly scoped scorer-calibration candidate on an isolated experiment branch, run the Rust unit tests and same-probe comparison, and retain it only if clean-pair consistency improves without unacceptable regression in contradiction/adversarial controls. Avoid pushing directly to `foundation/**` because the existing `wasm-scorer.yml` push workflow publishes prototype GitHub Releases automatically. Use PR-triggered validation or another non-release path; do not register, deploy, or change production.
 - Batch E remains blocked for official champion/leaderboard acceptance; Batch G diagnostics are in progress. No plan checkbox was marked complete, no production handler/source changed, and no registration, deployment, or on-chain transaction occurred.
+
+
+## V21 experiment PR isolation correction — 2026-10-18
+
+- The first draft PR (#49) was closed without merging because its branch ancestry produced an unrelated 60-file diff. It was not merged and no release/deployment action occurred.
+- Re-opened the actual calibration change as draft PR [#50](https://github.com/peterkehinde673/telegraph-verity-intelligence/pull/50) from the exact clean-pair reproduction baseline. PR #50 is verified to contain one changed file, `wasm/verity-fact-check-scorer/src/lib.rs`, with the exponent change only; the clean-pair regression test already exists in the base commit.
+- Candidate commit: `fd25abf57e215eb1381aa99a6c892853764c5407`. PR-triggered CI status has not yet been returned by GitHub; do not claim this candidate is green until the scorer workflow's Rust unit tests finish.
+- Frozen master plan unchanged. No merge, registration, deployment, release publication, on-chain transaction, or production change.
