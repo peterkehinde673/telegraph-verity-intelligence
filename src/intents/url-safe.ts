@@ -161,7 +161,7 @@ export async function checkUrlSafe(
       confidence: 0,
       answer: { input_url: raw, normalized_url: normalizedUrl, safe_on_checked_feeds: false, matches: [], provider: "google-safe-browsing" },
       evidence: [],
-      uncertainty: [{ code: "reputation_lookup_failed", message: error instanceof Error ? error.message : "URL reputation lookup failed." }],
+      uncertainty: [{ code: "reputation_lookup_failed", message: "The configured URL reputation source failed or returned an invalid response." }],
       retrieved_at: retrievedAt
     };
   }
