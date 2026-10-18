@@ -70,3 +70,20 @@ test("research synthesis abstains without a configured synthesizer", async () =>
   const result = await researchSynthesis("Question", { evidence });
   assert.equal(result.verdict, "insufficient_evidence");
 });
+
+
+test("research synthesis does not expose raw synthesis provider errors", async () => {
+  const result = await researchSynthesis("Question", {
+    evidence,
+    synthesizeImpl: async () => {
+      throw new Error("private synthesis endpoint https://synth.invalid/?token=research-secret-9");
+    }
+  });
+
+  assert.equal(result.verdict, "insufficient_evidence");
+  assert.equal(result.confidence, 0);
+  assert.equal(result.uncertainty[0]?.code, "synthesis_failed");
+  assert.equal(result.uncertainty[0]?.message, "The configured research synthesis source failed or returned an invalid response.");
+  assert.doesNotMatch(result.uncertainty[0]?.message ?? "", /research-secret-9|synth\.invalid/);
+  assert.deepEqual(result.evidence, []);
+});
