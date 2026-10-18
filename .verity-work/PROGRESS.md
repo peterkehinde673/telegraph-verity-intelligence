@@ -36,4 +36,6 @@ No WASM/scorer changes, score manipulation, unsupported claims, weakening securi
 - [x] Batch 2 IP reputation redaction fix CI green: run #743 https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39129001210
 - [x] Batch 2 vulnerability severity consistency fix CI green: run #745 https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39129372021; progress-log run #746 also green https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39129391317
 - [x] Both fixes are application-side correctness/security changes only; no protocol-score improvement is claimed.
-- [ ] Next: review remaining catalogue positions 23–29 for evidence-backed defects; do not modify first ten or WASM scorer.
+- [ ] Continue review of catalogue positions 23–29 for evidence-backed defects; do not modify first ten or WASM scorer.
+
+- [ ] `REGRESSION_VERIFY` now rejects `json_path` assertions missing an `equals` property; added a regression test. Source `3bfe21ad2daddbf1970cb60d93a9766ed5555307`; test `fc6dc7b46457e7989bc9584851ce84706272af6a`. CI run #748 queued: https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39129534768.
