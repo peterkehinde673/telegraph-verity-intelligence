@@ -38,21 +38,21 @@ The Explorer snapshot is an epoch-specific baseline only. Subscript-style digits
 
 ## Batch 1 — Vulnerability triage and content verification
 - [x] Fix CVSS/supplied-severity contradiction in `VULNERABILITY_TRIAGE` and verify with CI.
-- [ ] Inspect `CONTENT_VERIFICATION` and make only evidence-backed fixes with tests.
+- [x] Inspect `CONTENT_VERIFICATION`; redacted raw verifier exceptions and added regression test (CI #752 passed).
 - [ ] Run targeted and full CI checks; check non-target regression coverage.
 
 ## Batch 2 — URL scan and URL safety
-- [ ] Inspect `URL_SCAN` and `URL_SAFE` for reproducible correctness/security gaps.
+- [x] Inspect `URL_SCAN` and `URL_SAFE`; URL_SCAN protections reviewed with no extra change justified, URL_SAFE raw provider exceptions redacted (CI #754/#755 passed).
 - [ ] Preserve SSRF protections, redirect/DNS handling, and fail-closed behavior.
 - [ ] Add regression tests and validate with full CI.
 
 ## Batch 3 — Deepfake and research synthesis
 - [x] Correct the `authentic_likely` verdict/confidence direction in `DEEPFAKE_DETECTION`; CI passed.
-- [ ] Inspect `RESEARCH_SYNTHESIS` for grounded synthesis, provenance, contradiction handling, and uncertainty.
+- [x] Inspect `RESEARCH_SYNTHESIS`; redacted raw synthesis-provider exceptions and added regression test (CI #757 passed).
 - [ ] Test changes and ensure no shared regression.
 
 ## Batch 4 — SSL and DNS
-- [ ] Inspect `SSL_VERIFICATION` and `DNS_RECORD_LOOKUP` for evidence-backed gaps.
+- [x] Inspect `SSL_VERIFICATION` and `DNS_RECORD_LOOKUP`; existing validation, certificate/DNS failure handling, and sanitization tests cover reviewed cases; no additional source changes justified.
 - [ ] Validate hostname/certificate expiry, DNS response semantics, malformed inputs, and unavailable-provider handling as applicable.
 - [ ] Test changes and preserve security boundaries.
 
