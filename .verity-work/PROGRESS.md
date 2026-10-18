@@ -695,3 +695,13 @@ This file tracks execution status for the frozen `.verity-work/MASTER_PLAN.md`. 
 - Re-opened the actual calibration change as draft PR [#50](https://github.com/peterkehinde673/telegraph-verity-intelligence/pull/50) from the exact clean-pair reproduction baseline. PR #50 is verified to contain one changed file, `wasm/verity-fact-check-scorer/src/lib.rs`, with the exponent change only; the clean-pair regression test already exists in the base commit.
 - Candidate commit: `fd25abf57e215eb1381aa99a6c892853764c5407`. PR-triggered CI status has not yet been returned by GitHub; do not claim this candidate is green until the scorer workflow's Rust unit tests finish.
 - Frozen master plan unchanged. No merge, registration, deployment, release publication, on-chain transaction, or production change.
+
+
+## V21 calibration candidate rejected by scorer CI — 2026-10-18
+
+- Draft PR [#50](https://github.com/peterkehinde673/telegraph-verity-intelligence/pull/50) was closed without merging after CI disproved the blanket exponent-15 hypothesis.
+- [Verity CI run #729](https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39081894406) passed. However, [WASM scorer run #132](https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39081894397) failed: the clean-pair near-equality fixture passed, but `partial_answer_scores_below_exact_answer` failed because the partial answer saturated to the exact-answer score. This is an unacceptable regression; do not keep the exponent-15 change.
+- The [local scorer investigation run #82](https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39081894450) was still running at the time of this note; no comparison results are claimed.
+- Conclusion: a global exponent increase is rejected. Next scorer batch should test a narrowly scoped, evidence/anchor-aware adjustment for terse answers while preserving score separation for ordinary partial answers, and should rerun all contradiction/adversarial controls. Do not adjust the global exponent again without a clear calibration rationale.
+- PR #49 was also closed without merging because it contained unrelated branch history. PR #50 contained only the intended scorer file change and was closed after the measured regression.
+- The frozen master plan remains unchanged; Batch E official acceptance and Batch G authoritative scoring diagnosis remain incomplete. No merge, registration, deployment, release publication, on-chain transaction, or production change.
