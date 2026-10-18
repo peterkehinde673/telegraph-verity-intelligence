@@ -36,12 +36,12 @@
 - [ ] Record before/after test evidence. Unit-test success is not proof of a protocol-score gain.
 
 ## Batch 3 — Iterate over remaining unprotected intents
-- [ ] Repeat Batch 1–2 in small batches until all currently supported intents outside the protected first ten have been reviewed.
+- [ ] Repeat Batch 1–2 in small batches until all currently supported intents outside the protected first ten have been reviewed. Batch 2 fixes verified green: redact raw IP reputation provider errors; derive vulnerability severity from numeric CVSS when supplied severity conflicts. Continue review of catalogue positions 23–29.
 - [ ] Prefer measured correctness improvements; reject speculative changes and any candidate that causes a protected-intent regression.
 - [ ] Leave WASM/scorer code unchanged.
 
 ## Batch 4 — Add new intents
-- [ ] Identify useful new intent categories not already supported and check provider/data availability, contract design, costs, security, and maintenance burden.
+- [ ] Identify useful new intent categories not already supported and check provider/data availability, contract design, costs, security, and maintenance burden. Candidate selection follows after positions 20–29 review.
 - [ ] Propose a small first group of new intents with explicit input/output schemas and evidence requirements.
 - [ ] Implement each new intent with dispatcher/manifest wiring, focused tests, documentation, and failure/abstention handling.
 - [ ] Verify existing intents, especially the protected first ten, remain unaffected.
