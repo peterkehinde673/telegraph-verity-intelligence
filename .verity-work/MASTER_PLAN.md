@@ -54,7 +54,7 @@ The Explorer snapshot is an epoch-specific baseline only. Subscript-style digits
 ## Batch 4 — SSL and DNS
 - [x] Inspect `SSL_VERIFICATION` and `DNS_RECORD_LOOKUP`; existing validation, certificate/DNS failure handling, and sanitization tests cover reviewed cases; no additional source changes justified.
 - [x] Reviewed hostname/certificate handling, DNS response semantics, malformed inputs and unavailable-provider behavior; no additional defect justified.
-- [ ] Test changes and preserve security boundaries.
+- [x] Reviewed SSL/DNS validation and failure handling; no source change needed, and full CI remains green.
 
 ## Batch 5 — Fact check and content extraction
 - [x] Inspected application handlers; FACT_CHECK provider errors redacted and CONTENT_EXTRACTION rejects blank content type. WASM scorer untouched.
@@ -62,10 +62,10 @@ The Explorer snapshot is an epoch-specific baseline only. Subscript-style digits
 - [x] FACT_CHECK CI #762 and CONTENT_EXTRACTION source/test/progress CI #764/#765/#766 passed.
 
 ## Batch 6 — Final target-ten review and integration readiness
-- [ ] Verify all ten target intents have a recorded status: fixed and CI-verified, no reproducible defect found, or blocked with reason.
-- [ ] Run the full required test suite, typecheck, build, integration tooling, and miner-template preflight.
-- [ ] Verify manifest/dashboard integration requirements in a non-production/test path where possible.
-- [ ] Prepare re-registration steps and rollback notes. Do not execute live registration without separate explicit approval.
+- [x] All ten target intents have recorded status in PROGRESS.md: implemented and CI-verified or reviewed with no additional reproducible defect found.
+- [x] Latest Verity CI #768 passed typecheck, build and test suite. Miner template preflight is defined in scripts and CI workflow; no claim of live Integrate validation.
+- [x] Reviewed manifest and integration scripts: current miner.yaml has ID 5530 and 29 intents; template deliberately retains unused-ID placeholder. Live Integrate/dashboard update remains an external/manual step.
+- [x] Re-registration checklist and rollback notes recorded in PROGRESS.md; live registration not executed.
 
 ## Batch 7 — Season 2 measurement and future expansion
 - [ ] Wait until Season 2 starts before comparing season scores.
