@@ -35,4 +35,6 @@ Active plan: `.verity-work/MASTER_PLAN.md`. The user's exact target is the ten i
 - [x] `URL_SAFE`: raw reputation-provider exceptions replaced with generic failure message; regression test passed CI run #754: https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39151958681.
 - [x] `URL_SCAN` reviewed: existing tests cover redirect revalidation, private/reserved IPv4/IPv6, DNS timeout/failure sanitization, credentials in redirects, redirect limits, and TLS certificate validation. No new source change justified in this pass.
 
-- [ ] `RESEARCH_SYNTHESIS` candidate: synthesis implementation exceptions could expose raw provider URLs/details. Replaced with a generic failure message and added token-bearing fake-error regression test. Source `d87ff56925cca19026291d2a7826997f4a5e7ad5`; test `dd775369f9ab913d531a4f83f5c82839ede4eb82`. CI status pending.
+- [x] `RESEARCH_SYNTHESIS`: raw synthesis-provider exception details redacted; regression test passed CI run #757: https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39152070488.
+
+- [ ] `FACT_CHECK` candidate: raw checker exception text could expose provider URLs/details. Replaced with a generic failure message and added a token-bearing fake-error regression test. Source `c842773b9136754367d0cc7a7ecbc10b928dce1b`; test `5dd658de849bf71f4d9b92e3ce3092e71a261631`. CI run #762 queued: https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39152419791.
