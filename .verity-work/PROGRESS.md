@@ -705,3 +705,10 @@ This file tracks execution status for the frozen `.verity-work/MASTER_PLAN.md`. 
 - Conclusion: a global exponent increase is rejected. Next scorer batch should test a narrowly scoped, evidence/anchor-aware adjustment for terse answers while preserving score separation for ordinary partial answers, and should rerun all contradiction/adversarial controls. Do not adjust the global exponent again without a clear calibration rationale.
 - PR #49 was also closed without merging because it contained unrelated branch history. PR #50 contained only the intended scorer file change and was closed after the measured regression.
 - The frozen master plan remains unchanged; Batch E official acceptance and Batch G authoritative scoring diagnosis remain incomplete. No merge, registration, deployment, release publication, on-chain transaction, or production change.
+
+
+## V21 comparative investigation outcome — 2026-10-18
+
+- Follow-up completed for [FACT_CHECK local scorer investigation run #82](https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39081894450): it also failed at the Rust scorer unit-test gate for the same `partial_answer_scores_below_exact_answer` regression. The diagnostic artifact was uploaded, but no cross-binary score matrix was produced because the candidate did not pass unit tests.
+- Result is consistent across independent workflow jobs: exponent 15 makes the clean-pair fixture pass but collapses a normal partial answer to the exact-answer score. Candidate rejected; PR #50 closed unmerged. No comparative/official protocol improvement is claimed.
+- Next step is diagnosis/design only: define an evidence-backed, generalized criterion for concise answer coverage and add positive/negative fixtures before implementing any scoring bonus. Do not special-case the single essay fixture, weaken adversarial penalties, or use a global exponent increase. Batch E remains blocked pending valid comparative and official acceptance evidence.
