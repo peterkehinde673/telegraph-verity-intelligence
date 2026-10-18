@@ -7,12 +7,12 @@ Active plan: `.verity-work/MASTER_PLAN.md`. The user's exact target is the ten i
 - [x] Master plan corrected to the exact ten user-specified intents and priority order (commit `8be7ff56e9304ca7298cf2908b24950c8ebbd0b6`).
 - [x] `VULNERABILITY_TRIAGE`: valid numeric CVSS now controls normalized severity when supplied severity conflicts; CI run #745 passed: https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39129372021
 - [x] `DEEPFAKE_DETECTION`: `authentic_likely` maps to `likely` and confidence direction is corrected; CI run #735 passed: https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39082141570
-- [ ] `CONTENT_VERIFICATION`
-- [ ] `URL_SCAN`
-- [ ] `RESEARCH_SYNTHESIS`
-- [ ] `SSL_VERIFICATION`
-- [ ] `DNS_RECORD_LOOKUP`
-- [ ] `URL_SAFE`
+- [x] `CONTENT_VERIFICATION`: raw verifier exception details redacted; CI run #752 passed: https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39130770372
+- [x] `URL_SCAN`: reviewed redirect revalidation, private/reserved address blocking, credentials, limits, TLS, and resolver failure handling; no additional source change justified.
+- [x] `RESEARCH_SYNTHESIS`: raw synthesis-provider exception details redacted; regression test passed CI run #757: https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39152070488
+- [x] `SSL_VERIFICATION` reviewed: port/timeout validation, TLS SNI, certificate authorization, normalized errors, and socket cleanup covered; no new defect established in this pass.
+- [x] `DNS_RECORD_LOOKUP` reviewed: hostname/label validation, supported record types, ENODATA/ENOTFOUND distinction, transient failure abstention, and error sanitization covered; no new defect established in this pass.
+- [x] `URL_SAFE`: raw reputation-provider exception details redacted; CI runs #754 and #755 passed: https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39151958681
 - [ ] `FACT_CHECK` application handler only; WASM scorer/calibration is excluded
 - [ ] `CONTENT_EXTRACTION`
 
