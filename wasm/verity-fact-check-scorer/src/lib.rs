@@ -2,7 +2,7 @@
 
 //! Deterministic, content-weighted lexical scorer for Telegraph FACT_CHECK.
 //! This is still a lexical baseline, not a semantic fact-checking engine.
-//! V20 strengthens the penalty for explicit opposite factual verdicts while retaining V15's tenth-power calibration.
+//! V21 experiments with fifteenth-power calibration for concise fact-preserving answers; protocol promotion remains unverified.
 //! Release note: inflection normalization is a hypothesis; protocol promotion remains unverified.
 //! Retains tenth-power odds calibration and numeric-token weighting.
 //! Keeps polarity and numeric contradiction guards; adds explicit opposite-verdict detection.
@@ -287,7 +287,7 @@ fn score_bytes(_question: &[u8], truth: &[u8], answer: &[u8]) -> f32 {
     // weighting is a targeted factual-evidence experiment.
     let mut hit = 1.0f32;
     let mut miss = 1.0f32;
-    for _ in 0..10 {
+    for _ in 0..15 {
         hit *= overlap;
         miss *= 1.0 - overlap;
     }
@@ -325,6 +325,16 @@ pub unsafe extern "C" fn rank_answer(
 #[cfg(test)]
 mod tests {
     use super::score_bytes;
+
+    #[test]
+    fn real_clean_pair_fixture_keeps_terse_answer_near_verbatim() {
+        let truth = b"The submitted essay 'Coastal Erosion in Kerala' is assessed as plagiarised. Similarity to the reference corpus is 68%, derived from 7 matching passages against Journal of Coastal Research, 2019. Confidence in this assessment is 0.94.";
+        let terse = b"plagiarised; 68% similar; 7 matches; Journal of Coastal Research, 2019.";
+        let exact_score = score_bytes(b"Verify originality", truth, truth);
+        let terse_score = score_bytes(b"Verify originality", truth, terse);
+        assert!((exact_score - terse_score).abs() <= 0.05,
+            "clean-pair near-equality failed: exact={exact_score}, terse={terse_score}");
+    }
 
     #[test]
     fn exact_answer_scores_one() {
