@@ -13,7 +13,7 @@ Active plan: `.verity-work/MASTER_PLAN.md`. The user's exact target is the ten i
 - [x] `SSL_VERIFICATION` reviewed: port/timeout validation, TLS SNI, certificate authorization, normalized errors, and socket cleanup covered; no new defect established in this pass.
 - [x] `DNS_RECORD_LOOKUP` reviewed: hostname/label validation, supported record types, ENODATA/ENOTFOUND distinction, transient failure abstention, and error sanitization covered; no new defect established in this pass.
 - [x] `URL_SAFE`: raw reputation-provider exception details redacted; CI runs #754 and #755 passed: https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39151958681
-- [ ] `FACT_CHECK` application handler only; WASM scorer/calibration is excluded
+- [x] `FACT_CHECK` application handler: raw checker exceptions redacted; regression test passed CI run #762: https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39152419791. WASM scorer/calibration remains excluded
 - [ ] `CONTENT_EXTRACTION`
 
 ## Additional verified fixes
@@ -38,3 +38,5 @@ Active plan: `.verity-work/MASTER_PLAN.md`. The user's exact target is the ten i
 - [x] `RESEARCH_SYNTHESIS`: raw synthesis-provider exception details redacted; regression test passed CI run #757: https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39152070488.
 
 - [ ] `FACT_CHECK` candidate: raw checker exception text could expose provider URLs/details. Replaced with a generic failure message and added a token-bearing fake-error regression test. Source `c842773b9136754367d0cc7a7ecbc10b928dce1b`; test `5dd658de849bf71f4d9b92e3ce3092e71a261631`. CI run #762 queued: https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39152419791.
+
+- [ ] `CONTENT_EXTRACTION` candidate: extractor could return non-empty content with blank content_type and still be reported confirmed at confidence 1. Now abstains with `invalid_extraction_response`; regression test added. Source `60432caa8c772aaa369d8609084e473085a9ec07`; test `451bca7ffa6e2589306f51c08306bffa969ca176`. CI pending.
