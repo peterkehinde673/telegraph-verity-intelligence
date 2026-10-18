@@ -30,7 +30,8 @@ test("deepfake detection reports authentic-likely without claiming proof", async
     })
   });
 
-  assert.equal(result.verdict, "confirmed");
+  assert.equal(result.verdict, "likely");
+  assert.equal(result.confidence, 0.94);
   assert.equal(result.answer.signal, "authentic_likely");
   assert.equal(result.uncertainty[0]?.code, "deepfake_detection_is_probabilistic");
 });
