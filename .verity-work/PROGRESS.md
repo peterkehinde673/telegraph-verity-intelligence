@@ -1,42 +1,29 @@
 # Verity Work Progress — Season 2
 
-Active plan: `.verity-work/MASTER_PLAN.md`. The user's exact target is the ten intents listed there, not catalogue positions 20–29. Season 2 has not started. Keep changes in small batches.
+Active plan: `.verity-work/MASTER_PLAN.md`. Season 2 has not started. Work is limited to the user's exact target ten; do not add intents yet.
 
 ## Target-ten status
 
-- [x] Master plan corrected to the exact ten user-specified intents and priority order (commit `8be7ff56e9304ca7298cf2908b24950c8ebbd0b6`).
-- [x] `VULNERABILITY_TRIAGE`: valid numeric CVSS now controls normalized severity when supplied severity conflicts; CI run #745 passed: https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39129372021
-- [x] `DEEPFAKE_DETECTION`: `authentic_likely` maps to `likely` and confidence direction is corrected; CI run #735 passed: https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39082141570
-- [x] `CONTENT_VERIFICATION`: raw verifier exception details redacted; CI run #752 passed: https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39130770372
-- [x] `URL_SCAN`: reviewed redirect revalidation, private/reserved address blocking, credentials, limits, TLS, and resolver failure handling; no additional source change justified.
-- [x] `RESEARCH_SYNTHESIS`: raw synthesis-provider exception details redacted; regression test passed CI run #757: https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39152070488
-- [x] `SSL_VERIFICATION` reviewed: port/timeout validation, TLS SNI, certificate authorization, normalized errors, and socket cleanup covered; no new defect established in this pass.
-- [x] `DNS_RECORD_LOOKUP` reviewed: hostname/label validation, supported record types, ENODATA/ENOTFOUND distinction, transient failure abstention, and error sanitization covered; no new defect established in this pass.
-- [x] `URL_SAFE`: raw reputation-provider exception details redacted; CI runs #754 and #755 passed: https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39151958681
-- [x] `FACT_CHECK` application handler: raw checker exceptions redacted; regression test passed CI run #762: https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39152419791. WASM scorer/calibration remains excluded
-- [ ] `CONTENT_EXTRACTION`
+- [x] `VULNERABILITY_TRIAGE`: numeric CVSS takes precedence over conflicting supplied severity; CI #745 passed.
+- [x] `CONTENT_VERIFICATION`: provider exception details redacted; regression test CI #752 passed.
+- [x] `URL_SCAN`: reviewed redirect revalidation, private/reserved IPv4/IPv6, credentialed redirects, redirect limits, TLS and resolver failures; no additional change justified.
+- [x] `DEEPFAKE_DETECTION`: corrected `authentic_likely` verdict/confidence direction; CI #735 passed.
+- [x] `RESEARCH_SYNTHESIS`: provider exception details redacted; CI #757 passed.
+- [x] `SSL_VERIFICATION`: reviewed input validation, SNI, certificate authorization, normalized errors and socket cleanup; no additional change justified.
+- [x] `DNS_RECORD_LOOKUP`: reviewed hostname/label validation, record types, missing records, transient resolver failures and error sanitization; no additional change justified.
+- [x] `URL_SAFE`: provider exception details redacted; CI #754/#755 passed.
+- [x] `FACT_CHECK` application handler: checker exception details redacted; CI #762 passed. WASM scorer/calibration untouched.
+- [x] `CONTENT_EXTRACTION`: non-empty content with blank content type now abstains with `invalid_extraction_response`; source CI #764, test CI #765, progress CI #766 all passed.
 
-## Additional verified fixes
+## Additional verified correctness fixes
 
-- [x] `THREAT_IP_REPUTATION`: provider exception details are redacted; CI run #743 passed: https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39129001210
-- [x] `REGRESSION_VERIFY`: JSON assertions with `json_path` but no `equals` are rejected; CI run #748 passed: https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39129534768
+- [x] `THREAT_IP_REPUTATION`: provider exception details redacted; CI #743 passed.
+- [x] `REGRESSION_VERIFY`: JSON assertions lacking expected `equals` rejected; CI #748 passed.
 
 ## Baseline and guardrails
 
-- User screenshot: epoch 421, miner shown Active, 9 requests served, best rank #1, epochs participated 0. Ranks are a snapshot, not a guarantee.
-- Clearly legible zero scores in screenshot: `DEEPFAKE_DETECTION` #10, `FACT_CHECK` #15, `CONTENT_EXTRACTION` #17. Read subscript-style score digits as decimal places; do not guess unclear values.
-- Preserve every non-target intent, especially current ranks #1–#5. Shared changes require regression tests.
-- No WASM/scorer changes, score manipulation, weakened security controls, deployment, registration, on-chain transaction, release publication, or production config changes without separate explicit approval.
-- Do not add new intents until all target-ten intents are reviewed and fixed or explicitly blocked.
-
-- [x] `CONTENT_VERIFICATION`: raw verifier exception text replaced with a generic failure message; regression test passed CI run #752: https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39130770372.
-- [x] Master-plan scope correction CI green: run #750 https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39130718734; progress-log reset CI green: run #751 https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39130735043.
-
-- [x] `URL_SAFE`: raw reputation-provider exceptions replaced with generic failure message; regression test passed CI run #754: https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39151958681.
-- [x] `URL_SCAN` reviewed: existing tests cover redirect revalidation, private/reserved IPv4/IPv6, DNS timeout/failure sanitization, credentials in redirects, redirect limits, and TLS certificate validation. No new source change justified in this pass.
-
-- [x] `RESEARCH_SYNTHESIS`: raw synthesis-provider exception details redacted; regression test passed CI run #757: https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39152070488.
-
-- [ ] `FACT_CHECK` candidate: raw checker exception text could expose provider URLs/details. Replaced with a generic failure message and added a token-bearing fake-error regression test. Source `c842773b9136754367d0cc7a7ecbc10b928dce1b`; test `5dd658de849bf71f4d9b92e3ce3092e71a261631`. CI run #762 queued: https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39152419791.
-
-- [ ] `CONTENT_EXTRACTION` candidate: extractor could return non-empty content with blank content_type and still be reported confirmed at confidence 1. Now abstains with `invalid_extraction_response`; regression test added. Source `60432caa8c772aaa369d8609084e473085a9ec07`; test `451bca7ffa6e2589306f51c08306bffa969ca176`. CI pending.
+- User-provided Explorer snapshot: epoch 421; miner shown Active; 9 requests served; best rank #1; epochs participated 0. These are snapshot values, not guarantees.
+- Clearly legible zero scores: `DEEPFAKE_DETECTION` rank #10, `FACT_CHECK` rank #15, `CONTENT_EXTRACTION` rank #17. Subscript-style digits represent decimal places; don't guess illegible values.
+- Protect all non-target intents, especially current ranks #1–#5. Shared changes require regression tests.
+- No WASM/scorer changes, score manipulation, weakened security controls, deployment, live registration/re-registration, on-chain transaction, release publication, or production config changes without separate explicit approval.
+- No new intents until target-ten review and readiness checks are complete.
