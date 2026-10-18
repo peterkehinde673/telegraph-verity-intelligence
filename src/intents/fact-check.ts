@@ -104,7 +104,7 @@ export async function factCheck(
       evidence: [],
       uncertainty: [{
         code: "fact_checker_failed",
-        message: error instanceof Error ? error.message : "Fact-checking failed."
+        message: "The configured fact-checking source failed or returned an invalid response."
       }],
       retrieved_at: retrievedAt
     };
