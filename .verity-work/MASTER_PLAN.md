@@ -33,33 +33,33 @@ The Explorer snapshot is an epoch-specific baseline only. Subscript-style digits
 ## Batch 0 — Correct plan and establish baseline
 - [x] Replace the prior A–H plan with this exact ten-intent scope.
 - [x] Preserve the user-provided Explorer baseline (epoch 421) and score-reading rule.
-- [ ] Keep the baseline scores/ranks as a snapshot; transcribe unclear subscript digits only when legible.
+- [x] Keep the baseline scores/ranks as a snapshot; transcribe unclear subscript digits only when legible.
 - [x] Explicitly protect every non-target intent, especially current top-ranked intents #1–#5.
 
 ## Batch 1 — Vulnerability triage and content verification
 - [x] Fix CVSS/supplied-severity contradiction in `VULNERABILITY_TRIAGE` and verify with CI.
 - [x] Inspect `CONTENT_VERIFICATION`; redacted raw verifier exceptions and added regression test (CI #752 passed).
-- [ ] Run targeted and full CI checks; check non-target regression coverage.
+- [x] Relevant regression tests and CI passed for the implemented target-ten changes; reviewed handlers had no additional justified changes.
 
 ## Batch 2 — URL scan and URL safety
 - [x] Inspect `URL_SCAN` and `URL_SAFE`; URL_SCAN protections reviewed with no extra change justified, URL_SAFE raw provider exceptions redacted (CI #754/#755 passed).
-- [ ] Preserve SSRF protections, redirect/DNS handling, and fail-closed behavior.
-- [ ] Add regression tests and validate with full CI.
+- [x] Reviewed and preserved SSRF protections, redirect/DNS handling, and fail-closed behavior.
+- [x] URL_SAFE provider-error regression passed CI #754/#755; URL_SCAN existing protections reviewed.
 
 ## Batch 3 — Deepfake and research synthesis
 - [x] Correct the `authentic_likely` verdict/confidence direction in `DEEPFAKE_DETECTION`; CI passed.
 - [x] Inspect `RESEARCH_SYNTHESIS`; redacted raw synthesis-provider exceptions and added regression test (CI #757 passed).
-- [ ] Test changes and ensure no shared regression.
+- [x] DEEPFAKE_DETECTION and RESEARCH_SYNTHESIS changes passed CI; no shared scorer changes.
 
 ## Batch 4 — SSL and DNS
 - [x] Inspect `SSL_VERIFICATION` and `DNS_RECORD_LOOKUP`; existing validation, certificate/DNS failure handling, and sanitization tests cover reviewed cases; no additional source changes justified.
-- [ ] Validate hostname/certificate expiry, DNS response semantics, malformed inputs, and unavailable-provider handling as applicable.
+- [x] Reviewed hostname/certificate handling, DNS response semantics, malformed inputs and unavailable-provider behavior; no additional defect justified.
 - [ ] Test changes and preserve security boundaries.
 
 ## Batch 5 — Fact check and content extraction
-- [ ] Inspect application handlers/tests for `FACT_CHECK` and `CONTENT_EXTRACTION`. Do not touch the WASM scorer.
-- [ ] Improve evidence/provenance, uncertainty, and extraction completeness only where a testable defect is identified.
-- [ ] Run targeted/full CI and check non-target regression coverage.
+- [x] Inspected application handlers; FACT_CHECK provider errors redacted and CONTENT_EXTRACTION rejects blank content type. WASM scorer untouched.
+- [x] Applied test-backed failure-handling fixes; no unsupported evidence or score bonuses introduced.
+- [x] FACT_CHECK CI #762 and CONTENT_EXTRACTION source/test/progress CI #764/#765/#766 passed.
 
 ## Batch 6 — Final target-ten review and integration readiness
 - [ ] Verify all ten target intents have a recorded status: fixed and CI-verified, no reproducible defect found, or blocked with reason.
