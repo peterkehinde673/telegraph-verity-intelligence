@@ -32,3 +32,8 @@ No WASM/scorer changes, score manipulation, unsupported claims, weakening securi
 - [x] Prior fix validated: CI run #743 passed for the IP reputation provider-error redaction and regression test: https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39129001210
 - [x] Next Batch 2 finding: `VULNERABILITY_TRIAGE` could emit a contradictory severity when numeric CVSS conflicted with supplied text (e.g. CVSS 9.8 plus severity `low`). Numeric CVSS now determines normalized severity; a regression test covers the conflict. Source commit `33e1e36231d5d6a30aed09d365528688475133bc`; test commit `388dd7bd798faac20a59d89503b6dd49e648df1a`.
 - [ ] CI run #745 for the vulnerability triage fix is in progress: https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39129372021. Do not mark accepted until green.
+
+- [x] Batch 2 IP reputation redaction fix CI green: run #743 https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39129001210
+- [x] Batch 2 vulnerability severity consistency fix CI green: run #745 https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39129372021; progress-log run #746 also green https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39129391317
+- [x] Both fixes are application-side correctness/security changes only; no protocol-score improvement is claimed.
+- [ ] Next: review remaining catalogue positions 23–29 for evidence-backed defects; do not modify first ten or WASM scorer.
