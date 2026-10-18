@@ -2,7 +2,7 @@
 
 //! Deterministic, content-weighted lexical scorer for Telegraph FACT_CHECK.
 //! This is still a lexical baseline, not a semantic fact-checking engine.
-//! V20 strengthens the penalty for explicit opposite factual verdicts while retaining V15's tenth-power calibration.
+//! V21 tests a fifteenth-power calibration to reduce the gap for concise fact-preserving answers; protocol promotion remains unverified.
 //! Release note: inflection normalization is a hypothesis; protocol promotion remains unverified.
 //! Retains tenth-power odds calibration and numeric-token weighting.
 //! Keeps polarity and numeric contradiction guards; adds explicit opposite-verdict detection.
@@ -365,7 +365,7 @@ fn score_bytes(_question: &[u8], truth: &[u8], answer: &[u8]) -> f32 {
     // weighting is a targeted factual-evidence experiment.
     let mut hit = 1.0f32;
     let mut miss = 1.0f32;
-    for _ in 0..10 {
+    for _ in 0..15 {
         hit *= overlap;
         miss *= 1.0 - overlap;
     }
