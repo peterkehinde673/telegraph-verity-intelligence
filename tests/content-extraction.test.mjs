@@ -81,3 +81,20 @@ test("content extraction does not expose raw extractor errors", async () => {
   assert.equal(result.uncertainty[0]?.message.includes("content-key-123"), false);
   assert.deepEqual(result.evidence, []);
 });
+
+
+test("content extraction abstains when returned content has no content type", async () => {
+  const result = await contentExtraction("https://example.com/article", {
+    extractImpl: async () => ({
+      content: "Some extracted text",
+      content_type: "   "
+    })
+  });
+
+  assert.equal(result.verdict, "insufficient_evidence");
+  assert.equal(result.confidence, 0);
+  assert.equal(result.answer.content, "");
+  assert.equal(result.answer.content_type, "");
+  assert.equal(result.uncertainty[0]?.code, "invalid_extraction_response");
+  assert.deepEqual(result.evidence, []);
+});
