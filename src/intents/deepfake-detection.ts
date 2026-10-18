@@ -85,7 +85,13 @@ export async function detectDeepfake(
       // A numeric manipulation probability is not calibrated confidence in
       // an indeterminate verdict. Keep the raw probability in the answer,
       // but abstentions carry zero verdict confidence.
-      confidence: detection.signal === "indeterminate" ? 0 : probability ?? 0,
+      confidence: detection.signal === "indeterminate"
+        ? 0
+        : probability === null
+          ? 0
+          : detection.signal === "authentic_likely"
+            ? 1 - probability
+            : probability,
       intent: "DEEPFAKE_DETECTION",
       answer: {
         media_type: detection.media_type,
