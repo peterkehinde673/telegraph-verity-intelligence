@@ -25,3 +25,6 @@ User-provided screenshot: epoch 421; miner shown Active; 9 requests served; best
 ## Guardrails
 
 No WASM/scorer changes, score manipulation, unsupported claims, weakening security controls, deployment, registration, on-chain transactions, release publication, or production config changes without explicit authorization. Season 2 is not yet underway.
+
+- [x] Batch 2 first evidence-backed fix committed: `THREAT_IP_REPUTATION` now returns a generic provider-failure message instead of exposing raw provider exception text; regression test checks a token-bearing fake error is not returned. Source commit `ff9fa8400e2abaf804ffb90f1eea03a9faa7a0be`; test commit `37ea76b67b8d19c5378916adbb971ccc22b619f9`.
+- [ ] CI for code/test run #743 is still in progress: https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39129001210. Do not treat the fix as accepted until green.
