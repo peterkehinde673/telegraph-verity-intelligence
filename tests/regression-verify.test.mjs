@@ -47,3 +47,14 @@ test("REGRESSION_VERIFY rejects redirecting paths and malformed check plans", as
   }, { allowedHosts: ["service.example"] });
   assert.equal(result.verdict, "rejected");
 });
+
+
+test("REGRESSION_VERIFY rejects JSON assertions without an expected value", async () => {
+  const result = await verifyRegression({
+    base_url: "https://service.example",
+    checks: [{ path: "/health", json_path: "status" }]
+  }, { allowedHosts: ["service.example"] });
+
+  assert.equal(result.verdict, "rejected");
+  assert.equal(result.uncertainty[0].code, "invalid_checks");
+});
