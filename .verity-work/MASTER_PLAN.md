@@ -25,10 +25,10 @@
 - [x] Inventory all 29 catalogue intents, handler wiring, and available intent-focused tests; score transcription remains partial where screenshot digits are ambiguous.
 - [x] Exclude the protected first ten (catalogue positions 1–10) from optimization work.
 - [x] Select the first inspection batch from catalogue positions 20–22: `DNS_RECORD_LOOKUP`, `CODE_REVIEW`, and `URL_SAFE`; validate actual code/test gaps before modifying handlers.
-- [ ] Do not alter an intent just because its score is low; identify whether the cause is handler behavior, evidence quality, response schema, availability, or evaluator behavior.
+- [x] Do not alter an intent just because its score is low; identify whether the cause is handler behavior, evidence quality, response schema, availability, or evaluator behavior. First inspected DNS_RECORD_LOOKUP, CODE_REVIEW, and URL_SAFE; existing tests cover core cases and no source change is justified yet.
 
 ## Batch 2 — Improve the lowest-performing intent batch
-- [ ] Add/confirm regression cases for correct, incorrect, ambiguous, empty, malformed, and adversarial inputs where relevant.
+- [ ] Add/confirm regression cases for correct, incorrect, ambiguous, empty, malformed, and adversarial inputs where relevant. First inspection batch found no sufficiently evidenced handler defect to justify a code change.
 - [ ] Make the smallest evidence-backed application-side change per intent.
 - [ ] Preserve abstention behavior, provenance, response contracts, SSRF protections, and all other security boundaries.
 - [ ] Run typecheck, build, full tests, integration tooling, and miner-template preflight.
