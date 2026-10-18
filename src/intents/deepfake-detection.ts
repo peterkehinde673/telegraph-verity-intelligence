@@ -80,7 +80,7 @@ export async function detectDeepfake(
         detection.signal === "manipulated_likely"
           ? "likely"
           : detection.signal === "authentic_likely"
-            ? "confirmed"
+            ? "likely"
             : "insufficient_evidence",
       // A numeric manipulation probability is not calibrated confidence in
       // an indeterminate verdict. Keep the raw probability in the answer,
