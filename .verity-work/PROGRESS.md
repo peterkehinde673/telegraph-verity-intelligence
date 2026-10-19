@@ -143,7 +143,7 @@ Active plan: `.verity-work/MASTER_PLAN.md`. Season 2 has not started. The ten ta
 - [x] `npm run smoke:render` passed against the existing production service: healthy, 29 advertised intents, 12 safe validation cases, three live provider cases. No deploy or production configuration changed.
 - [x] `git diff --check` passed; full diff review confirmed no manifest edits or credentials.
 - [ ] `npm run validate:miner` remains blocked: documented endpoint returned HTTP 404 HTML; no validator result was produced.
-- [ ] Verify remote push and GitHub Actions result for the commit after it is created.
+- [x] Commit `a95d46422afa665194dde79f45215c35cf25aa0a` was pushed to `origin/verity/score-improvements-batch-1`; the remote ref matched. GitHub Actions run `39247857333` completed successfully for this exact SHA: https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39247857333.
 - [ ] Keep manifest integration gated: X's API contract is established, but Telegraph does not publish an intent-specific schema; Integrate nested `input.query` request construction and saved YAML validation remain unverified.
 
 ### TWITTER_SEARCH evidence
