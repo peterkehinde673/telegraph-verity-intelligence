@@ -167,7 +167,7 @@ Active plan: `.verity-work/MASTER_PLAN.md`. Season 2 has not started. The ten ta
 - [x] `npm run smoke:render` passed against the existing production service: healthy, 29 advertised intents, 12 safe validation cases, three live provider cases. No deployment or production configuration was changed.
 - [x] `git diff --check` passed; full review found no credential values or miner manifest changes.
 - [ ] `npm run validate:miner` again returned HTTP 404 HTML rather than JSON; no remote YAML validation result was produced.
-- [ ] Commit, push, and verify exact-commit GitHub Actions result.
+- [x] Commit `55a15af0bc8adb80dc93ce584a4583f0ce2f560f` was pushed to the target branch; the remote ref matched. GitHub Actions run `39253954588` passed typecheck, build, all tests, Telegraph tooling verification, and miner template preflight: https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39253954588.
 - [ ] Manifest gate remains closed: Telegraph does not publish a per-intent schema; Integrate nested `{ intent, input: { text } }` construction and saved YAML validation remain unverified. Provider token access/credits and external text processing require separate operational review before enabling.
 
 ### SENTIMENT_ANALYSIS sources
