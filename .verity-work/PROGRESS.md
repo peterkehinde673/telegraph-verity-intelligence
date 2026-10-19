@@ -104,9 +104,8 @@ Active plan: `.verity-work/MASTER_PLAN.md`. Season 2 has not started. The ten ta
 - **Completed and verified:** NEWS_SEARCH route preparation; commit `5ea6d78967e45efa1869a96a6f42709799fda49f` and CI run `39240080251` passed.
 - **Completed and CI-verified:** WEB_SEARCH with Jina Search, based on current canonical registry and official provider schema. Credential provisioning and Integrate request-building remain later deployment/manifest gates.
 - **Canonical and locally implemented:** NEWS_SEARCH, WEB_SEARCH, TWITTER_SEARCH, SENTIMENT_ANALYSIS, ONCHAIN_METRIC_VERIFY, SLA_COMPLIANCE. All remain absent from both miner manifests pending the specific integration gates recorded below.
-- **Canonical but deferred:** DOCUMENT_AUTHENTICITY until a supported signed-document format and independently trusted certificate/timestamp/notarization verification source are selected.
-- **Canonical but deferred:** DOCUMENT_AUTHENTICITY, CONTRACT_OBLIGATION_AUDIT, pending the evidence and parser requirements recorded in their assessment notes.
-- **Awaiting feasibility review:** SLA_COMPLIANCE, SHIPMENT_DELAY_RISK, FRAUD_DETECTION.
+- **Canonical but deferred:** DOCUMENT_AUTHENTICITY, CONTRACT_OBLIGATION_AUDIT, and SHIPMENT_DELAY_RISK, pending the trusted verification, contract parser/fulfillment evidence, and logistics data/forecast outcomes described in their assessment notes.
+- **Awaiting feasibility review:** FRAUD_DETECTION.
 - **Still blocked for manifest integration:** NEWS_SEARCH and WEB_SEARCH until Integrate can build the nested project request and current miner YAML validation succeeds. The provider key must also be available externally before WEB_SEARCH is useful in a deployment.
 - **External:** The documented Integrate validator remains HTTP 404 HTML; local implementation proceeds, but remote YAML validation is not passed.
 
@@ -181,6 +180,14 @@ Active plan: `.verity-work/MASTER_PLAN.md`. Season 2 has not started. The ten ta
 - [x] `git diff --check` passed; manifests were unchanged and the staged diff contained only the SLA calculator, tests, docs, and plan/progress updates.
 - [x] Implementation commit `cd4f7c5b513af7e412742f373716101a3961a54f` was pushed; remote SHA matched. GitHub Actions run `39261937877` passed typecheck, build, all tests, Telegraph integration-tool verification, and miner-template preflight: https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39261937877.
 - [ ] Integration gate: verify Integrate can construct the project-defined nested `input.metric`, period, totals, and target, then successfully validate saved YAML. The local calculation does not establish a Telegraph-specific schema.
+- [x] Progress commit `677d6cc` was pushed; its exact GitHub Actions run `39262623773` passed: https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39262623773.
+
+## SHIPMENT_DELAY_RISK feasibility (2026-10-19)
+
+- [x] Rechecked the live registry: `SHIPMENT_DELAY_RISK` is canonical and currently lists 10 miners. Its description asks for forward-looking arrival-late probability using customs, port congestion, weather, and carrier performance, and distinguishes a present-location/status lookup. Source: https://devnode.telegraphprotocol.com/engine/v1/intents.
+- [x] Repository inventory found no shipment/container IDs, carrier or customs clients, port congestion feeds, weather integration, shipment records, forecast model, or historical arrival outcomes. No current independent evidence can support the requested risk probability.
+- [x] Deferred implementation rather than synthesize a risk score or misrepresent current-status data. Revisit once reliable route-specific signals and time-stamped arrival outcomes are available for calibration and tests. No handler, catalogue entry, or manifest entry was added.
+- [x] Continue to FRAUD_DETECTION in the master-plan order; this deferral does not block its independent assessment.
 
 ## Batch 4 — TWITTER_SEARCH implementation (2026-10-19)
 
