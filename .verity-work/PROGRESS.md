@@ -105,7 +105,8 @@ Active plan: `.verity-work/MASTER_PLAN.md`. Season 2 has not started. The ten ta
 - **Completed and CI-verified:** WEB_SEARCH with Jina Search, based on current canonical registry and official provider schema. Credential provisioning and Integrate request-building remain later deployment/manifest gates.
 - **Canonical and locally implemented:** NEWS_SEARCH, WEB_SEARCH, TWITTER_SEARCH, SENTIMENT_ANALYSIS, ONCHAIN_METRIC_VERIFY. All remain absent from both miner manifests pending the specific integration gates recorded below.
 - **Canonical but deferred:** DOCUMENT_AUTHENTICITY until a supported signed-document format and independently trusted certificate/timestamp/notarization verification source are selected.
-- **Awaiting feasibility review:** CONTRACT_OBLIGATION_AUDIT, SLA_COMPLIANCE, SHIPMENT_DELAY_RISK, FRAUD_DETECTION.
+- **Canonical but deferred:** DOCUMENT_AUTHENTICITY, CONTRACT_OBLIGATION_AUDIT, pending the evidence and parser requirements recorded in their assessment notes.
+- **Awaiting feasibility review:** SLA_COMPLIANCE, SHIPMENT_DELAY_RISK, FRAUD_DETECTION.
 - **Still blocked for manifest integration:** NEWS_SEARCH and WEB_SEARCH until Integrate can build the nested project request and current miner YAML validation succeeds. The provider key must also be available externally before WEB_SEARCH is useful in a deployment.
 - **External:** The documented Integrate validator remains HTTP 404 HTML; local implementation proceeds, but remote YAML validation is not passed.
 
@@ -157,6 +158,14 @@ Active plan: `.verity-work/MASTER_PLAN.md`. Season 2 has not started. The ten ta
 - Project response: shared Verity envelope. It reports the receipt gas value, block and transaction identifiers, configured-node provenance and uncertainty. This is not an authoritative Telegraph response contract. The configured node is not independently cross-checked, and the implementation does not claim light-client proof or finality.
 - Ethereum protocol evidence: https://ethereum.org/developers/docs/apis/json-rpc/ and https://ethereum.github.io/execution-apis/api/methods/eth_getTransactionReceipt/. Registry evidence: https://devnode.telegraphprotocol.com/engine/v1/intents.
 - [x] Commit `d6ef4a42ae163c7017f8548b4e9440b4b8e1a273` was pushed to `origin/verity/score-improvements-batch-1`; remote SHA matched. GitHub Actions run `39258669977` passed typecheck, build, all tests, Telegraph integration-tool verification, and miner-template preflight: https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39258669977.
+
+## CONTRACT_OBLIGATION_AUDIT feasibility (2026-10-19)
+
+- [x] Rechecked the live Telegraph registry: exact canonical name, `canonical: true`, currently 13 miners. Registry description calls for extracting deliverables, milestones, payment terms, performance commitments and possibly determining whether they were met. It distinguishes document integrity and invoice/PO reconciliation. Source: https://devnode.telegraphprotocol.com/engine/v1/intents.
+- [x] Repository overlap review found only generic content extraction/synthesis and no contract parser, obligation model, legal-domain source, or project/ledger records that could evidence fulfillment. Raw user-provided contract text can ground quoted passages, but alone cannot verify completion or overdue status.
+- [x] Deferred implementation: keyword rules would provide only fragile clause candidates and could misread definitions, exceptions, cross-references, amendments, jurisdiction-dependent terms, or “will” used outside an obligation. A text-generation model without grounded legal extraction and fulfillment records would not solve that evidence gap. No weak handler or manifest entry was added.
+- [ ] Revisit when a specific supported contract format/field schema, evaluation corpus with reviewed ground truth, and independent fulfillment evidence (or a deliberately narrower extraction-only canonical scope accepted by Telegraph) are available.
+- [x] Continue in master-plan order with SLA_COMPLIANCE; the contract-audit deferral does not block independent candidate review.
 
 ## Batch 4 — TWITTER_SEARCH implementation (2026-10-19)
 
