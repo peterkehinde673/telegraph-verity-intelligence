@@ -178,7 +178,8 @@ Active plan: `.verity-work/MASTER_PLAN.md`. Season 2 has not started. The ten ta
 - [x] `npm run preflight:registration` passed: all 35 local catalogue names are present in Telegraph's live canonical set, and miner-template preflight passed. Both manifests remain at the original 29.
 - [x] `npm run smoke:render` passed: existing production endpoint healthy, 29 advertised intents, 12 safe cases, three provider checks, response contracts verified. No deployment or production configuration was changed.
 - [ ] `npm run validate:miner` again returned HTTP 404 HTML rather than JSON; no validation result was produced.
-- [x] `git diff --check` passed; inspect and commit this batch, then verify exact-commit CI before continuing to SHIPMENT_DELAY_RISK.
+- [x] `git diff --check` passed; manifests were unchanged and the staged diff contained only the SLA calculator, tests, docs, and plan/progress updates.
+- [x] Implementation commit `cd4f7c5b513af7e412742f373716101a3961a54f` was pushed; remote SHA matched. GitHub Actions run `39261937877` passed typecheck, build, all tests, Telegraph integration-tool verification, and miner-template preflight: https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39261937877.
 - [ ] Integration gate: verify Integrate can construct the project-defined nested `input.metric`, period, totals, and target, then successfully validate saved YAML. The local calculation does not establish a Telegraph-specific schema.
 
 ## Batch 4 — TWITTER_SEARCH implementation (2026-10-19)
