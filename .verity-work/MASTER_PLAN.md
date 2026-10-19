@@ -1,12 +1,12 @@
-# Verity Intelligence — Season 2 Targeted Improvement Plan (Frozen)
+# Verity Intelligence — Season 2 Targeted Improvement and Intent Expansion Plan
 
-**Objective:** Improve the user's exact ten target intents from the Epoch 421 Explorer snapshot, while preserving the current behavior and ranking potential of every other intent—especially those currently ranked #1 through #5. Season 2 has not started; no future score or rank is guaranteed.
+**Objective:** Preserve the completed target-ten quality work, then expand the miner in small, test-gated batches before Season 2. No future score, rank, traffic or revenue is guaranteed. Season 2 has not started as of this plan.
 
-## Exact optimization scope
+## Phase 0 — Completed target-ten review
 
-Work only on these ten existing intents, in this priority order:
+The Epoch 421 Explorer screenshot was the baseline for this completed review:
 
-1. `VULNERABILITY_TRIAGE` — screenshot rank #6
+1. `VULNERABILITY_TRIAGE` — rank #6
 2. `CONTENT_VERIFICATION` — rank #8
 3. `URL_SCAN` — rank #8
 4. `DEEPFAKE_DETECTION` — rank #10
@@ -17,54 +17,108 @@ Work only on these ten existing intents, in this priority order:
 9. `FACT_CHECK` — rank #15
 10. `CONTENT_EXTRACTION` — rank #17
 
-The Explorer snapshot is an epoch-specific baseline only. Subscript-style digits in scores represent decimal places; preserve the raw display and normalize only when the digits are clear.
+All ten have a documented fix or review outcome in `.verity-work/PROGRESS.md`. CI success proves the tested code passed; it does not prove a protocol score or rank improved. FACT_CHECK/WASM scorer and calibration remain out of scope.
 
 ## Protection and quality rules
 
-- Do not change any non-target intent merely to improve the target ten. Preserve current behavior for all other intents, especially intents currently ranked #1–#5, so they retain the opportunity to remain or become #1.
-- Shared code may be changed only for a clear correctness/security reason, with targeted regression tests for affected target and non-target intents.
-- Do not optimize by inflating scores, fabricating evidence, weakening abstention, hiding uncertainty, weakening security/SSRF protections, or hardcoding evaluator behavior.
-- Keep FACT_CHECK application logic in scope because it is explicitly one of the target ten. The FACT_CHECK/WASM scorer implementation and calibration remain out of scope.
-- Work in small batches. A candidate is accepted only after relevant tests and CI pass. CI success shows code correctness, not protocol-score improvement.
-- No new intents until all ten target intents have been reviewed and addressed or explicitly marked blocked.
-- No deployment, live registration/re-registration, on-chain transaction, release publication, or production configuration change without validation and separate explicit user authorization.
-- Do not commit credentials or private evaluation answers.
+- Keep the current 29-intent manifest working while adding capabilities. Do not remove or rename existing intents as part of expansion.
+- Preserve behavior for all existing intents, especially any currently top-ranked intents. Add regression tests for shared code paths.
+- Do not manipulate scores, fabricate evidence, weaken abstention, hide uncertainty, or weaken security/SSRF protections.
+- Every intent must have a real handler, explicit input/output behavior, deterministic error/abstention behavior where appropriate, tests, docs and an endpoint/manifest mapping before it is advertised.
+- **Canonical gate:** Every name in `miner.yaml` must match Telegraph's live canonical registry exactly. Proposed concepts must not be added to `miner.yaml` until Telegraph accepts/canonicalizes them and the live registry confirms the exact name.
+- **Coverage gate:** Check the live intent endpoint for current miner counts before choosing an intent. A canonical intent is not necessarily underserved; do not claim zero competition without checking.
+- Keep all work in small batches. After each batch, run relevant tests and CI, review the diff, update `.verity-work/PROGRESS.md`, and stop to fix failures before starting the next batch.
+- No deployment, release publishing, production configuration changes, live registration/re-registration or on-chain transaction until implementation and preflight are complete and the user separately confirms the final action.
+- Keep credentials and private evaluation answers out of source control.
 
-## Batch 0 — Correct plan and establish baseline
-- [x] Replace the prior A–H plan with this exact ten-intent scope.
-- [x] Preserve the user-provided Explorer baseline (epoch 421) and score-reading rule.
-- [x] Keep the baseline scores/ranks as a snapshot; transcribe unclear subscript digits only when legible.
-- [x] Explicitly protect every non-target intent, especially current top-ranked intents #1–#5.
+## Phase 1 — Candidate intake and canonical verification
 
-## Batch 1 — Vulnerability triage and content verification
-- [x] Fix CVSS/supplied-severity contradiction in `VULNERABILITY_TRIAGE` and verify with CI.
-- [x] Inspect `CONTENT_VERIFICATION`; redacted raw verifier exceptions and added regression test (CI #752 passed).
-- [x] Relevant regression tests and CI passed for the implemented target-ten changes; reviewed handlers had no additional justified changes.
+Telegraph's docs describe the on-chain registry as the source of truth and expose the live list at `https://devnode.telegraphprotocol.com/engine/v1/intents`. The documentation and hackathon catalogue have shown different totals at different times, so use the current live registry—not a copied count or an older docs list—as final authority.
 
-## Batch 2 — URL scan and URL safety
-- [x] Inspect `URL_SCAN` and `URL_SAFE`; URL_SCAN protections reviewed with no extra change justified, URL_SAFE raw provider exceptions redacted (CI #754/#755 passed).
-- [x] Reviewed and preserved SSRF protections, redirect/DNS handling, and fail-closed behavior.
-- [x] URL_SAFE provider-error regression passed CI #754/#755; URL_SCAN existing protections reviewed.
+### A. Existing canonical candidates to verify against the current registry and current miner coverage
 
-## Batch 3 — Deepfake and research synthesis
-- [x] Correct the `authentic_likely` verdict/confidence direction in `DEEPFAKE_DETECTION`; CI passed.
-- [x] Inspect `RESEARCH_SYNTHESIS`; redacted raw synthesis-provider exceptions and added regression test (CI #757 passed).
-- [x] DEEPFAKE_DETECTION and RESEARCH_SYNTHESIS changes passed CI; no shared scorer changes.
+These names are candidate additions because they are not in the current repository's 29-intent `miner.yaml`. Verify each exact spelling and current availability before implementation; this list is not a claim that all are currently underserved.
 
-## Batch 4 — SSL and DNS
-- [x] Inspect `SSL_VERIFICATION` and `DNS_RECORD_LOOKUP`; existing validation, certificate/DNS failure handling, and sanitization tests cover reviewed cases; no additional source changes justified.
-- [x] Reviewed hostname/certificate handling, DNS response semantics, malformed inputs and unavailable-provider behavior; no additional defect justified.
-- [x] Reviewed SSL/DNS validation and failure handling; no source change needed, and full CI remains green.
+- `NEWS_SEARCH` — web/news discovery.
+- `SENTIMENT_ANALYSIS` — sentiment classification.
+- `DOCUMENT_AUTHENTICITY` — document authenticity checks.
+- `ONCHAIN_METRIC_VERIFY` — verifiable on-chain metric checks.
+- `SANCTIONS_SCREENING_MATCH` — compliance screening match.
+- `FRAUD_RISK` — fraud risk assessment.
+- `CROSS_CHAIN_STATE_VERIFY` — cross-chain state checks.
+- `ASSET_RESERVE_ATTESTATION` — reserve-attestation checks.
+- `CONTRACT_OBLIGATION_AUDIT` — contract obligation extraction and audit.
+- `SLA_COMPLIANCE` — service-level agreement compliance.
+- `SHIPMENT_DELAY_RISK` — shipment delay risk analysis.
 
-## Batch 5 — Fact check and content extraction
-- [x] Inspected application handlers; FACT_CHECK provider errors redacted and CONTENT_EXTRACTION rejects blank content type. WASM scorer untouched.
-- [x] Applied test-backed failure-handling fixes; no unsupported evidence or score bonuses introduced.
-- [x] FACT_CHECK CI #762 and CONTENT_EXTRACTION source/test/progress CI #764/#765/#766 passed.
+Priority selection should favour a useful canonical intent with verifiable inputs, a realistic data/provider path, clear evaluation criteria, and manageable implementation risk. Do not add every candidate automatically.
 
-## Batch 6 — Final target-ten review and integration readiness
-- [x] All ten target intents have recorded status in PROGRESS.md: implemented and CI-verified or reviewed with no additional reproducible defect found.
-- [x] Latest Verity CI #768 passed typecheck, build and test suite. Miner template preflight is defined in scripts and CI workflow; no claim of live Integrate validation.
-- [x] Reviewed manifest and integration scripts: current miner.yaml has ID 5530 and 29 intents; template deliberately retains unused-ID placeholder. Live Integrate/dashboard update remains an external/manual step.
-- [x] Re-registration checklist and rollback notes recorded in PROGRESS.md; live registration not executed.
+### B. New intent concepts to propose to Telegraph
 
-**Freeze rule:** This plan records the completed target-ten review. Any future intent expansion is a separate, explicit scope decision: first verify the current canonical intent registry and miner coverage, then assess implementation feasibility and tests. Do not add non-canonical intent names to miner.yaml. Update task status only when verified in `.verity-work/PROGRESS.md`.
+These are **proposals only**, not confirmed canonical names. Check the complete live registry for duplicates or near-equivalent intents first. Draft a concise use case, input/output contract, ground-truth/evaluation approach, safety boundaries and examples for Telegraph review. Only after acceptance and canonicalization can a selected exact name be added to `miner.yaml`.
+
+1. `PROMPT_INJECTION_DETECTION` — detect hostile or instruction-hijacking text embedded in retrieved pages, documents or tool outputs; return quoted evidence and calibrated risk.
+2. `AI_AGENT_ACTION_AUDIT` — assess whether an agent's proposed tool calls/actions match a declared task, authorization and policy; report evidence and violations.
+3. `SOFTWARE_DEPENDENCY_RISK` — assess package and software supply-chain risk beyond a single CVE, using version, provenance, maintainer and dependency evidence.
+4. `CLAIM_PROVENANCE_GRAPH` — map claims to supporting/contradicting sources and preserve traceable source links.
+5. `API_CONTRACT_CONFORMANCE` — compare observed API responses and behaviour against an explicit schema/contract, with reproducible failing cases.
+6. `CROSS_SOURCE_CONSISTENCY` — compare the same factual claims across independent sources and report conflicts, source timestamps and uncertainty.
+
+Do not invent a registration-ready canonical name or promise Telegraph will accept a proposal. If a concept already exists under another canonical name, reuse that canonical intent rather than creating a duplicate.
+
+## Phase 2 — Implementation batches
+
+Work on one small batch at a time. Begin with Batch A only after Phase 1 confirms canonical status, coverage and feasibility. Prefer one or two intents per batch; reduce the batch if the provider or safety work is complex.
+
+### Batch A — Low-dependency, testable canonical candidate(s)
+- Select the best verified canonical candidate(s) from Phase 1A after checking the live registry, miner counts, data source availability and evaluator expectations.
+- Define request examples, response shape, evidence requirements, abstention conditions, timeouts and sanitized errors before implementation.
+- Add handler/dispatch mapping, unit and regression tests, docs and progress notes.
+- Acceptance: tests and CI pass; existing 29 intents and their manifest mappings remain intact.
+
+### Batch B — Second verified canonical candidate(s)
+- Repeat the same discovery, implementation and test gates for the next highest-value candidate(s).
+- Reuse existing safe infrastructure where justified; avoid broad refactors.
+- Acceptance: tests and CI pass; no existing-intent regression; progress entry links the CI run.
+
+### Batch C — Further canonical candidates, only if worthwhile
+- Add further candidates in small batches based on verified coverage, realistic provider access, evaluation clarity and maintenance cost.
+- Skip candidates whose data cannot be grounded or whose behaviour cannot be evaluated reliably.
+
+### Batch D — New-concept proposal and canonicalization
+- Prepare and submit proposals for selected concepts in Phase 1B through the appropriate Telegraph process; record the response and any requested canonical spelling.
+- Do not declare a proposed intent as supported or add it to the manifest while awaiting acceptance.
+- After an exact canonical name is confirmed, implement it in a later isolated batch with tests and documentation.
+
+### Batch E — Manifest/YAML integration and regression gate
+Only after an intent is implemented, tested and canonical:
+- Add the exact canonical name consistently to the endpoint `intents`, `input_schema.intent.enum`, and `semantics.supported_intents` in `miner.yaml`.
+- Update endpoint descriptions and intent-specific input documentation where necessary; ensure the handler accepts the advertised request shape.
+- Check for duplicates and consistency across all three YAML lists, and confirm all old 29 intent names remain present.
+- Run YAML/schema validation, endpoint sandbox/preflight validation, typecheck, build, unit tests and the full CI suite.
+- Inspect the diff and compare the before/after manifest programmatically. Do not combine unimplemented proposals with supported intents.
+
+## Phase 3 — Registration and post-registration verification
+
+This phase is deliberately last. No live registration action is part of code implementation.
+
+1. Freeze the tested commit and final YAML; preserve the previous valid YAML, current registration details and rollback instructions.
+2. Validate the final YAML and endpoint through Telegraph Integrate's sandbox/preflight flow; resolve every failure before proceeding.
+3. Present the exact YAML diff, canonical intent list, test/CI results, endpoint health and registration implications for review.
+4. Only after separate explicit user approval, use the Telegraph Integrate dashboard with the authorized wallet to update/re-register. Do not sign or submit a transaction without that approval.
+5. Confirm the dashboard reports success, then independently verify the live miner record, activation status, endpoint health and exact served intent list. Do not infer registration success from CI or a Git commit.
+6. Record the transaction/registration identifiers only if actually returned by the dashboard, and document rollback steps.
+
+## Season 2 measurement
+
+After Season 2 starts and comparable measurements exist, compare actual intent scores/ranks and traffic with the epoch 421 baseline where comparable. Record dates, evidence and limitations. Do not claim improvement before measurements support it.
+
+## Current state
+
+- [x] Target-ten review completed and documented.
+- [x] Previous Batch 7 removed; expansion is now explicitly planned as a separate, gated workstream.
+- [ ] Verify current canonical registry and miner coverage for Phase 1A candidates.
+- [ ] Select and implement Batch A; no expansion intent has been added to `miner.yaml` yet.
+- [ ] Prepare selected Phase 1B proposals and obtain canonical confirmation before implementation/manifest changes.
+- [ ] Complete manifest integration, preflight and regression checks.
+- [ ] Obtain separate explicit approval before live Integrate dashboard registration/update.
