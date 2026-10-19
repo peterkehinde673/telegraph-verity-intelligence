@@ -156,7 +156,7 @@ Active plan: `.verity-work/MASTER_PLAN.md`. Season 2 has not started. The ten ta
 - Project body: `{ "intent": "ONCHAIN_METRIC_VERIFY", "input": { "metric": "transaction_gas_used", "transaction_hash": "0x…64 hex…", "block_number": "decimal", "expected_gas_used": "optional decimal" } }`.
 - Project response: shared Verity envelope. It reports the receipt gas value, block and transaction identifiers, configured-node provenance and uncertainty. This is not an authoritative Telegraph response contract. The configured node is not independently cross-checked, and the implementation does not claim light-client proof or finality.
 - Ethereum protocol evidence: https://ethereum.org/developers/docs/apis/json-rpc/ and https://ethereum.github.io/execution-apis/api/methods/eth_getTransactionReceipt/. Registry evidence: https://devnode.telegraphprotocol.com/engine/v1/intents.
-- [ ] Commit, push, and record exact-commit GitHub Actions status after final review. Do not proceed to another intent batch until that CI run completes successfully.
+- [x] Commit `d6ef4a42ae163c7017f8548b4e9440b4b8e1a273` was pushed to `origin/verity/score-improvements-batch-1`; remote SHA matched. GitHub Actions run `39258669977` passed typecheck, build, all tests, Telegraph integration-tool verification, and miner-template preflight: https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39258669977.
 
 ## Batch 4 — TWITTER_SEARCH implementation (2026-10-19)
 
