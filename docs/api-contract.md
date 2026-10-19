@@ -15,11 +15,11 @@ Request:
 }
 ```
 
-The local `intent` value must be one of the 33 entries in `src/intents/catalogue.ts`. The registration manifests intentionally advertise only the original 29 until each new capability passes the manifest and Integrate gates; the local catalogue is not a statement of live miner registration.
+The local `intent` value must be one of the 34 entries in `src/intents/catalogue.ts`. The registration manifests intentionally advertise only the original 29 until each new capability passes the manifest and Integrate gates; the local catalogue is not a statement of live miner registration.
 
 The `input` object is Intent-specific. Verity intentionally keeps it opaque at the shared HTTP layer; the Intent handler validates its own required fields.
 
-For the local `NEWS_SEARCH`, `WEB_SEARCH`, and `TWITTER_SEARCH` handlers, the project-defined input is `{ "query": "..." }`; each limits queries to 500 characters. `SENTIMENT_ANALYSIS` accepts `{ "text": "..." }` with at most 4,000 characters. These are Verity handler contracts, not Telegraph-published per-intent schemas. See [the endpoint preparation guide](integrate-endpoint-guide.md).
+For the local `NEWS_SEARCH`, `WEB_SEARCH`, and `TWITTER_SEARCH` handlers, the project-defined input is `{ "query": "..." }`; each limits queries to 500 characters. `SENTIMENT_ANALYSIS` accepts `{ "text": "..." }` with at most 4,000 characters. `ONCHAIN_METRIC_VERIFY` locally supports an Ethereum-mainnet transaction gas-used receipt lookup at an explicit block; see [its intent guide](intents/onchain-metric-verify.md). These are Verity handler contracts, not Telegraph-published per-intent schemas. See [the endpoint preparation guide](integrate-endpoint-guide.md).
 
 Every successful Intent response uses:
 

@@ -119,6 +119,22 @@ test("search intents are reachable through the real POST /v1/intent route", asyn
         message: "A Hugging Face Inference Providers token is required to classify text in this deployment."
       }]
     });
+
+    const onchainResponse = await fetch(`http://127.0.0.1:${port}/v1/intent`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ intent: "ONCHAIN_METRIC_VERIFY", input: {
+        metric: "transaction_gas_used",
+        transaction_hash: `0x${"a".repeat(64)}`,
+        block_number: "21000000"
+      } })
+    });
+    assert.equal(onchainResponse.status, 200);
+    const onchainResult = await onchainResponse.json();
+    assert.equal(onchainResult.intent, "ONCHAIN_METRIC_VERIFY");
+    assert.equal(onchainResult.verdict, "insufficient_evidence");
+    assert.equal(onchainResult.answer.gas_used, null);
+    assert.equal(onchainResult.uncertainty[0].code, "ethereum_rpc_unconfigured");
   } finally {
     if (child.exitCode === null) {
       const exitPromise = new Promise(resolve => child.once("exit", resolve));

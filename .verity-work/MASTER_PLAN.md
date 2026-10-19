@@ -44,7 +44,7 @@ The published catalogue includes the names below, and they are not in this repos
 - `TWITTER_SEARCH` — search public social posts.
 - `SENTIMENT_ANALYSIS` — classify sentiment and tone.
 - `DOCUMENT_AUTHENTICITY` — assess document authenticity.
-- `ONCHAIN_METRIC_VERIFY` — verify on-chain metrics.
+- `ONCHAIN_METRIC_VERIFY` — verify on-chain metrics (local scope narrowed to Ethereum mainnet transaction gas used at an explicit block).
 - `CONTRACT_OBLIGATION_AUDIT` — extract and assess contract obligations.
 - `SLA_COMPLIANCE` — check service-level compliance.
 - `SHIPMENT_DELAY_RISK` — assess shipment-delay risk.
@@ -122,14 +122,14 @@ After Season 2 starts and comparable measurements exist, compare actual intent s
 - [x] Investigated official Intent, YAML, validator, and OpenAPI documentation; no authoritative per-intent `NEWS_SEARCH` JSON schema is published. The local query/result fields are explicitly documented as Verity contracts, with the builder behavior left for dashboard validation.
 - [x] Confirmed the documented validation API URL currently answers POST with HTTP 404 HTML and no redirect. The docs describe it as unauthenticated, so do not add auth or change the URL without Telegraph confirmation.
 - [ ] Verify the unchanged YAML with Telegraph Integrate's validation UI or obtain a working official validator endpoint before manifest integration.
-- [ ] Recheck canonical status, current miner counts, provider feasibility, and contract requirements before selecting another implementation batch.
+- [x] Rechecked canonical status and provider feasibility for DOCUMENT_AUTHENTICITY and ONCHAIN_METRIC_VERIFY; see the current execution checklist. DOCUMENT_AUTHENTICITY is deferred; ONCHAIN_METRIC_VERIFY has a narrow local implementation.
 - [ ] Prepare selected Phase 1B proposals and obtain canonical confirmation before implementation/manifest changes.
 - [ ] Complete manifest integration, preflight and regression checks.
 - [ ] Obtain separate explicit approval before live Integrate dashboard registration/update.
 
 ## Current execution checklist (registry recheck: 2026-10-19)
 
-The public live registry at <https://devnode.telegraphprotocol.com/engine/v1/intents> returned 134 entries on this check. The published Intent docs page still states an older count; use the live endpoint for canonical names and miner counts.
+The public live registry at <https://devnode.telegraphprotocol.com/engine/v1/intents> returned 134 entries on this check (rechecked for ONCHAIN_METRIC_VERIFY on 2026-10-19). The published Intent docs page still states an older count; use the live endpoint for canonical names and miner counts.
 
 | Master-plan candidate | Live canonical | Current miners | Work status |
 | --- | --- | ---: | --- |
@@ -137,8 +137,8 @@ The public live registry at <https://devnode.telegraphprotocol.com/engine/v1/int
 | `WEB_SEARCH` | Yes | 25 | Implemented and tested locally using Jina Search's attributable result API. It uses `JINA_API_KEY`, abstains without it, and remains out of manifests pending credential readiness and Integrate request-builder validation. |
 | `TWITTER_SEARCH` | Yes | 10 | Implemented locally using X recent search; the API's seven-day window, bearer requirement, minimum 10-result request, response structure, and current per-post pricing are documented. Not in manifests. |
 | `SENTIMENT_ANALYSIS` | Yes | 19 | Implemented locally with an optional Hugging Face CardiffNLP model. English three-way sentiment polarity only; provider scores are uncalibrated and emotion categories are not claimed. Not in manifests. |
-| `DOCUMENT_AUTHENTICITY` | Yes | 12 | Purpose confirmed; verified document-signature/timestamp data source and implementation feasibility not yet assessed. |
-| `ONCHAIN_METRIC_VERIFY` | Yes | 34 | Purpose confirmed; chain/RPC coverage, block anchoring, and implementation feasibility not yet assessed. |
+| `DOCUMENT_AUTHENTICITY` | Yes | 12 | Deferred: no supported document signature parser, trust-anchor/revocation path, or independent timestamp/notarization source is present; caller-provided hashes/keys are insufficient to substantiate authenticity. |
+| `ONCHAIN_METRIC_VERIFY` | Yes | 34 | Implemented locally for Ethereum mainnet receipt `gasUsed` at explicit block; single configured RPC source, not independently cross-checked. Kept out of manifests pending Integrate builder and saved-YAML validation. |
 | `CONTRACT_OBLIGATION_AUDIT` | Yes | 13 | Purpose confirmed; overlap with text/document handlers and contract/evaluation scope not yet assessed. |
 | `SLA_COMPLIANCE` | Yes | 11 | Purpose confirmed; required measurement inputs and deterministic calculation contract not yet assessed. |
 | `SHIPMENT_DELAY_RISK` | Yes | 10 | Purpose confirmed; reliable shipment/weather/port data and forecast evaluation not yet assessed. |
@@ -150,9 +150,10 @@ Current order of work:
 2. [x] Implement and test WEB_SEARCH using the verified Jina Search API; keep it local pending credentials and Integrate request-builder validation.
 3. [x] Reverify TWITTER_SEARCH canonical status and implement/test a bounded optional X recent-search provider. Keep it local pending Integrate request-builder validation.
 4. [x] Verify and implement SENTIMENT_ANALYSIS using a real, optional model provider; keep it local pending Integrate schema/request-builder validation.
-5. Assess DOCUMENT_AUTHENTICITY, then continue ONCHAIN_METRIC_VERIFY, CONTRACT_OBLIGATION_AUDIT, SLA_COMPLIANCE, SHIPMENT_DELAY_RISK, and FRAUD_DETECTION in the master-plan order. For each, verify canonical status/count, overlap, dependable evidence/input, evaluation fit, and implementation risk before choosing whether to build or defer.
-6. After Phase 1A feasibility reviews, inspect the complete canonical registry for duplicates or near-equivalents to the six Phase 1B proposals; prepare selected proposal/evaluation drafts without representing them as canonical.
-7. Keep manifests unchanged until each candidate's route, request-builder mapping, response behavior, canonical name, and applicable validation gates are evidenced. Revisit remote validator recovery separately; its known 404 does not block local work but prevents claiming remote YAML validation passed.
-8. Finish the implementation/configuration guide and preflight review. Live Integrate registration remains a separate manual action requiring the user's explicit approval.
+5. [x] Assess DOCUMENT_AUTHENTICITY and implement the feasible narrow ONCHAIN_METRIC_VERIFY scope. DOCUMENT_AUTHENTICITY is deferred pending a supported signature format and independent trusted chain/timestamp verification source. ONCHAIN_METRIC_VERIFY uses a configured read-only Ethereum mainnet RPC and remains local pending Integrate request-builder and saved-YAML validation.
+6. Continue with CONTRACT_OBLIGATION_AUDIT, SLA_COMPLIANCE, SHIPMENT_DELAY_RISK, and FRAUD_DETECTION in the master-plan order. For each, verify canonical status/count, overlap, dependable evidence/input, evaluation fit, and implementation risk before choosing whether to build or defer.
+7. After Phase 1A feasibility reviews, inspect the complete canonical registry for duplicates or near-equivalents to the six Phase 1B proposals; prepare selected proposal/evaluation drafts without representing them as canonical.
+8. Keep manifests unchanged until each candidate's route, request-builder mapping, response behavior, canonical name, and applicable validation gates are evidenced. Revisit remote validator recovery separately; its known 404 does not block local work but prevents claiming remote YAML validation passed.
+9. Finish the implementation/configuration guide and preflight review. Live Integrate registration remains a separate manual action requiring the user's explicit approval.
 
 The live registry check confirms canonical names and counts, not that any intent is underserved or suitable for this miner. The Integrate screen fields described by the user are used as the dashboard field inventory; no screenshot file was present in the checkout. Telegraph's public docs explain generic params but not nested per-property schemas, so the exact `input.query` builder behavior remains a dashboard validation question.

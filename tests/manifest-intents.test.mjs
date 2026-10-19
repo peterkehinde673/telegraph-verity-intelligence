@@ -21,7 +21,7 @@ function manifestIntentLists(text) {
 }
 
 test("new search intents stay local until manifest gates pass; original 29 stay consistent", async () => {
-  const unadvertised = ["NEWS_SEARCH", "WEB_SEARCH", "TWITTER_SEARCH", "SENTIMENT_ANALYSIS"];
+  const unadvertised = ["NEWS_SEARCH", "WEB_SEARCH", "TWITTER_SEARCH", "SENTIMENT_ANALYSIS", "ONCHAIN_METRIC_VERIFY"];
   const expected = VERITY_INTENTS.filter(intent => !unadvertised.includes(intent));
   assert.equal(expected.length, 29);
 

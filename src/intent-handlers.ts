@@ -8,6 +8,7 @@ import { newsSearch, type NewsSearchOptions } from "./intents/news-search.js";
 import { webSearch, type WebSearchOptions } from "./intents/web-search.js";
 import { twitterSearch, type TwitterSearchOptions } from "./intents/twitter-search.js";
 import { sentimentAnalysis, type SentimentAnalysisOptions } from "./intents/sentiment-analysis.js";
+import { onchainMetricVerify, type OnchainMetricVerifyOptions } from "./intents/onchain-metric-verify.js";
 import { academicSearch, type AcademicSearchOptions } from "./intents/academic-search.js";
 import { contentExtraction, type ContentExtractionOptions } from "./intents/content-extraction.js";
 import { contentVerification, type ContentVerificationOptions } from "./intents/content-verification.js";
@@ -47,6 +48,7 @@ export interface IntentProviderDependencies {
   WEB_SEARCH?: WebSearchOptions;
   TWITTER_SEARCH?: TwitterSearchOptions;
   SENTIMENT_ANALYSIS?: SentimentAnalysisOptions;
+  ONCHAIN_METRIC_VERIFY?: OnchainMetricVerifyOptions;
   ACADEMIC_SEARCH?: AcademicSearchOptions;
   CONTENT_EXTRACTION?: ContentExtractionOptions;
   CONTENT_VERIFICATION?: ContentVerificationOptions;
@@ -99,6 +101,11 @@ function defaultSentimentAnalysisOptions(): SentimentAnalysisOptions {
   return token ? { token } : {};
 }
 
+function defaultEthereumRpcOptions(): OnchainMetricVerifyOptions {
+  const rpcUrl = process.env.ETHEREUM_RPC_URL?.trim();
+  return rpcUrl ? { rpcUrl } : {};
+}
+
 export function createIntentHandlers(
   providers: IntentProviderDependencies = {}
 ): Partial<Record<VerityIntent, IntentHandler>> {
@@ -127,6 +134,7 @@ export function createIntentHandlers(
       stringInput(input, "text"),
       providers.SENTIMENT_ANALYSIS ?? defaultSentimentAnalysisOptions()
     )),
+    ONCHAIN_METRIC_VERIFY: handler((input) => onchainMetricVerify(input, providers.ONCHAIN_METRIC_VERIFY ?? defaultEthereumRpcOptions())),
     ACADEMIC_SEARCH: handler((input) => academicSearch(stringInput(input, "query"), providers.ACADEMIC_SEARCH ?? { searchImpl: crossrefSearch })),
     CONTENT_EXTRACTION: handler((input) => contentExtraction(stringInput(input, "source"), providers.CONTENT_EXTRACTION ?? { extractImpl: (source) => readUrl(source, process.env.JINA_API_KEY) })),
     CONTENT_VERIFICATION: handler((input) => contentVerification(stringInput(input, "content"), providers.CONTENT_VERIFICATION)),

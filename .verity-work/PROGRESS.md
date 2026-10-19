@@ -103,7 +103,9 @@ Active plan: `.verity-work/MASTER_PLAN.md`. Season 2 has not started. The ten ta
 
 - **Completed and verified:** NEWS_SEARCH route preparation; commit `5ea6d78967e45efa1869a96a6f42709799fda49f` and CI run `39240080251` passed.
 - **Completed and CI-verified:** WEB_SEARCH with Jina Search, based on current canonical registry and official provider schema. Credential provisioning and Integrate request-building remain later deployment/manifest gates.
-- **Canonical but feasibility not established:** TWITTER_SEARCH, SENTIMENT_ANALYSIS, DOCUMENT_AUTHENTICITY, ONCHAIN_METRIC_VERIFY, CONTRACT_OBLIGATION_AUDIT, SLA_COMPLIANCE, SHIPMENT_DELAY_RISK, FRAUD_DETECTION.
+- **Canonical and locally implemented:** NEWS_SEARCH, WEB_SEARCH, TWITTER_SEARCH, SENTIMENT_ANALYSIS, ONCHAIN_METRIC_VERIFY. All remain absent from both miner manifests pending the specific integration gates recorded below.
+- **Canonical but deferred:** DOCUMENT_AUTHENTICITY until a supported signed-document format and independently trusted certificate/timestamp/notarization verification source are selected.
+- **Awaiting feasibility review:** CONTRACT_OBLIGATION_AUDIT, SLA_COMPLIANCE, SHIPMENT_DELAY_RISK, FRAUD_DETECTION.
 - **Still blocked for manifest integration:** NEWS_SEARCH and WEB_SEARCH until Integrate can build the nested project request and current miner YAML validation succeeds. The provider key must also be available externally before WEB_SEARCH is useful in a deployment.
 - **External:** The documented Integrate validator remains HTTP 404 HTML; local implementation proceeds, but remote YAML validation is not passed.
 
@@ -130,6 +132,31 @@ Active plan: `.verity-work/MASTER_PLAN.md`. Season 2 has not started. The ten ta
 - Top-level body parameters are the `intent` string and `input` object. Verity requires `input.query` to be non-empty for NEWS_SEARCH, but official YAML docs only describe an object parameter and do not confirm whether Integrate can build that nested field.
 - The sample response in `docs/integrate-endpoint-guide.md` is a code-backed no-results abstention. No article/evidence example is presented as a real provider result.
 - No screenshot image was found in the checkout; dashboard field names in this guide follow the field inventory supplied in the user request.
+
+## Batch 6 — ONCHAIN_METRIC_VERIFY and DOCUMENT_AUTHENTICITY feasibility (2026-10-19)
+
+- [x] Verified the live Telegraph registry entry again at https://devnode.telegraphprotocol.com/engine/v1/intents: `ONCHAIN_METRIC_VERIFY` is canonical, currently lists 34 miners, and describes a specific on-chain value at a stated block height or latest, including receipt/gas metrics. `DOCUMENT_AUTHENTICITY` remains canonical with 12 miners and describes document signature, certificate, notarization, timestamp, or tamper-evident-seal checks. Counts are not an underserved claim.
+- [x] Reviewed the existing source tree for document-signature parsing and trusted certificate/timestamp verification. No supported signed-document parser, trust-anchor/revocation process, or independent notarization/timestamp source exists. A checksum or verification key supplied by the same caller cannot independently establish signer authenticity. Deferred this candidate until a supported format and trusted validation source are chosen; no placeholder handler was added.
+- [x] Confirmed official Ethereum JSON-RPC documentation supports `eth_chainId` and the execution API defines receipt `transactionHash`, `blockNumber`, `blockHash`, and `gasUsed`: https://ethereum.org/developers/docs/apis/json-rpc/ and https://ethereum.github.io/execution-apis/api/methods/eth_getTransactionReceipt/. No Telegraph-specific request/response schema is published; the following is explicitly Verity's limited project contract.
+- [x] Added a local `ONCHAIN_METRIC_VERIFY` handler scoped only to Ethereum mainnet transaction `gasUsed` at an explicit decimal block number. It validates hash/block/metric before provider access; uses only an operator-configured HTTPS `ETHEREUM_RPC_URL`, checks chain ID, transaction/block anchors, response size and timeout, rejects redirects, and sanitizes errors. Missing receipts, wrong block, invalid/unconfigured provider, or malformed response abstain. It reports single-node trust limitations and optional expected-value mismatches. No live RPC endpoint, credential, or transaction was used.
+- [x] Added a project API/Integrate guide with endpoint path/method, request and representative response. This shares the existing `/v1/intent` route, but Integrate nested parameter construction is still unverified. The intent remains out of both manifests; the original 29 entries are protected by the manifest regression test.
+- [x] Added provider/handler, input, no-result, wrong-chain, RPC error, malformed JSON/receipt, unsafe endpoint, expected mismatch, provenance, sanitized error, dispatch, and real HTTP route tests.
+- [x] `npm run typecheck` and `npm run build` passed. Focused catalogue/dispatch/manifest/route/provider/handler tests passed (12); full `npm test` passed (325 tests).
+- [x] `npm run preflight:registration` passed: the live registry contains all 34 local catalogue names and the miner template preflight passed. Both manifests still contain exactly the original 29 intents.
+- [x] `npm run smoke:render` passed against the existing production service: healthy, 29 advertised intents, 12 safe validation cases, three provider-backed checks, and response contracts verified. No production settings were changed.
+- [ ] `npm run validate:miner` remains blocked by HTTP 404 `text/html`; the validator correctly produced no result. No authentication or alternate URL was guessed.
+- [x] `git diff --check` passed. Review confirmed no manifest changes, provider credentials, private evaluation data, scorer/calibration edits, deployment changes, or transactions.
+- [ ] Commit and push only if required local checks pass; verify exact-commit GitHub Actions before proceeding.
+- [ ] `DOCUMENT_AUTHENTICITY` unblocking evidence: select a supported signed format (for example a concrete PDF signature profile), trusted signer root/revocation behavior, and an independent timestamp/notarization validation source, then add vectors covering valid, tampered, expired/revoked, unknown-root, and missing-evidence cases.
+- [ ] Manifest integration remains gated on an Integrate test confirming nested JSON request construction and successful validation of the saved YAML. Telegraph's documented validator remains a known HTTP 404 HTML blocker; do not count it as a pass or guess a replacement endpoint.
+
+### ONCHAIN_METRIC_VERIFY project endpoint contract
+
+- Telegraph path and API endpoint path: `/v1/intent`; method `POST`; JSON content type; no multipart or parameter mapping; current server has no inbound authentication. Base URL override stays blank. Runtime JSON-RPC URL is server-side configuration only and must not be exposed in Integrate parameters.
+- Project body: `{ "intent": "ONCHAIN_METRIC_VERIFY", "input": { "metric": "transaction_gas_used", "transaction_hash": "0x…64 hex…", "block_number": "decimal", "expected_gas_used": "optional decimal" } }`.
+- Project response: shared Verity envelope. It reports the receipt gas value, block and transaction identifiers, configured-node provenance and uncertainty. This is not an authoritative Telegraph response contract. The configured node is not independently cross-checked, and the implementation does not claim light-client proof or finality.
+- Ethereum protocol evidence: https://ethereum.org/developers/docs/apis/json-rpc/ and https://ethereum.github.io/execution-apis/api/methods/eth_getTransactionReceipt/. Registry evidence: https://devnode.telegraphprotocol.com/engine/v1/intents.
+- [ ] Commit, push, and record exact-commit GitHub Actions status after final review. Do not proceed to another intent batch until that CI run completes successfully.
 
 ## Batch 4 — TWITTER_SEARCH implementation (2026-10-19)
 
