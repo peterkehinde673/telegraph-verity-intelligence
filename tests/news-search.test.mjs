@@ -45,6 +45,36 @@ test("news search abstains when provider returns no valid results", async () => 
   assert.equal(result.answer.results.length, 0);
 });
 
+test("news search abstains safely when the provider response is malformed", async () => {
+  const result = await newsSearch("some topic", {
+    searchImpl: async () => null
+  });
+
+  assert.equal(result.verdict, "insufficient_evidence");
+  assert.equal(result.confidence, 0);
+  assert.deepEqual(result.answer.results, []);
+  assert.equal(result.uncertainty[0]?.code, "news_search_failed");
+});
+
+test("news search drops malformed records while preserving valid source provenance", async () => {
+  const result = await newsSearch("some topic", {
+    searchImpl: async () => [null, {
+      title: "A report",
+      url: "https://news.example/report",
+      source_id: "publisher:report",
+      source_type: "publisher-feed",
+      published_at: "2026-10-10T12:00:00.000Z"
+    }]
+  });
+
+  assert.equal(result.verdict, "confirmed");
+  assert.equal(result.answer.results.length, 1);
+  assert.equal(result.evidence[0]?.url, "https://news.example/report");
+  assert.equal(result.evidence[0]?.source_type, "publisher-feed");
+  assert.equal(result.evidence[0]?.published_at, "2026-10-10T12:00:00.000Z");
+  assert.ok(result.evidence[0]?.retrieved_at);
+});
+
 test("news search bounds the result limit", async () => {
   const result = await newsSearch("topic", {
     max_results: 1,

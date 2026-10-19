@@ -46,9 +46,14 @@ Active plan: `.verity-work/MASTER_PLAN.md`. Season 2 has not started. The ten ta
 
 - [x] Confirmed `NEWS_SEARCH`, `WEB_SEARCH`, `TWITTER_SEARCH`, `SENTIMENT_ANALYSIS`, `DOCUMENT_AUTHENTICITY`, `ONCHAIN_METRIC_VERIFY`, `CONTRACT_OBLIGATION_AUDIT`, `SLA_COMPLIANCE`, `SHIPMENT_DELAY_RISK`, and `FRAUD_DETECTION` appear in the published Telegraph Season II intent catalogue.
 - [x] Corrected the master-plan candidate list to avoid treating unverified names as canonical candidates.
-- [ ] Retrieve the live canonical registry and per-intent miner coverage. The public catalogue lists mission usage, not miner competition; the live registry endpoint was inaccessible during this check.
-- [x] Selected `NEWS_SEARCH` for an isolated implementation prototype because it is documented as a canonical Telegraph intent and the existing public news RSS provider can supply source-backed results. Live miner coverage is still unverified; this is not a claim of zero competition.
-- [x] Added an isolated `NEWS_SEARCH` handler, sanitized provider failures, bounded/validated result selection, and tests for evidence, empty input, invalid results, result limits and abstention.
+- [x] Retrieved the live registry from `https://devnode.telegraphprotocol.com/engine/v1/intents` on 2026-10-19: 134 canonical intents; `NEWS_SEARCH` is canonical and currently lists 18 miners. This is not an underserved-intent claim.
+- [x] Confirmed the official registry description distinguishes article/coverage search from headline lists. No fixed per-intent JSON request/response schema is published in the registry docs; the exact Telegraph integration contract remains a blocker to manifest advertisement.
+- [x] Selected `NEWS_SEARCH` for isolated local implementation because its current official description is clear and Google News RSS provides source-backed article results.
+- [x] Added an isolated `NEWS_SEARCH` handler, sanitized provider failures, bounded/validated result selection, and tests for evidence, empty input, malformed responses, invalid results, result limits and abstention.
 - [x] Wired the handler and added the intent to the local TypeScript catalogue; updated catalogue/router tests for 30 local intents.
-- [ ] CI for the implementation commit is running; do not proceed to YAML integration until green.
-- [ ] Verify live canonical registry and miner count, then update `miner.yaml` and `miner.yaml.template` consistently only after CI passes. Until then both registration manifests remain unchanged.
+- [x] Latest CI run for implementation commit `e267ac015b2d6b629e566e9f73d1bcc24901b1ab` passed: https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39197144619.
+- [ ] Confirm Telegraph's request/response contract before adding `NEWS_SEARCH` to `miner.yaml` and `miner.yaml.template`. Both manifests remain unchanged; the original 29 manifest intents are still the advertised set.
+- [x] Added an explicit manifest regression test that compares all three intent lists in both YAML files to the original 29 and excludes `NEWS_SEARCH` until contract approval.
+- [x] Local verification: `npm run typecheck`, `npm run build`, `npm test` (281 passing), and `npm run preflight:registration` passed. This preflight verified all 30 local catalogue names exist in the live canonical set and the unchanged template is valid.
+- [ ] `npm run validate:miner` could not validate YAML: the configured Telegraph Integrate validation URL returned the Developer Console HTML page rather than JSON. No registration or production change was attempted; obtain a working validator endpoint before relying on remote YAML validation.
+- [ ] Run CI for this follow-up commit after push; the existing green run above is for the prior implementation commit, not these follow-up changes.

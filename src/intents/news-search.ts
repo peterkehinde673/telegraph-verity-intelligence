@@ -64,6 +64,7 @@ export async function newsSearch(
     const configuredLimit = options.max_results ?? 10;
     const limit = Number.isFinite(configuredLimit) ? Math.min(50, Math.max(1, Math.floor(configuredLimit))) : 10;
     const selected = raw.filter((item) =>
+      item !== null && typeof item === "object" &&
       typeof item.title === "string" && item.title.trim() !== "" &&
       typeof item.url === "string" && /^https?:\/\//i.test(item.url) &&
       typeof item.source_id === "string" && item.source_id.trim() !== ""

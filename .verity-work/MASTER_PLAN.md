@@ -116,8 +116,10 @@ After Season 2 starts and comparable measurements exist, compare actual intent s
 
 - [x] Target-ten review completed and documented.
 - [x] Previous Batch 7 removed; expansion is now explicitly planned as a separate, gated workstream.
-- [ ] Verify current canonical registry and miner coverage for Phase 1A candidates.
-- [ ] Select and implement Batch A; no expansion intent has been added to `miner.yaml` yet.
+- [x] Verified the live registry for `NEWS_SEARCH` on 2026-10-19: canonical, 18 miners. The registry docs give the intent meaning but no fixed per-intent JSON request/response schema.
+- [x] Implemented and tested `NEWS_SEARCH` as a local handler using Google News RSS; the registration manifests still contain the original 29 intents.
+- [ ] Confirm Telegraph's request/response contract for `NEWS_SEARCH` and a working Integrate YAML validator before adding it to either manifest. Do not claim Batch A manifest integration complete until then.
+- [ ] Recheck canonical status, current miner counts, provider feasibility, and contract requirements before selecting another implementation batch.
 - [ ] Prepare selected Phase 1B proposals and obtain canonical confirmation before implementation/manifest changes.
 - [ ] Complete manifest integration, preflight and regression checks.
 - [ ] Obtain separate explicit approval before live Integrate dashboard registration/update.
