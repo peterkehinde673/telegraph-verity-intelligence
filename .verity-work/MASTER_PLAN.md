@@ -155,7 +155,7 @@ Current order of work:
 7. [x] Assess and implement a narrow SLA_COMPLIANCE uptime calculation using caller-supplied measurements; keep local and explicitly state data cannot be independently validated.
 8. [x] Assess SHIPMENT_DELAY_RISK: defer until carrier/customs/port/weather feeds and arrival-ground-truth data support a calibrated forecast.
 9. [x] Assess FRAUD_DETECTION: defer until a specific fraud domain, reliable fraud-labeled evidence, and validated/calibrated evaluation set are selected.
-10. [ ] Inspect all six Phase 1B proposal concepts against the complete live canonical registry for exact and near-equivalent names; prepare only useful, non-duplicate proposals with evaluation/safety drafts, without representing them as canonical or submitting them.
+10. [x] Inspected all six Phase 1B concepts against the 134-entry live canonical registry; none is an exact canonical name. Recorded nearest equivalents, duplicate risks, and three differentiated internal proposal/evaluation/safety drafts in `.verity-work/PHASE1B_PROPOSALS.md`. Nothing was submitted or marked canonical.
 11. Keep manifests unchanged until each candidate's route, request-builder mapping, response behavior, canonical name, and applicable validation gates are evidenced. Revisit remote validator recovery separately; its known 404 does not block local work but prevents claiming remote YAML validation passed.
 12. Finish the implementation/configuration guide and preflight review. Live Integrate registration remains a separate manual action requiring the user's explicit approval.
 
