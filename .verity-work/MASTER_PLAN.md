@@ -67,11 +67,4 @@ The Explorer snapshot is an epoch-specific baseline only. Subscript-style digits
 - [x] Reviewed manifest and integration scripts: current miner.yaml has ID 5530 and 29 intents; template deliberately retains unused-ID placeholder. Live Integrate/dashboard update remains an external/manual step.
 - [x] Re-registration checklist and rollback notes recorded in PROGRESS.md; live registration not executed.
 
-## Batch 7 — Season 2 measurement and future expansion
-- [ ] Wait until Season 2 starts before comparing season scores.
-- [ ] After explicit approval, register/re-register and integrate using official Telegraph steps.
-- [ ] Verify miner identity, supported intents, request health, and first scored epoch.
-- [ ] Compare target-ten results against the epoch 421 baseline and report actual results without guaranteeing rank.
-- [ ] Only after the target ten are completed or explicitly blocked, consider adding new intents.
-
-**Freeze rule:** This is the active plan. Update task status as verified in `.verity-work/PROGRESS.md`. Revise scope only if the user explicitly changes the objective.
+**Freeze rule:** This plan records the completed target-ten review. Any future intent expansion is a separate, explicit scope decision: first verify the current canonical intent registry and miner coverage, then assess implementation feasibility and tests. Do not add non-canonical intent names to miner.yaml. Update task status only when verified in `.verity-work/PROGRESS.md`.
