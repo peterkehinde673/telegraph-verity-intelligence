@@ -22,6 +22,8 @@ This handler searches the Google News RSS search endpoint and returns article re
 
 The local handler accepts a non-empty `query` string. It returns that query, a bounded list of result records, provenance evidence, and retrieval time in the shared Verity response envelope. The Telegraph registry defines the intent's meaning but does not publish a fixed `NEWS_SEARCH` JSON request/response schema. For that reason, this intent is implemented locally but is not advertised in `miner.yaml` or `miner.yaml.template` pending confirmation of the integration contract.
 
+The actual Verity route is `POST /v1/intent` with `{ "intent": "NEWS_SEARCH", "input": { "query": "..." } }`. The route-level test exercises this request through the running HTTP server. See [the proposed Integrate endpoint guide](../integrate-endpoint-guide.md) for the project-defined request/response shape and the remaining request-builder check. This route is a local Verity API contract, not a Telegraph-guaranteed NEWS_SEARCH schema.
+
 ## Result states and limits
 
 - Non-empty results with valid HTTP(S) URLs, titles, and source IDs -> `confirmed`

@@ -68,3 +68,45 @@ Active plan: `.verity-work/MASTER_PLAN.md`. Season 2 has not started. The ten ta
 - [x] Checks: `npm run typecheck`, `npm run build`, `npm test` (285 passing), `npm run preflight:registration`, and `git diff --check` passed. The no-credential `npm run validate:miner` invocation exits 1 with a sanitized HTTP 404 / HTML diagnostic; validation did not occur.
 - [ ] Validator route remains unavailable. Safe manual next step: test the unchanged YAML in Telegraph Integrate's documented validation UI without registering; if it fails too, request a restored/current API endpoint from Telegraph. Do not change the validator URL or add authentication based on a guess.
 - [x] Investigation commit `e78dfd213a5c81fb5523fdbda8634837ca9f37e0` was pushed; GitHub Actions CI passed (typecheck, build, tests, Telegraph canonical check, template preflight): https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39227519646. Keep `NEWS_SEARCH` unadvertised until Telegraph confirms its per-intent contract.
+
+## Batch 2 — NEWS_SEARCH endpoint preparation (2026-10-19)
+
+### State and ordered execution checklist
+
+- [x] Confirmed the checkout is `/root/telegraph-verity-intelligence`, branch `verity/score-improvements-batch-1`, clean working tree, `origin` is the expected GitHub repository, and local/remote branch both point to `2f9d306f7325eb16924eb5baaa635c7c4bc041b6`.
+- [x] Confirmed GitHub Actions run `39227700948` succeeded for the current branch state: https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39227700948.
+- [x] Requeried the official live registry: 134 entries. All ten names in the master-plan candidate list are exact canonical entries. Current miner counts: NEWS_SEARCH 18, WEB_SEARCH 25, TWITTER_SEARCH 10, SENTIMENT_ANALYSIS 19, DOCUMENT_AUTHENTICITY 12, ONCHAIN_METRIC_VERIFY 34, CONTRACT_OBLIGATION_AUDIT 13, SLA_COMPLIANCE 11, SHIPMENT_DELAY_RISK 10, FRAUD_DETECTION 29. These are counts only; no candidate is described as underserved.
+- [x] Inspected the complete NEWS_SEARCH path from `src/server.ts` through `src/api.ts`, the handler registry, provider adapter, response contract, and tests. The implemented route is `POST /v1/intent`; the local body is `{ intent: "NEWS_SEARCH", input: { query: string } }` and the local result is the shared Verity envelope with article records and provenance evidence.
+- [x] Rechecked Telegraph's Intent, YAML, and validation docs. The registry confirms name/meaning/count but does not publish a NEWS_SEARCH schema. YAML docs support top-level body `intent` and object `input` parameters but do not document nested-property validation. The Integrate request builder's ability to produce `input.query` remains an explicit dashboard validation question.
+- [x] Added `docs/integrate-endpoint-guide.md` with proposed route, method, request shape, response example, authentication, content type, endpoint-base behavior, multipart and mapping fields. It distinguishes project API behavior from Telegraph guarantees and does not change either manifest.
+- [x] Added a route-level test that starts the actual built server and calls `POST /v1/intent` for NEWS_SEARCH, exercising deterministic empty-query rejection without network access. Existing NEWS_SEARCH provider and evidence tests remain in place.
+- [x] Corrected stale local API documentation that described a 20-intent catalogue and linked the new endpoint guide. The advertised miner manifests remain the original 29.
+- [x] `npm run typecheck`, `npm run build`, `npm test` (286 passing), `node --test tests/news-search-endpoint.test.mjs` (1 passing), `npm run verify:telegraph` (all 30 local names canonical), `npm run preflight:miner`, `npm run preflight:registration`, `npm run smoke:render` (production service healthy with the existing 29 intents and three provider-backed checks), and `git diff --check` passed.
+- [ ] `npm run validate:miner` did not validate: the documented endpoint returned HTTP 404 HTML (`text/html`), and the safe parser produced no validation result. No auth, endpoint substitution, or HTML bypass was used.
+- [x] Reviewed the complete tracked diff and both new files; the manifests and production settings are unchanged, and no credentials or private evaluation data were added.
+- [ ] Commit and push only if the checks pass, then confirm remote SHA and Actions result.
+
+### Work classification
+
+- **Completed and verified:** NEWS_SEARCH live canonical name and count; local handler/provider behavior; shared HTTP route and response envelope; original 29 manifest entries protected by regression coverage.
+- **Implementation-ready in this batch:** Document the actual NEWS_SEARCH route contract and test it end to end. This work does not assert Telegraph publishes that schema.
+- **Awaiting more feasibility research:** WEB_SEARCH, TWITTER_SEARCH, SENTIMENT_ANALYSIS, DOCUMENT_AUTHENTICITY, ONCHAIN_METRIC_VERIFY, CONTRACT_OBLIGATION_AUDIT, SLA_COMPLIANCE, SHIPMENT_DELAY_RISK, FRAUD_DETECTION. Their canonical names and current counts are confirmed; overlap, attributable sources/inputs, safety, evaluation fit and useful local scopes are not yet established.
+- **Awaiting Integrate request-builder / registration evidence:** NEWS_SEARCH. Keep it out of the manifest until the nested request shape is demonstrably accepted and the saved YAML validates.
+- **External service blocker:** The documented Integrate validator returned HTTP 404 HTML in the previous investigation. No authentication, alternate production URL, or HTML-success bypass is justified; this does not block local implementation/tests.
+- **Deferred proposals:** The six Phase 1B concepts remain proposals. Registry duplicate/near-equivalent review and proposal drafts are pending; none may be advertised without canonical acceptance.
+
+### Proposed Integrate fields and known limits
+
+- Incoming Telegraph path and upstream API path: `/v1/intent`; method: `POST`; content type: `application/json`.
+- Base URL override: blank, using the existing top-level manifest base URL. Multipart fields and parameter mappings: none. Authentication: none, per server and current manifest.
+- Top-level body parameters are the `intent` string and `input` object. Verity requires `input.query` to be non-empty for NEWS_SEARCH, but official YAML docs only describe an object parameter and do not confirm whether Integrate can build that nested field.
+- The sample response in `docs/integrate-endpoint-guide.md` is a code-backed no-results abstention. No article/evidence example is presented as a real provider result.
+- No screenshot image was found in the checkout; dashboard field names in this guide follow the field inventory supplied in the user request.
+
+### Relevant sources
+
+- Live registry: https://devnode.telegraphprotocol.com/engine/v1/intents
+- Intent docs: https://docs.telegraphprotocol.com/docs/using/intents
+- YAML guide (endpoint fields and params): https://docs.telegraphprotocol.com/docs/miners/yaml-config
+- Validation API (request/response and limitations): https://docs.telegraphprotocol.com/docs/miners/validation-api
+- Local server route: `src/server.ts`; project guide: `docs/integrate-endpoint-guide.md`.

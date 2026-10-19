@@ -3,7 +3,7 @@
 The service exposes three transport endpoints:
 
 - `GET /health` — service health.
-- `GET /intents` — the 20-Intent Verity scope.
+- `GET /intents` — the 30-Intent local Verity catalogue. This is broader than the 29 intents currently advertised in the miner manifests.
 - `POST /v1/intent` — controlled Intent execution.
 
 ## Execution envelope

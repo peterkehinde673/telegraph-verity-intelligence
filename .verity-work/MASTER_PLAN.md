@@ -118,11 +118,39 @@ After Season 2 starts and comparable measurements exist, compare actual intent s
 - [x] Previous Batch 7 removed; expansion is now explicitly planned as a separate, gated workstream.
 - [x] Verified the live registry for `NEWS_SEARCH` on 2026-10-19: canonical, 18 miners. The registry docs give the intent meaning but no fixed per-intent JSON request/response schema.
 - [x] Implemented and tested `NEWS_SEARCH` as a local handler using Google News RSS; the registration manifests still contain the original 29 intents.
-- [ ] Confirm Telegraph's request/response contract for `NEWS_SEARCH` and a working Integrate YAML validator before adding it to either manifest. Do not claim Batch A manifest integration complete until then.
-- [x] Investigated official Intent, YAML, validator, and OpenAPI documentation; no authoritative per-intent `NEWS_SEARCH` JSON schema is published. Local query/result fields remain project-defined and are not grounds for registration.
+- [ ] Confirm in Integrate that its request builder can produce the project-defined nested `{ intent: "NEWS_SEARCH", input: { query } }` request, then validate the saved YAML before adding the intent to either manifest. Telegraph does not publish an intent-specific schema; do not invent one.
+- [x] Investigated official Intent, YAML, validator, and OpenAPI documentation; no authoritative per-intent `NEWS_SEARCH` JSON schema is published. The local query/result fields are explicitly documented as Verity contracts, with the builder behavior left for dashboard validation.
 - [x] Confirmed the documented validation API URL currently answers POST with HTTP 404 HTML and no redirect. The docs describe it as unauthenticated, so do not add auth or change the URL without Telegraph confirmation.
 - [ ] Verify the unchanged YAML with Telegraph Integrate's validation UI or obtain a working official validator endpoint before manifest integration.
 - [ ] Recheck canonical status, current miner counts, provider feasibility, and contract requirements before selecting another implementation batch.
 - [ ] Prepare selected Phase 1B proposals and obtain canonical confirmation before implementation/manifest changes.
 - [ ] Complete manifest integration, preflight and regression checks.
 - [ ] Obtain separate explicit approval before live Integrate dashboard registration/update.
+
+## Current execution checklist (registry recheck: 2026-10-19)
+
+The public live registry at <https://devnode.telegraphprotocol.com/engine/v1/intents> returned 134 entries on this check. The published Intent docs page still states an older count; use the live endpoint for canonical names and miner counts.
+
+| Master-plan candidate | Live canonical | Current miners | Work status |
+| --- | --- | ---: | --- |
+| `NEWS_SEARCH` | Yes | 18 | Implemented locally; route guide and real-server test completed. Manifest remains gated on verifying Integrate can construct nested `input.query` and validating the saved config. |
+| `WEB_SEARCH` | Yes | 25 | Purpose confirmed; overlap, safe source, and implementation feasibility not yet assessed. |
+| `TWITTER_SEARCH` | Yes | 10 | Purpose confirmed; access to attributable public posts and implementation feasibility not yet assessed. |
+| `SENTIMENT_ANALYSIS` | Yes | 19 | Purpose confirmed; overlap and evaluator-compatible local contract not yet assessed. |
+| `DOCUMENT_AUTHENTICITY` | Yes | 12 | Purpose confirmed; verified document-signature/timestamp data source and implementation feasibility not yet assessed. |
+| `ONCHAIN_METRIC_VERIFY` | Yes | 34 | Purpose confirmed; chain/RPC coverage, block anchoring, and implementation feasibility not yet assessed. |
+| `CONTRACT_OBLIGATION_AUDIT` | Yes | 13 | Purpose confirmed; overlap with text/document handlers and contract/evaluation scope not yet assessed. |
+| `SLA_COMPLIANCE` | Yes | 11 | Purpose confirmed; required measurement inputs and deterministic calculation contract not yet assessed. |
+| `SHIPMENT_DELAY_RISK` | Yes | 10 | Purpose confirmed; reliable shipment/weather/port data and forecast evaluation not yet assessed. |
+| `FRAUD_DETECTION` | Yes | 29 | Purpose confirmed; evidence sources, scope, and overlap with security/risk handlers not yet assessed. |
+
+Current order of work:
+
+1. [x] Complete NEWS_SEARCH endpoint preparation: verify the real server route and request/response behavior, document Integrate fields, add route-level coverage, and preserve the 29-intent manifest gate. Remote Integrate validation remains blocked by its documented endpoint's 404 HTML response.
+2. Assess the remaining nine verified candidates against existing handlers, dependable attributable inputs, evaluation criteria, and safety boundaries; choose only a small feasible next batch.
+3. Inspect the complete canonical registry for duplicate or near-equivalent entries for the six proposed concepts, then prepare selected proposal drafts and evaluation plans. Do not represent proposals as canonical.
+4. Keep candidate manifests unchanged until the candidate's real route, request builder mapping, response contract, all manifest lists, and applicable validation checks are evidenced.
+5. Revisit remote validator recovery separately; its known 404 does not block local implementation or tests, but it blocks claiming remote YAML validation passed.
+6. Finish the implementation/configuration guide and preflight review. Live Integrate registration remains a separate manual action requiring the user's explicit approval.
+
+The live registry check confirms canonical names and counts, not that any intent is underserved or suitable for this miner. The Integrate screen fields described by the user are used as the dashboard field inventory; no screenshot file was present in the checkout. Telegraph's public docs explain generic params but not nested per-property schemas, so the exact `input.query` builder behavior remains a dashboard validation question.
