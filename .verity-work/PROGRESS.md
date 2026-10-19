@@ -1,6 +1,6 @@
 # Verity Work Progress — Season 2
 
-Active plan: `.verity-work/MASTER_PLAN.md`. Season 2 has not started. The ten target intents are reviewed; no new intents were added in this phase.
+Active plan: `.verity-work/MASTER_PLAN.md`. Season 2 has not started. The ten target intents are reviewed; intent expansion is now planned as a separate, gated workstream.
 
 ## Target-ten result
 
@@ -25,8 +25,19 @@ Active plan: `.verity-work/MASTER_PLAN.md`. Season 2 has not started. The ten ta
 - [ ] After explicit approval: submit/update registration via Telegraph Integrate dashboard, confirm success, verify Explorer intent list and API health; retain previous valid YAML and commit SHA for rollback. Do not change ID unless the official registry requires it.
 - [ ] After Season 2 begins, compare actual scores against epoch 421 baseline; no score/rank improvement claimed yet.
 
+## Intent expansion — planned, not implemented
+
+- [x] Added candidate-intake and implementation/registration gates to `.verity-work/MASTER_PLAN.md`.
+- [x] Recorded existing canonical-name candidates to verify against the live registry and miner counts, plus proposed new concepts requiring Telegraph canonicalization.
+- [ ] Query the current canonical registry and miner counts; select a small first batch based on demand, coverage, reliable data and evaluator fit.
+- [ ] Implement selected canonical candidate(s) with handlers, input/output contracts, tests, docs and regression coverage.
+- [ ] Update `miner.yaml` only after implementation is complete and the exact name is confirmed canonical. Keep the existing 29 intents intact and validate all manifest lists together.
+- [ ] Run schema/preflight, typecheck, build, tests and full CI after each batch.
+- [ ] Submit proposed new concepts to Telegraph and wait for explicit canonical confirmation before advertising them in YAML.
+- [ ] Complete final preflight and obtain separate explicit approval before any live dashboard update/re-registration.
+
 ## Guardrails
 
-- Preserve all non-target intents, especially ranks #1–#5; changes require regression coverage.
+- Preserve all existing intents, especially any currently ranked #1–#5; changes require regression coverage.
 - No WASM/scorer changes, score manipulation, deployment, live registration, on-chain transaction, release publication or production configuration change without separate explicit approval.
-- New intents remain deferred until the target-ten measurement/readiness phase is resolved.
+- Do not claim live registration, dashboard state, competition counts, or score/rank gains without direct current evidence.
