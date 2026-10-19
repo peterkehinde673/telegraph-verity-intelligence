@@ -35,23 +35,22 @@ All ten have a documented fix or review outcome in `.verity-work/PROGRESS.md`. C
 
 Telegraph's docs describe the on-chain registry as the source of truth and expose the live list at `https://devnode.telegraphprotocol.com/engine/v1/intents`. The documentation and hackathon catalogue have shown different totals at different times, so use the current live registry—not a copied count or an older docs list—as final authority.
 
-### A. Existing canonical candidates to verify against the current registry and current miner coverage
+### A. Existing canonical candidates confirmed in the published Season II catalogue
 
-These names are candidate additions because they are not in the current repository's 29-intent `miner.yaml`. Verify each exact spelling and current availability before implementation; this list is not a claim that all are currently underserved.
+The published catalogue includes the names below, and they are not in this repository's current 29-intent manifest. This confirms catalogue presence only—not current live registry status, miner competition, or that a candidate is underserved. Recheck the live registry and current miner coverage before choosing an implementation batch.
 
-- `NEWS_SEARCH` — web/news discovery.
-- `SENTIMENT_ANALYSIS` — sentiment classification.
-- `DOCUMENT_AUTHENTICITY` — document authenticity checks.
-- `ONCHAIN_METRIC_VERIFY` — verifiable on-chain metric checks.
-- `SANCTIONS_SCREENING_MATCH` — compliance screening match.
-- `FRAUD_RISK` — fraud risk assessment.
-- `CROSS_CHAIN_STATE_VERIFY` — cross-chain state checks.
-- `ASSET_RESERVE_ATTESTATION` — reserve-attestation checks.
-- `CONTRACT_OBLIGATION_AUDIT` — contract obligation extraction and audit.
-- `SLA_COMPLIANCE` — service-level agreement compliance.
-- `SHIPMENT_DELAY_RISK` — shipment delay risk analysis.
+- `NEWS_SEARCH` — search news sources for a topic or query.
+- `WEB_SEARCH` — retrieve web results for a query.
+- `TWITTER_SEARCH` — search public social posts.
+- `SENTIMENT_ANALYSIS` — classify sentiment and tone.
+- `DOCUMENT_AUTHENTICITY` — assess document authenticity.
+- `ONCHAIN_METRIC_VERIFY` — verify on-chain metrics.
+- `CONTRACT_OBLIGATION_AUDIT` — extract and assess contract obligations.
+- `SLA_COMPLIANCE` — check service-level compliance.
+- `SHIPMENT_DELAY_RISK` — assess shipment-delay risk.
+- `FRAUD_DETECTION` — assess potential fraud.
 
-Priority selection should favour a useful canonical intent with verifiable inputs, a realistic data/provider path, clear evaluation criteria, and manageable implementation risk. Do not add every candidate automatically.
+Priority selection should favour a useful canonical intent with verifiable inputs, a realistic data/provider path, clear evaluation criteria, and manageable implementation risk. Do not add every candidate automatically. Do not treat catalogue mission counts as miner competition counts.
 
 ### B. New intent concepts to propose to Telegraph
 
