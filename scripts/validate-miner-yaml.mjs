@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { readFile } from "node:fs/promises";
+import { parseMinerValidationResponse } from "./parse-miner-validation-response.mjs";
 
 const file = process.argv[2] ?? "miner.yaml";
 const apiKey = process.env.TELEGRAPH_VALIDATION_API_KEY;
@@ -29,7 +30,13 @@ const response = await fetch("https://integrate.telegraphprotocol.com/api/valida
   body: JSON.stringify(body)
 });
 
-const result = await response.json();
+let result;
+try {
+  result = await parseMinerValidationResponse(response);
+} catch (error) {
+  console.error(error instanceof Error ? error.message : "Telegraph validation response could not be read.");
+  process.exit(1);
+}
 console.log(JSON.stringify(result, null, 2));
 
 if (!response.ok || result.valid !== true) {

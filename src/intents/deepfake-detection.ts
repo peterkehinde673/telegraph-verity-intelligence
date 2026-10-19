@@ -76,14 +76,23 @@ export async function detectDeepfake(
     const sourceId = detection.source_id ?? "deepfake-detector";
 
     return {
-      intent: "DEEPFAKE_DETECTION",
       verdict:
         detection.signal === "manipulated_likely"
           ? "likely"
           : detection.signal === "authentic_likely"
-            ? "confirmed"
+            ? "likely"
             : "insufficient_evidence",
-      confidence: probability ?? 0,
+      // A numeric manipulation probability is not calibrated confidence in
+      // an indeterminate verdict. Keep the raw probability in the answer,
+      // but abstentions carry zero verdict confidence.
+      confidence: detection.signal === "indeterminate"
+        ? 0
+        : probability === null
+          ? 0
+          : detection.signal === "authentic_likely"
+            ? 1 - probability
+            : probability,
+      intent: "DEEPFAKE_DETECTION",
       answer: {
         media_type: detection.media_type,
         signal: detection.signal,
@@ -117,7 +126,7 @@ export async function detectDeepfake(
       evidence: [],
       uncertainty: [{
         code: "deepfake_detector_failed",
-        message: error instanceof Error ? error.message : "Deepfake detection failed."
+        message: "The configured deepfake detector could not process the media reference."
       }],
       retrieved_at: retrievedAt
     };

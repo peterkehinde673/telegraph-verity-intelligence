@@ -60,3 +60,41 @@ test("content extraction converts extractor failures into abstention", async () 
   assert.equal(result.verdict, "insufficient_evidence");
   assert.equal(result.uncertainty[0]?.code, "content_extraction_failed");
 });
+
+
+test("content extraction does not expose raw extractor errors", async () => {
+  const result = await contentExtraction("https://example.com/article", {
+    extractImpl: async () => {
+      throw new Error("secret token content-key-123 internal upstream stack trace");
+    },
+    now: () => "2026-10-17T00:00:00.000Z"
+  });
+
+  assert.equal(result.intent, "CONTENT_EXTRACTION");
+  assert.equal(result.verdict, "insufficient_evidence");
+  assert.equal(result.confidence, 0);
+  assert.equal(result.uncertainty[0]?.code, "content_extraction_failed");
+  assert.equal(
+    result.uncertainty[0]?.message,
+    "The configured content source could not be reached or returned an invalid response."
+  );
+  assert.equal(result.uncertainty[0]?.message.includes("content-key-123"), false);
+  assert.deepEqual(result.evidence, []);
+});
+
+
+test("content extraction abstains when returned content has no content type", async () => {
+  const result = await contentExtraction("https://example.com/article", {
+    extractImpl: async () => ({
+      content: "Some extracted text",
+      content_type: "   "
+    })
+  });
+
+  assert.equal(result.verdict, "insufficient_evidence");
+  assert.equal(result.confidence, 0);
+  assert.equal(result.answer.content, "");
+  assert.equal(result.answer.content_type, "");
+  assert.equal(result.uncertainty[0]?.code, "invalid_extraction_response");
+  assert.deepEqual(result.evidence, []);
+});

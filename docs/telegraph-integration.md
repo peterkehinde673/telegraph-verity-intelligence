@@ -2,7 +2,7 @@
 
 ## Current state
 
-The application layer now contains the approved 20-Intent scope and the shared Verity response/evidence contract.
+The local TypeScript catalogue contains 35 handler intents. The two miner manifests still advertise the original 29-intent set; `NEWS_SEARCH`, `WEB_SEARCH`, `TWITTER_SEARCH`, `SENTIMENT_ANALYSIS`, `ONCHAIN_METRIC_VERIFY`, and `SLA_COMPLIANCE` remain local while Integrate request-builder behavior and deployment provider configuration are unverified.
 
 The Telegraph Miner YAML is intentionally **not** being registered yet.
 
@@ -27,7 +27,7 @@ Two values must be real before a production Miner YAML can be finalized:
 
 The protocol treats the Miner ID as part of the registered integration path, while the YAML declares the capabilities and endpoints. citeturn1search1
 
-The live canonical Intent registry endpoint could not be independently read from this environment, so this project does not treat a locally copied list as proof of the current on-chain registry. The current official Intent catalogue remains the source used for scope selection, while live canonical verification is a pre-registration gate. citeturn1search0
+The live registry at <https://devnode.telegraphprotocol.com/engine/v1/intents> was reachable on 2026-10-19 and returned 134 entries. Recheck it before any manifest or registration change; canonical status and miner counts can change.
 
 ## YAML rules we will follow
 
@@ -45,17 +45,15 @@ When registration work begins:
 
 Verity's Miner implementation and any Evaluator/WASM implementation remain separate. Telegraph validators execute the canonical evaluation script associated with an Intent; a custom evaluator is not being embedded into the Miner configuration merely to make the Miner register. citeturn1search1turn1search7
 
-## Next implementation gate
+## Next integration gate
 
-Before producing `miner.yaml`:
+Before adding a new intent to either manifest:
 
-1. Expose the Verity API through a stable production endpoint.
-2. Map the supported request shape to the internal Intent handlers.
-3. Add API-level contract tests.
-4. Deploy the service to Render and obtain the real HTTPS base URL.
-5. Verify the live canonical Intent set.
-6. Verify Miner-ID availability.
-7. Create and validate the final Miner YAML.
-8. Only then perform registration.
+1. Confirm its exact canonical name in the live registry.
+2. Document the Verity route, request fields, response envelope, source behavior, and abstention conditions.
+3. Confirm the Integrate request builder can construct the documented request and exercise the route.
+4. Add it consistently to endpoint intents, the input schema enum, and supported-intent declarations while preserving the original 29.
+5. Run local YAML/preflight checks and a successful Integrate validation. The documented API currently returned HTTP 404 HTML in the last recorded check; this is not a passing validation.
+6. Have the user review the final YAML, preflight results, and CI before any separately approved dashboard registration.
 
 This order prevents a syntactically valid YAML file from pointing at an unready service or using an unverified on-chain identity.

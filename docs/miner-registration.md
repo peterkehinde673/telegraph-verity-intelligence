@@ -9,7 +9,7 @@ This project keeps the registration YAML as `miner.yaml` only when a real, verif
    - `GET /health`
    - `GET /intents`
    - `POST /v1/intent`
-3. Verify the 20 declared Intents against Telegraph's current canonical Intent set.
+3. Verify the declared Intents against Telegraph's current canonical Intent set.
 4. Query the live Miner catalogue and choose an ID only after confirming it is unused.
 5. Copy `miner.yaml.template` to `miner.yaml` and replace only the Miner ID placeholder.
 6. Run the official Telegraph validation API through:
@@ -45,9 +45,11 @@ With a final `miner.yaml`:
 npm run validate:miner
 ```
 
-Optional validator inputs:
+The validation API is unauthenticated. Supply an upstream API key only when the YAML declares an authentication mode that requires one. This repository's current manifest uses `auth.type: none` and needs no validator API key.
 
-```export TELEGRAPH_VALIDATION_API_KEY=...
+Optional identity pre-check input:
+
+```
 export TELEGRAPH_MINER_ADDRESS=0x...
 npm run validate:miner
 ```

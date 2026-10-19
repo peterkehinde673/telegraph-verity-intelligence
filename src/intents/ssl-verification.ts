@@ -89,7 +89,11 @@ export async function verifySsl(hostname: string, port = 443, options: SslVerifi
         ...(certificate.fingerprint256 ? { fingerprint256: certificate.fingerprint256 } : {}),
         ...(certificate.serialNumber ? { serial_number: certificate.serialNumber } : {}),
         ...(certificate.subjectaltname ? { subject_alt_names: certificate.subjectaltname } : {}),
-        ...(socket.authorizationError ? { authorization_error: String(socket.authorizationError) } : {})
+        ...(socket.authorizationError ? {
+          authorization_error: typeof socket.authorizationError === "string" && /^[A-Z0-9_]+$/.test(socket.authorizationError)
+            ? socket.authorizationError
+            : "CERTIFICATE_NOT_AUTHORIZED"
+        } : {})
       };
       const endpoint = "tls:" + normalizedHost + ":" + port;
       finish({
@@ -106,7 +110,7 @@ export async function verifySsl(hostname: string, port = 443, options: SslVerifi
         })],
         uncertainty: socket.authorized ? [] : [{
           code: "certificate_not_authorized",
-          message: socket.authorizationError ? String(socket.authorizationError) : "The TLS certificate was not authorized by the local trust store."
+          message: "The TLS certificate was not authorized by the local trust store."
         }],
         retrieved_at: retrievedAt
       });

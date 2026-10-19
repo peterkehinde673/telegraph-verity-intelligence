@@ -109,7 +109,7 @@ export async function contentVerification(
       evidence: [],
       uncertainty: [{
         code: "content_verifier_failed",
-        message: error instanceof Error ? error.message : "Content verification failed."
+        message: "The configured content verification source failed or returned an invalid response."
       }],
       retrieved_at: retrievedAt
     };

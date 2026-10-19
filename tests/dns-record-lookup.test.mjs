@@ -56,3 +56,22 @@ test("DNS lookup rejects malformed hostnames before resolver access", async () =
   assert.equal(result.uncertainty[0]?.code, "invalid_hostname");
   assert.equal(called, false);
 });
+
+
+test("DNS lookup returns insufficient evidence for transient resolver failures", async () => {
+  const result = await lookupDnsRecord("example.com", "A", {
+    resolveImpl: async () => {
+      throw Object.assign(new Error("temporary resolver outage"), { code: "EAI_AGAIN" });
+    },
+    now: () => "2026-10-17T00:00:00.000Z"
+  });
+
+  assert.equal(result.intent, "DNS_RECORD_LOOKUP");
+  assert.equal(result.verdict, "insufficient_evidence");
+  assert.equal(result.confidence, 0);
+  assert.deepEqual(result.answer.records, []);
+  assert.deepEqual(result.evidence, []);
+  assert.equal(result.uncertainty[0]?.code, "dns_lookup_failed");
+  assert.equal(result.uncertainty[0]?.message.includes("temporary resolver outage"), false);
+  assert.equal(result.retrieved_at, "2026-10-17T00:00:00.000Z");
+});
