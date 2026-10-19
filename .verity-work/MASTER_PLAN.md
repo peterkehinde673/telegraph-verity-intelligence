@@ -119,6 +119,9 @@ After Season 2 starts and comparable measurements exist, compare actual intent s
 - [x] Verified the live registry for `NEWS_SEARCH` on 2026-10-19: canonical, 18 miners. The registry docs give the intent meaning but no fixed per-intent JSON request/response schema.
 - [x] Implemented and tested `NEWS_SEARCH` as a local handler using Google News RSS; the registration manifests still contain the original 29 intents.
 - [ ] Confirm Telegraph's request/response contract for `NEWS_SEARCH` and a working Integrate YAML validator before adding it to either manifest. Do not claim Batch A manifest integration complete until then.
+- [x] Investigated official Intent, YAML, validator, and OpenAPI documentation; no authoritative per-intent `NEWS_SEARCH` JSON schema is published. Local query/result fields remain project-defined and are not grounds for registration.
+- [x] Confirmed the documented validation API URL currently answers POST with HTTP 404 HTML and no redirect. The docs describe it as unauthenticated, so do not add auth or change the URL without Telegraph confirmation.
+- [ ] Verify the unchanged YAML with Telegraph Integrate's validation UI or obtain a working official validator endpoint before manifest integration.
 - [ ] Recheck canonical status, current miner counts, provider feasibility, and contract requirements before selecting another implementation batch.
 - [ ] Prepare selected Phase 1B proposals and obtain canonical confirmation before implementation/manifest changes.
 - [ ] Complete manifest integration, preflight and regression checks.
