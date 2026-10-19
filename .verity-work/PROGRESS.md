@@ -86,23 +86,23 @@ Active plan: `.verity-work/MASTER_PLAN.md`. Season 2 has not started. The ten ta
 - [x] Reviewed the complete tracked diff and both new files; the manifests and production settings are unchanged, and no credentials or private evaluation data were added.
 - [x] Commit `5ea6d78967e45efa1869a96a6f42709799fda49f` was pushed to the target branch; remote SHA matched. GitHub Actions run `39240080251` passed: https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39240080251.
 
-## Batch 3 — WEB_SEARCH implementation (in progress, 2026-10-19)
+## Batch 3 — WEB_SEARCH implementation (completed, 2026-10-19)
 
 - [x] Reverified live canonical `WEB_SEARCH`; registry returned canonical `true`, 25 miners, and a description for current/live/external web information. It is distinct from `NEWS_SEARCH` and Verity's Wikipedia-backed `RESEARCH_QUERY`.
 - [x] Verified provider feasibility against Jina's official [Reader/Search docs](https://jina.ai/reader/) and [OpenAPI](https://docs.jina.ai/openapi.json): the Search API at `https://s.jina.ai/` supports query search and JSON result records including URL, title, description, and publication time. Jina requires an API key and documents token usage/rate limits. No live or billable request was made.
-- [x] Began an isolated handler/provider implementation with optional `JINA_API_KEY`, bounded inputs/results/response bytes, HTTP(S)-only source URLs, provenance, timeout, safe errors, and abstention. It is not included in either miner manifest.
+- [x] Added an isolated handler/provider implementation with optional `JINA_API_KEY`, bounded inputs/results/response bytes, HTTP(S)-only source URLs, provenance, timeout, safe errors, and abstention. It is not included in either miner manifest.
 - [x] Added provider/handler tests for normal and empty responses, malformed inputs/envelopes, unsafe result URLs, missing credentials, timeouts as passed to fetch, and sanitized provider failures.
 - [x] `npm run typecheck`, `npm run build`, focused WEB_SEARCH/provider/dispatch/manifest tests (19 passing), and `npm test` (300 passing) passed.
 - [x] `npm run verify:telegraph` and `npm run preflight:registration` passed; all 31 local catalogue names are canonical and the unchanged template passed its repository preflight.
 - [x] `npm run smoke:render` passed against the existing production service: it remains healthy with 29 intents and all 12 safe validation cases and three live provider-backed smoke cases passed. No deployment or production setting was changed.
-- [ ] `npm run validate:miner` exited 1: the documented endpoint returned HTTP 404 HTML, so no YAML validation result was produced. Credential variables were removed; no fallback URL or HTML bypass was used.
+- [x] `npm run validate:miner` exited 1: the documented endpoint returned HTTP 404 HTML, so no YAML validation result was produced. Credential variables were removed; no fallback URL or HTML bypass was used.
 - [x] Reviewed the full tracked and new-file diff, verified both miner manifests are unchanged, ran whitespace and secret-pattern checks, and confirmed no credentials or private evaluation data were added.
-- [ ] Commit/push this isolated batch and confirm remote SHA and CI.
+- [x] Commit `717bac06d5bd8895f977c45500682793664d45ff` was pushed; the remote branch matches and GitHub Actions run `39243396991` passed: https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39243396991.
 
 ### Current classification
 
 - **Completed and verified:** NEWS_SEARCH route preparation; commit `5ea6d78967e45efa1869a96a6f42709799fda49f` and CI run `39240080251` passed.
-- **Implemented and locally verified, pending push/CI:** WEB_SEARCH with Jina Search, based on current canonical registry and official provider schema. Credential provisioning and Integrate request-building remain later deployment/manifest gates.
+- **Completed and CI-verified:** WEB_SEARCH with Jina Search, based on current canonical registry and official provider schema. Credential provisioning and Integrate request-building remain later deployment/manifest gates.
 - **Canonical but feasibility not established:** TWITTER_SEARCH, SENTIMENT_ANALYSIS, DOCUMENT_AUTHENTICITY, ONCHAIN_METRIC_VERIFY, CONTRACT_OBLIGATION_AUDIT, SLA_COMPLIANCE, SHIPMENT_DELAY_RISK, FRAUD_DETECTION.
 - **Still blocked for manifest integration:** NEWS_SEARCH and WEB_SEARCH until Integrate can build the nested project request and current miner YAML validation succeeds. The provider key must also be available externally before WEB_SEARCH is useful in a deployment.
 - **External:** The documented Integrate validator remains HTTP 404 HTML; local implementation proceeds, but remote YAML validation is not passed.
