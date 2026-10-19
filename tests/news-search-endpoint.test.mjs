@@ -135,6 +135,24 @@ test("search intents are reachable through the real POST /v1/intent route", asyn
     assert.equal(onchainResult.verdict, "insufficient_evidence");
     assert.equal(onchainResult.answer.gas_used, null);
     assert.equal(onchainResult.uncertainty[0].code, "ethereum_rpc_unconfigured");
+
+    const slaResponse = await fetch(`http://127.0.0.1:${port}/v1/intent`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ intent: "SLA_COMPLIANCE", input: {
+        metric: "uptime",
+        period_start: "2026-01-01T00:00:00Z",
+        period_end: "2026-01-02T00:00:00Z",
+        measured_seconds: 86400,
+        downtime_seconds: 60,
+        target_uptime_percent: 99.9
+      } })
+    });
+    assert.equal(slaResponse.status, 200);
+    const slaResult = await slaResponse.json();
+    assert.equal(slaResult.intent, "SLA_COMPLIANCE");
+    assert.equal(slaResult.answer.observed_uptime_percent, 99.930556);
+    assert.equal(slaResult.answer.meets_target, true);
   } finally {
     if (child.exitCode === null) {
       const exitPromise = new Promise(resolve => child.once("exit", resolve));

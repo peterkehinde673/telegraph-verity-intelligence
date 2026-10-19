@@ -11,6 +11,7 @@ const expectedIntents = [
   "TWITTER_SEARCH",
   "SENTIMENT_ANALYSIS",
   "ONCHAIN_METRIC_VERIFY",
+  "SLA_COMPLIANCE",
   "ACADEMIC_SEARCH",
   "CONTENT_EXTRACTION",
   "CONTENT_VERIFICATION",
@@ -39,6 +40,6 @@ const expectedIntents = [
 ];
 
 test("the Verity scope contains the configured intents", () => {
-  assert.equal(expectedIntents.length, 34);
-  assert.equal(new Set(expectedIntents).size, 34);
+  assert.equal(expectedIntents.length, 35);
+  assert.equal(new Set(expectedIntents).size, 35);
 });

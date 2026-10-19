@@ -103,7 +103,7 @@ Active plan: `.verity-work/MASTER_PLAN.md`. Season 2 has not started. The ten ta
 
 - **Completed and verified:** NEWS_SEARCH route preparation; commit `5ea6d78967e45efa1869a96a6f42709799fda49f` and CI run `39240080251` passed.
 - **Completed and CI-verified:** WEB_SEARCH with Jina Search, based on current canonical registry and official provider schema. Credential provisioning and Integrate request-building remain later deployment/manifest gates.
-- **Canonical and locally implemented:** NEWS_SEARCH, WEB_SEARCH, TWITTER_SEARCH, SENTIMENT_ANALYSIS, ONCHAIN_METRIC_VERIFY. All remain absent from both miner manifests pending the specific integration gates recorded below.
+- **Canonical and locally implemented:** NEWS_SEARCH, WEB_SEARCH, TWITTER_SEARCH, SENTIMENT_ANALYSIS, ONCHAIN_METRIC_VERIFY, SLA_COMPLIANCE. All remain absent from both miner manifests pending the specific integration gates recorded below.
 - **Canonical but deferred:** DOCUMENT_AUTHENTICITY until a supported signed-document format and independently trusted certificate/timestamp/notarization verification source are selected.
 - **Canonical but deferred:** DOCUMENT_AUTHENTICITY, CONTRACT_OBLIGATION_AUDIT, pending the evidence and parser requirements recorded in their assessment notes.
 - **Awaiting feasibility review:** SLA_COMPLIANCE, SHIPMENT_DELAY_RISK, FRAUD_DETECTION.
@@ -166,6 +166,20 @@ Active plan: `.verity-work/MASTER_PLAN.md`. Season 2 has not started. The ten ta
 - [x] Deferred implementation: keyword rules would provide only fragile clause candidates and could misread definitions, exceptions, cross-references, amendments, jurisdiction-dependent terms, or “will” used outside an obligation. A text-generation model without grounded legal extraction and fulfillment records would not solve that evidence gap. No weak handler or manifest entry was added.
 - [ ] Revisit when a specific supported contract format/field schema, evaluation corpus with reviewed ground truth, and independent fulfillment evidence (or a deliberately narrower extraction-only canonical scope accepted by Telegraph) are available.
 - [x] Continue in master-plan order with SLA_COMPLIANCE; the contract-audit deferral does not block independent candidate review.
+- [x] Deferral documentation commit `577a136` was pushed; GitHub Actions run `39259211587` passed: https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39259211587.
+
+## SLA_COMPLIANCE local implementation (2026-10-19)
+
+- [x] Queried the live registry again: HTTP 200, 134 entries; `SLA_COMPLIANCE` is canonical and currently lists 11 miners. Its description covers measured response time, resolution time, and uptime over a period against a stated threshold. It distinguishes customer-ticket satisfaction. Source: https://devnode.telegraphprotocol.com/engine/v1/intents.
+- [x] Repository review found no monitoring provider or historical metrics. Implemented only an explicit deterministic uptime calculation over caller-supplied full-period totals. It requires UTC ISO timestamps, a period no longer than 366 days, full period coverage as represented by `measured_seconds`, bounded integer downtime, and a stated target. No external provider call or customer data is involved.
+- [x] Response states the computed uptime, target comparison, and a provenance record marked `user-provided-measurement`; uncertainty explicitly says source measurements, coverage, exclusions, and contract interpretation were not independently verified. No response-time or incident-resolution check is claimed.
+- [x] Added focused tests for passing/failing target comparisons, malformed metrics, invalid/nonexistent dates, period boundaries, incomplete measurement totals, numeric boundaries, and malformed top-level input; added dispatch/manifest and real HTTP route regression coverage. Manifest remains the original 29.
+- [x] `npm run typecheck`, `npm run build`, and 10 focused SLA/catalogue/dispatch/manifest/route tests passed. Full `npm test` passed (329 tests).
+- [x] `npm run preflight:registration` passed: all 35 local catalogue names are present in Telegraph's live canonical set, and miner-template preflight passed. Both manifests remain at the original 29.
+- [x] `npm run smoke:render` passed: existing production endpoint healthy, 29 advertised intents, 12 safe cases, three provider checks, response contracts verified. No deployment or production configuration was changed.
+- [ ] `npm run validate:miner` again returned HTTP 404 HTML rather than JSON; no validation result was produced.
+- [x] `git diff --check` passed; inspect and commit this batch, then verify exact-commit CI before continuing to SHIPMENT_DELAY_RISK.
+- [ ] Integration gate: verify Integrate can construct the project-defined nested `input.metric`, period, totals, and target, then successfully validate saved YAML. The local calculation does not establish a Telegraph-specific schema.
 
 ## Batch 4 — TWITTER_SEARCH implementation (2026-10-19)
 
