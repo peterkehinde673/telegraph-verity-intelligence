@@ -19,7 +19,7 @@ The local `intent` value must be one of the 35 entries in `src/intents/catalogue
 
 The `input` object is Intent-specific. Verity intentionally keeps it opaque at the shared HTTP layer; the Intent handler validates its own required fields.
 
-For the local `NEWS_SEARCH`, `WEB_SEARCH`, and `TWITTER_SEARCH` handlers, the project-defined input is `{ "query": "..." }`; each limits queries to 500 characters. `SENTIMENT_ANALYSIS` accepts `{ "text": "..." }` with at most 4,000 characters. `ONCHAIN_METRIC_VERIFY` locally supports an Ethereum-mainnet transaction gas-used receipt lookup at an explicit block; see [its intent guide](intents/onchain-metric-verify.md). `SLA_COMPLIANCE` calculates a narrowly defined uptime metric from caller-supplied totals; see [its intent guide](intents/sla-compliance.md). These are Verity handler contracts, not Telegraph-published per-intent schemas. See [the endpoint preparation guide](integrate-endpoint-guide.md).
+For the local `NEWS_SEARCH` handler, the project-defined input is a non-empty `{ "query": "..." }` string. `WEB_SEARCH` and `TWITTER_SEARCH` accept the same shape and limit queries to 500 characters. `SENTIMENT_ANALYSIS` accepts `{ "text": "..." }` with at most 4,000 characters. `ONCHAIN_METRIC_VERIFY` locally supports an Ethereum-mainnet transaction gas-used receipt lookup at an explicit block; see [its intent guide](intents/onchain-metric-verify.md). `SLA_COMPLIANCE` calculates a narrowly defined uptime metric from caller-supplied totals; see [its intent guide](intents/sla-compliance.md). These are Verity handler contracts, not Telegraph-published per-intent schemas. See [the endpoint preparation guide](integrate-endpoint-guide.md).
 
 Every successful Intent response uses:
 

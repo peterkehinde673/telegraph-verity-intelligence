@@ -155,3 +155,44 @@ The project-defined request is documented with its limited metric scope, RPC sou
 ## SLA_COMPLIANCE local endpoint mapping
 
 The limited local uptime calculation uses the shared JSON `POST /v1/intent` route. Its project-defined nested input is shown in [the intent guide](intents/sla-compliance.md). There are no external credentials, multipart fields, or parameter mapping. The route has no inbound authentication. Telegraph's canonical registry describes uptime and other service-level metrics, but does not publish a per-intent schema; Integrate's nested input construction and saved-YAML validation must be checked before manifest integration.
+
+## Consolidated Integrate configuration reference
+
+All current Verity intent handlers use the same server endpoint. There are no intent-specific upstream paths. The existing YAML and production service continue to advertise the original 29 intents; the six local-only candidates below are not ready for manifest association until the dashboard confirms nested request construction and the saved YAML validates. Telegraph publishes no per-intent JSON schema for these names, so these are Verity request/response contracts.
+
+### Shared endpoint fields
+
+| Integrate field | Value supported by the actual Verity server |
+| --- | --- |
+| Telegraph path | `/v1/intent` |
+| API endpoint path | `/v1/intent` |
+| HTTP method | `POST` |
+| Endpoint base URL override | Blank; use the existing top-level `base_url` |
+| Description | Dispatch a JSON Verity intent request and return the shared Verity response envelope |
+| Content-type override | `application/json` (or blank if Integrate supplies this default) |
+| Multipart fields | None |
+| Parameter mapping | None; pass the JSON body through as `intent` and `input` |
+| Inbound authentication | None in the existing server and manifest |
+| Top-level JSON params | Required `intent` string and required `input` object |
+
+The actual request shape is `{ "intent": "…", "input": { … } }`. The server keeps `input` opaque at the shared route and each handler validates its own fields. Confirm that the Integrate request builder can construct the nested `input` object; a flattened property is not equivalent. The `JINA_API_KEY`, `X_API_BEARER_TOKEN`, `HF_TOKEN`, and `ETHEREUM_RPC_URL` values listed below are server-side provider configuration, never Integrate request authentication or YAML parameters.
+
+### Additional local-only intent associations
+
+| Intent association | Project-defined JSON `input` shape | Runtime provider authentication/configuration | Representative `answer` fields |
+| --- | --- | --- | --- |
+| `NEWS_SEARCH` | `{ "query": "non-empty string" }` | No credential for the current Google News RSS adapter | `{ "query": "…", "results": [{ "title": "…", "url": "…", "excerpt": null, "source_id": "…", "published_at": null }] }`; valid articles also carry evidence URLs and retrieval time. |
+| `WEB_SEARCH` | `{ "query": "non-empty string, max 500 characters" }` | Server-side `JINA_API_KEY`; without it the handler abstains | `{ "query": "…", "results": [{ "title": "…", "url": "…", "excerpt": "…", "source_id": "…" }] }` with attributable result evidence. |
+| `TWITTER_SEARCH` | `{ "query": "non-empty string, max 500 characters" }` | Server-side `X_API_BEARER_TOKEN`; recent-search provider can return billable posts | `{ "query": "…", "results": [{ "id": "…", "text": "…", "url": "…", "author_username": null, "published_at": null, "source_id": "…" }] }` with X post provenance. |
+| `SENTIMENT_ANALYSIS` | `{ "text": "non-empty string, max 4,000 characters" }` | Server-side `HF_TOKEN`; no model call without it | `{ "sentiment": "positive", "model_score": 0.96, "class_scores": [{ "label": "positive", "score": 0.96 }, { "label": "neutral", "score": 0.03 }, { "label": "negative", "score": 0.01 }], "model": "cardiffnlp/twitter-roberta-base-sentiment-latest", "language_scope": "English" }`; scores are not calibrated probabilities. |
+| `ONCHAIN_METRIC_VERIFY` | `{ "metric": "transaction_gas_used", "transaction_hash": "0x…64 hex…", "block_number": "decimal", "expected_gas_used": "optional decimal" }` | Server-side operator-managed HTTPS `ETHEREUM_RPC_URL`; no caller-supplied endpoint | `{ "network": "ethereum-mainnet", "metric": "transaction_gas_used", "block_number": "…", "gas_used": "…", "matches_expected": true }`; evidence identifies the configured single RPC source. |
+| `SLA_COMPLIANCE` | `{ "metric": "uptime", "period_start": "UTC ISO timestamp", "period_end": "UTC ISO timestamp", "measured_seconds": 86400, "downtime_seconds": 60, "target_uptime_percent": 99.9 }` | No external provider; totals are caller-supplied | `{ "metric": "uptime", "observed_uptime_percent": 99.930556, "meets_target": true }`; evidence labels the measurement as user-provided. |
+
+Each route response wraps the intent-specific answer in the shared local envelope: `intent`, `verdict`, `confidence`, `answer`, `evidence`, `uncertainty`, and `retrieved_at`. See the linked intent pages above for full examples, rejection/abstention behavior, and limitations. The sample values in this table are illustrative contracts, not live provider results or Telegraph-guaranteed schemas.
+
+### Remaining integration gates
+
+1. In Integrate's non-registration validation flow, verify the body builder can emit `intent` plus the nested per-intent `input` shown above, including the extra nested object for `ONCHAIN_METRIC_VERIFY` and `SLA_COMPLIANCE`.
+2. Configure runtime provider credentials only through the existing service's approved secret mechanism, after separately reviewing provider cost, privacy, and account controls. No secret belongs in Integrate params or YAML.
+3. Validate the saved configuration in the dashboard or through a restored official validator. The documented validator currently returns HTTP 404 HTML and does not produce a result; this is not a pass.
+4. Only after all checks pass, prepare a reviewable YAML diff that adds each exact canonical intent consistently to endpoint association, input enum, and supported-intent declarations while preserving all original 29. Live registration remains separate and requires the user's explicit approval.
