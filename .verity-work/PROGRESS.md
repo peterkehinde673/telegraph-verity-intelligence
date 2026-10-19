@@ -131,6 +131,29 @@ Active plan: `.verity-work/MASTER_PLAN.md`. Season 2 has not started. The ten ta
 - The sample response in `docs/integrate-endpoint-guide.md` is a code-backed no-results abstention. No article/evidence example is presented as a real provider result.
 - No screenshot image was found in the checkout; dashboard field names in this guide follow the field inventory supplied in the user request.
 
+## Batch 4 — TWITTER_SEARCH implementation (2026-10-19)
+
+- [x] Rechecked the public live registry from `https://devnode.telegraphprotocol.com/engine/v1/intents`: HTTP 200, 134 entries. The exact `TWITTER_SEARCH` record is canonical and lists 10 miners. Its description says this intent applies when the user wants posts/accounts/discussion searched on X/Twitter, not when the platform is only the topic.
+- [x] Confirmed the provider contract from X's official [Search Posts guide](https://docs.x.com/x-api/posts/search/introduction), [Recent Search API reference](https://docs.x.com/x-api/posts/search-recent-posts), and [pay-per-use pricing](https://docs.x.com/x-api/getting-started/pricing). Recent search covers seven days, uses `GET https://api.x.com/2/tweets/search/recent`, requires bearer auth and `query`, returns JSON `data` and optional `includes`/`meta`, and currently requires `max_results` from 10 to 100. Current listed Post Read price is $0.005 per returned post; one request may therefore return/bill up to 10 ($0.05 at the listed rate). Prices may change.
+- [x] Added an optional X recent-search provider and local `TWITTER_SEARCH` handler. `X_API_BEARER_TOKEN` is read only at runtime. Without it the handler abstains without outbound provider traffic. A call requests 10 results (API minimum) and returns at most five; uses a 10-second timeout and 512 KiB response cap; validates post IDs, author handles, URLs, timestamps and response shape; sanitizes failures; and preserves post URL/ID/text/provenance and timestamps when available. Results do not assert post truth.
+- [x] Added provider, handler, dispatch, manifest regression, and real HTTP route tests, plus a project Integrate mapping and intent guide. `TWITTER_SEARCH` remains out of both miner manifests; all original 29 manifest intents are unchanged.
+- [x] No X credential was inspected, no X request was made, and no billable call occurred. Before enabling the runtime key, configure a spending limit in X Developer Console.
+- [x] `npm run typecheck`, `npm run build`, and full `npm test` passed (310 tests). Focused provider/handler/dispatch/manifest/route tests passed after correcting a timestamp-regex assertion in the new route fixture.
+- [x] `npm run preflight:registration` passed: all 32 local names appear in the current Telegraph canonical registry and the miner template preflight passed. Both manifests remain unchanged at the original 29.
+- [x] `npm run smoke:render` passed against the existing production service: healthy, 29 advertised intents, 12 safe validation cases, three live provider cases. No deploy or production configuration changed.
+- [x] `git diff --check` passed; full diff review confirmed no manifest edits or credentials.
+- [ ] `npm run validate:miner` remains blocked: documented endpoint returned HTTP 404 HTML; no validator result was produced.
+- [ ] Verify remote push and GitHub Actions result for the commit after it is created.
+- [ ] Keep manifest integration gated: X's API contract is established, but Telegraph does not publish an intent-specific schema; Integrate nested `input.query` request construction and saved YAML validation remain unverified.
+
+### TWITTER_SEARCH evidence
+
+- Telegraph canonical registry: https://devnode.telegraphprotocol.com/engine/v1/intents (live record rechecked 2026-10-19; 134 canonical entries, `TWITTER_SEARCH` canonical, 10 miners).
+- Telegraph registry purpose text distinguishes search for X/Twitter content from discussion merely about the platform.
+- X documents Recent Search as `GET /2/tweets/search/recent`, searches the last seven days, requires a bearer token and `query`, supports 10–100 results, and returns `data` plus optional `includes`, `errors`, and `meta`: https://docs.x.com/x-api/posts/search-recent-posts.
+- X's current listed Posts Read price is $0.005 per returned post: https://docs.x.com/x-api/getting-started/pricing. Actual prices can change; at `max_results=10`, the API may return up to 10 billable posts/request.
+- Project route and Integrate fields are described in `docs/integrate-endpoint-guide.md`. This project contract is not a Telegraph guarantee.
+
 ### Relevant sources
 
 - Live registry: https://devnode.telegraphprotocol.com/engine/v1/intents

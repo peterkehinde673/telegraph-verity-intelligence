@@ -77,6 +77,27 @@ test("search intents are reachable through the real POST /v1/intent route", asyn
         message: "A Jina Search API key is required to search the web in this deployment."
       }]
     });
+
+    const twitterResponse = await fetch(`http://127.0.0.1:${port}/v1/intent`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ intent: "TWITTER_SEARCH", input: { query: "public posts" } })
+    });
+    assert.equal(twitterResponse.status, 200);
+    const twitterResult = await twitterResponse.json();
+    assert.match(twitterResult.retrieved_at, /^\d{4}-\d{2}-\d{2}T.*Z$/);
+    delete twitterResult.retrieved_at;
+    assert.deepEqual(twitterResult, {
+      intent: "TWITTER_SEARCH",
+      verdict: "insufficient_evidence",
+      confidence: 0,
+      answer: { query: "public posts", results: [] },
+      evidence: [],
+      uncertainty: [{
+        code: "twitter_search_source_unconfigured",
+        message: "An X API bearer token is required to search public X posts in this deployment."
+      }]
+    });
   } finally {
     if (child.exitCode === null) {
       const exitPromise = new Promise(resolve => child.once("exit", resolve));

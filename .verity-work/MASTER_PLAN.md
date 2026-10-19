@@ -135,7 +135,7 @@ The public live registry at <https://devnode.telegraphprotocol.com/engine/v1/int
 | --- | --- | ---: | --- |
 | `NEWS_SEARCH` | Yes | 18 | Implemented locally; route guide and real-server test completed. Manifest remains gated on verifying Integrate can construct nested `input.query` and validating the saved config. |
 | `WEB_SEARCH` | Yes | 25 | Implemented and tested locally using Jina Search's attributable result API. It uses `JINA_API_KEY`, abstains without it, and remains out of manifests pending credential readiness and Integrate request-builder validation. |
-| `TWITTER_SEARCH` | Yes | 10 | Purpose confirmed; access to attributable public posts and implementation feasibility not yet assessed. |
+| `TWITTER_SEARCH` | Yes | 10 | Implemented locally using X recent search; the API's seven-day window, bearer requirement, minimum 10-result request, response structure, and current per-post pricing are documented. Not in manifests. |
 | `SENTIMENT_ANALYSIS` | Yes | 19 | Purpose confirmed; overlap and evaluator-compatible local contract not yet assessed. |
 | `DOCUMENT_AUTHENTICITY` | Yes | 12 | Purpose confirmed; verified document-signature/timestamp data source and implementation feasibility not yet assessed. |
 | `ONCHAIN_METRIC_VERIFY` | Yes | 34 | Purpose confirmed; chain/RPC coverage, block anchoring, and implementation feasibility not yet assessed. |
@@ -146,11 +146,12 @@ The public live registry at <https://devnode.telegraphprotocol.com/engine/v1/int
 
 Current order of work:
 
-1. [x] Complete NEWS_SEARCH endpoint preparation: verify the real server route and request/response behavior, document Integrate fields, add route-level coverage, and preserve the 29-intent manifest gate. Remote Integrate validation remains blocked by its documented endpoint's 404 HTML response.
-2. [x] Implement and test WEB_SEARCH using the verified Jina Search API. Continue feasibility assessment of the remaining eight candidates against overlap, dependable inputs, evaluation criteria, and safety boundaries.
-3. Inspect the complete canonical registry for duplicate or near-equivalent entries for the six proposed concepts, then prepare selected proposal drafts and evaluation plans. Do not represent proposals as canonical.
-4. Keep candidate manifests unchanged until the candidate's real route, request builder mapping, response contract, all manifest lists, and applicable validation checks are evidenced.
-5. Revisit remote validator recovery separately; its known 404 does not block local implementation or tests, but it blocks claiming remote YAML validation passed.
-6. Finish the implementation/configuration guide and preflight review. Live Integrate registration remains a separate manual action requiring the user's explicit approval.
+1. [x] Complete NEWS_SEARCH endpoint preparation and preserve the original 29-intent manifest gate. Remote Integrate validation remains blocked by its documented endpoint's 404 HTML response.
+2. [x] Implement and test WEB_SEARCH using the verified Jina Search API; keep it local pending credentials and Integrate request-builder validation.
+3. [x] Reverify TWITTER_SEARCH canonical status and implement/test a bounded optional X recent-search provider. Keep it local pending Integrate request-builder validation.
+4. Assess SENTIMENT_ANALYSIS, then continue the remaining Phase 1A candidates in listed order. For each, verify current canonical status/count, overlap, dependable evidence/input, evaluation fit, and implementation risk before choosing whether to build or defer.
+5. After candidate feasibility reviews, inspect the complete canonical registry for duplicates or near-equivalents to the six Phase 1B proposals; prepare selected proposal/evaluation drafts without representing them as canonical.
+6. Keep manifests unchanged until each candidate's route, request-builder mapping, response behavior, canonical name, and applicable validation gates are evidenced. Revisit remote validator recovery separately; its known 404 does not block local work but prevents claiming remote YAML validation passed.
+7. Finish the implementation/configuration guide and preflight review. Live Integrate registration remains a separate manual action requiring the user's explicit approval.
 
 The live registry check confirms canonical names and counts, not that any intent is underserved or suitable for this miner. The Integrate screen fields described by the user are used as the dashboard field inventory; no screenshot file was present in the checkout. Telegraph's public docs explain generic params but not nested per-property schemas, so the exact `input.query` builder behavior remains a dashboard validation question.

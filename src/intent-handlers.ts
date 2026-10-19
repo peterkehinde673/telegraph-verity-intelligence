@@ -6,6 +6,7 @@ import { researchSynthesis, type ResearchSynthesisOptions } from "./intents/rese
 import { newsHeadlines, type NewsHeadlinesOptions } from "./intents/news-headlines.js";
 import { newsSearch, type NewsSearchOptions } from "./intents/news-search.js";
 import { webSearch, type WebSearchOptions } from "./intents/web-search.js";
+import { twitterSearch, type TwitterSearchOptions } from "./intents/twitter-search.js";
 import { academicSearch, type AcademicSearchOptions } from "./intents/academic-search.js";
 import { contentExtraction, type ContentExtractionOptions } from "./intents/content-extraction.js";
 import { contentVerification, type ContentVerificationOptions } from "./intents/content-verification.js";
@@ -43,6 +44,7 @@ export interface IntentProviderDependencies {
   NEWS_HEADLINES?: NewsHeadlinesOptions;
   NEWS_SEARCH?: NewsSearchOptions;
   WEB_SEARCH?: WebSearchOptions;
+  TWITTER_SEARCH?: TwitterSearchOptions;
   ACADEMIC_SEARCH?: AcademicSearchOptions;
   CONTENT_EXTRACTION?: ContentExtractionOptions;
   CONTENT_VERIFICATION?: ContentVerificationOptions;
@@ -85,6 +87,11 @@ function defaultWebSearchOptions(): WebSearchOptions {
   return apiKey ? { apiKey } : {};
 }
 
+function defaultTwitterSearchOptions(): TwitterSearchOptions {
+  const bearerToken = process.env.X_API_BEARER_TOKEN?.trim();
+  return bearerToken ? { bearerToken } : {};
+}
+
 export function createIntentHandlers(
   providers: IntentProviderDependencies = {}
 ): Partial<Record<VerityIntent, IntentHandler>> {
@@ -104,6 +111,10 @@ export function createIntentHandlers(
     WEB_SEARCH: handler((input) => webSearch(
       stringInput(input, "query"),
       providers.WEB_SEARCH ?? defaultWebSearchOptions()
+    )),
+    TWITTER_SEARCH: handler((input) => twitterSearch(
+      stringInput(input, "query"),
+      providers.TWITTER_SEARCH ?? defaultTwitterSearchOptions()
     )),
     ACADEMIC_SEARCH: handler((input) => academicSearch(stringInput(input, "query"), providers.ACADEMIC_SEARCH ?? { searchImpl: crossrefSearch })),
     CONTENT_EXTRACTION: handler((input) => contentExtraction(stringInput(input, "source"), providers.CONTENT_EXTRACTION ?? { extractImpl: (source) => readUrl(source, process.env.JINA_API_KEY) })),

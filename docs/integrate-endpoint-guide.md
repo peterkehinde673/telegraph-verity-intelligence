@@ -106,4 +106,25 @@ Example of that configured-provider-missing response:
 
 The external Jina Search API credential is a server-side `JINA_API_KEY` environment secret. It is not Telegraph endpoint authentication and must not be placed in Integrate params, `miner.yaml`, or this guide. The current inbound miner endpoint remains unauthenticated per the existing server and manifest. The test suite exercises the WEB_SEARCH route with no key and provider behavior through controlled fixtures; it makes no live or billable Jina request.
 
-Before any future manifest edit, add `WEB_SEARCH` only to the shared endpoint's intent association, `input_schema.intent.enum`, and `semantics.supported_intents` after confirming Integrate can build the nested `input.query` request and validating the saved YAML. Keep both search intents out of the current manifests until those checks pass.
+Before any future manifest edit, add `WEB_SEARCH` only to the shared endpoint's intent association, `input_schema.intent.enum`, and `semantics.supported_intents` after confirming Integrate can build the nested `input.query` request and validating the saved YAML. Keep the search intents out of the current manifests until those checks pass.
+
+## TWITTER_SEARCH local endpoint mapping
+
+`TWITTER_SEARCH` also uses `POST /v1/intent` with JSON. The project-defined body is:
+
+```json
+{
+  "intent": "TWITTER_SEARCH",
+  "input": {
+    "query": "public X posts to find"
+  }
+}
+```
+
+Verity requires a non-empty query of at most 500 characters. With no `X_API_BEARER_TOKEN`, the route returns an `insufficient_evidence` result and makes no provider request. The token is a server-side runtime secret, not Integrate endpoint authentication, and must never be placed in endpoint params or either miner manifest.
+
+When configured, Verity calls X's official `GET https://api.x.com/2/tweets/search/recent` endpoint with a bearer token and requests at most 10 recent posts, author IDs/usernames, post text, and creation times. X documents recent search as covering the previous seven days and requires `max_results` between 10 and 100. Verity retains at most five well-formed records, each with an X post URL, ID, text, author handle when returned, provider timestamp when valid, and retrieval time in evidence. Returned posts are search results, not proof of their claims.
+
+X's current published pay-per-use rate is $0.005 per post returned, so one query may return up to 10 billable posts (up to $0.05 at that listed rate, subject to pricing changes). No live request or billable call was made. Configure `X_API_BEARER_TOKEN` only after setting an appropriate spending limit in X Developer Console. The provider uses a ten-second timeout, 512 KiB response cap, strict response validation, and sanitized abstention on API errors.
+
+Telegraph's registry confirms the canonical intent name, description, and current miner count, but does not publish an intent-specific schema. The request and response above are Verity contracts; Integrate nested input construction and saved YAML validation remain unverified. Keep `TWITTER_SEARCH` out of both manifests until those gates pass.
