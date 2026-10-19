@@ -142,7 +142,7 @@ The public live registry at <https://devnode.telegraphprotocol.com/engine/v1/int
 | `CONTRACT_OBLIGATION_AUDIT` | Yes | 13 | Deferred: the repo has no contract-aware parser or independent fulfillment records. Keyword extraction would not reliably resolve defined terms, cross-references, exceptions, amendments, or whether obligations were met. |
 | `SLA_COMPLIANCE` | Yes | 11 | Implemented locally for uptime arithmetic from caller-supplied full-period measurement totals only; no monitoring data, response-time, or resolution-time checks. Kept out of both manifests. |
 | `SHIPMENT_DELAY_RISK` | Yes | 10 | Deferred: no shipment/carrier/customs/port/weather integrations or calibrated historical delay outcomes are available; a forecast score would be unsupported. |
-| `FRAUD_DETECTION` | Yes | 29 | Purpose confirmed; evidence sources, scope, and overlap with security/risk handlers not yet assessed. |
+| `FRAUD_DETECTION` | Yes | 29 | Deferred: broad entity/transaction/action fraud probability has no defined domain, fraud-labeled outcomes, or calibrated evidence source here; adjacent cyber-reputation signals cannot be presented as fraud findings. |
 
 Current order of work:
 
@@ -154,8 +154,8 @@ Current order of work:
 6. [x] Assess CONTRACT_OBLIGATION_AUDIT: keep deferred until a supported structured contract parser/grounded extraction path and trusted fulfillment evidence are available.
 7. [x] Assess and implement a narrow SLA_COMPLIANCE uptime calculation using caller-supplied measurements; keep local and explicitly state data cannot be independently validated.
 8. [x] Assess SHIPMENT_DELAY_RISK: defer until carrier/customs/port/weather feeds and arrival-ground-truth data support a calibrated forecast.
-9. Continue with FRAUD_DETECTION in the master-plan order; then finish the Phase 1B duplicate review and prepare only evidence-supported proposals.
-10. After Phase 1A feasibility reviews, inspect the complete canonical registry for duplicates or near-equivalents to the six Phase 1B proposals; prepare selected proposal/evaluation drafts without representing them as canonical.
+9. [x] Assess FRAUD_DETECTION: defer until a specific fraud domain, reliable fraud-labeled evidence, and validated/calibrated evaluation set are selected.
+10. [ ] Inspect all six Phase 1B proposal concepts against the complete live canonical registry for exact and near-equivalent names; prepare only useful, non-duplicate proposals with evaluation/safety drafts, without representing them as canonical or submitting them.
 11. Keep manifests unchanged until each candidate's route, request-builder mapping, response behavior, canonical name, and applicable validation gates are evidenced. Revisit remote validator recovery separately; its known 404 does not block local work but prevents claiming remote YAML validation passed.
 12. Finish the implementation/configuration guide and preflight review. Live Integrate registration remains a separate manual action requiring the user's explicit approval.
 

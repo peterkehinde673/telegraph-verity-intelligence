@@ -104,8 +104,7 @@ Active plan: `.verity-work/MASTER_PLAN.md`. Season 2 has not started. The ten ta
 - **Completed and verified:** NEWS_SEARCH route preparation; commit `5ea6d78967e45efa1869a96a6f42709799fda49f` and CI run `39240080251` passed.
 - **Completed and CI-verified:** WEB_SEARCH with Jina Search, based on current canonical registry and official provider schema. Credential provisioning and Integrate request-building remain later deployment/manifest gates.
 - **Canonical and locally implemented:** NEWS_SEARCH, WEB_SEARCH, TWITTER_SEARCH, SENTIMENT_ANALYSIS, ONCHAIN_METRIC_VERIFY, SLA_COMPLIANCE. All remain absent from both miner manifests pending the specific integration gates recorded below.
-- **Canonical but deferred:** DOCUMENT_AUTHENTICITY, CONTRACT_OBLIGATION_AUDIT, and SHIPMENT_DELAY_RISK, pending the trusted verification, contract parser/fulfillment evidence, and logistics data/forecast outcomes described in their assessment notes.
-- **Awaiting feasibility review:** FRAUD_DETECTION.
+- **Canonical but deferred:** DOCUMENT_AUTHENTICITY, CONTRACT_OBLIGATION_AUDIT, SHIPMENT_DELAY_RISK, and FRAUD_DETECTION, pending the trusted verification, contract parser/fulfillment evidence, logistics data/forecast outcomes, and fraud-domain evidence/calibration described in their assessment notes.
 - **Still blocked for manifest integration:** NEWS_SEARCH and WEB_SEARCH until Integrate can build the nested project request and current miner YAML validation succeeds. The provider key must also be available externally before WEB_SEARCH is useful in a deployment.
 - **External:** The documented Integrate validator remains HTTP 404 HTML; local implementation proceeds, but remote YAML validation is not passed.
 
@@ -188,6 +187,15 @@ Active plan: `.verity-work/MASTER_PLAN.md`. Season 2 has not started. The ten ta
 - [x] Repository inventory found no shipment/container IDs, carrier or customs clients, port congestion feeds, weather integration, shipment records, forecast model, or historical arrival outcomes. No current independent evidence can support the requested risk probability.
 - [x] Deferred implementation rather than synthesize a risk score or misrepresent current-status data. Revisit once reliable route-specific signals and time-stamped arrival outcomes are available for calibration and tests. No handler, catalogue entry, or manifest entry was added.
 - [x] Continue to FRAUD_DETECTION in the master-plan order; this deferral does not block its independent assessment.
+- [x] Shipment-risk deferral commit `e5e030d` was pushed; exact GitHub Actions run `39265357079` passed: https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39265357079.
+
+## FRAUD_DETECTION feasibility (2026-10-19)
+
+- [x] Rechecked the live registry: exact name `FRAUD_DETECTION`, `canonical: true`, currently 29 miners. Its scope covers assessing how likely a specific entity, transaction, or action is fraudulent; it distinguishes transaction-status lookup. Source: https://devnode.telegraphprotocol.com/engine/v1/intents.
+- [x] Overlap review found AbuseIPDB IP reputation, AlienVault OTX indicator intelligence, MalwareBazaar malware hashes, email DNS security, and content moderation. These are cyber/threat signals and do not provide fraud-labeled transaction/action evidence; no payments, identity, chargeback, or fraud-outcome source/model is present.
+- [x] Deferred implementation to avoid relabeling adjacent risk signals as fraud or fabricating a fraud probability. Revisit with a defined fraud domain, lawful and reliable feature data, reviewed labels, and temporal validation/calibration set. No new handler or manifest entry was added.
+- [x] All ten Phase 1A candidates have now been assessed in master-plan order: six local implementations (NEWS_SEARCH, WEB_SEARCH, TWITTER_SEARCH, SENTIMENT_ANALYSIS, ONCHAIN_METRIC_VERIFY, SLA_COMPLIANCE) and four evidence-based deferrals (DOCUMENT_AUTHENTICITY, CONTRACT_OBLIGATION_AUDIT, SHIPMENT_DELAY_RISK, FRAUD_DETECTION).
+- [ ] Complete Phase 1B registry duplicate review and determine whether any non-duplicate proposal is useful enough to draft; canonical submission requires Telegraph's separate review.
 
 ## Batch 4 — TWITTER_SEARCH implementation (2026-10-19)
 
