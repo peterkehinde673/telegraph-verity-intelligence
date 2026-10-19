@@ -47,5 +47,8 @@ Active plan: `.verity-work/MASTER_PLAN.md`. Season 2 has not started. The ten ta
 - [x] Confirmed `NEWS_SEARCH`, `WEB_SEARCH`, `TWITTER_SEARCH`, `SENTIMENT_ANALYSIS`, `DOCUMENT_AUTHENTICITY`, `ONCHAIN_METRIC_VERIFY`, `CONTRACT_OBLIGATION_AUDIT`, `SLA_COMPLIANCE`, `SHIPMENT_DELAY_RISK`, and `FRAUD_DETECTION` appear in the published Telegraph Season II intent catalogue.
 - [x] Corrected the master-plan candidate list to avoid treating unverified names as canonical candidates.
 - [ ] Retrieve the live canonical registry and per-intent miner coverage. The public catalogue lists mission usage, not miner competition; the live registry endpoint was inaccessible during this check.
-- [ ] Select the first implementation candidate only after current registry/coverage checks and provider/evaluation feasibility review.
-- [ ] No new source handler or manifest intent has been added in this batch yet; the existing 29-intent manifest remains unchanged.
+- [x] Selected `NEWS_SEARCH` for an isolated implementation prototype because it is documented as a canonical Telegraph intent and the existing public news RSS provider can supply source-backed results. Live miner coverage is still unverified; this is not a claim of zero competition.
+- [x] Added an isolated `NEWS_SEARCH` handler, sanitized provider failures, bounded/validated result selection, and tests for evidence, empty input, invalid results, result limits and abstention.
+- [x] Wired the handler and added the intent to the local TypeScript catalogue; updated catalogue/router tests for 30 local intents.
+- [ ] CI for the implementation commit is running; do not proceed to YAML integration until green.
+- [ ] Verify live canonical registry and miner count, then update `miner.yaml` and `miner.yaml.template` consistently only after CI passes. Until then both registration manifests remain unchanged.
