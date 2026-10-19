@@ -41,3 +41,11 @@ Active plan: `.verity-work/MASTER_PLAN.md`. Season 2 has not started. The ten ta
 - Preserve all existing intents, especially any currently ranked #1–#5; changes require regression coverage.
 - No WASM/scorer changes, score manipulation, deployment, live registration, on-chain transaction, release publication or production configuration change without separate explicit approval.
 - Do not claim live registration, dashboard state, competition counts, or score/rank gains without direct current evidence.
+
+## Batch A — candidate verification
+
+- [x] Confirmed `NEWS_SEARCH`, `WEB_SEARCH`, `TWITTER_SEARCH`, `SENTIMENT_ANALYSIS`, `DOCUMENT_AUTHENTICITY`, `ONCHAIN_METRIC_VERIFY`, `CONTRACT_OBLIGATION_AUDIT`, `SLA_COMPLIANCE`, `SHIPMENT_DELAY_RISK`, and `FRAUD_DETECTION` appear in the published Telegraph Season II intent catalogue.
+- [x] Corrected the master-plan candidate list to avoid treating unverified names as canonical candidates.
+- [ ] Retrieve the live canonical registry and per-intent miner coverage. The public catalogue lists mission usage, not miner competition; the live registry endpoint was inaccessible during this check.
+- [ ] Select the first implementation candidate only after current registry/coverage checks and provider/evaluation feasibility review.
+- [ ] No new source handler or manifest intent has been added in this batch yet; the existing 29-intent manifest remains unchanged.
