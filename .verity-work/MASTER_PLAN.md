@@ -134,7 +134,7 @@ The public live registry at <https://devnode.telegraphprotocol.com/engine/v1/int
 | Master-plan candidate | Live canonical | Current miners | Work status |
 | --- | --- | ---: | --- |
 | `NEWS_SEARCH` | Yes | 18 | Implemented locally; route guide and real-server test completed. Manifest remains gated on verifying Integrate can construct nested `input.query` and validating the saved config. |
-| `WEB_SEARCH` | Yes | 25 | Purpose confirmed; overlap, safe source, and implementation feasibility not yet assessed. |
+| `WEB_SEARCH` | Yes | 25 | Implemented and tested locally using Jina Search's attributable result API. It uses `JINA_API_KEY`, abstains without it, and remains out of manifests pending credential readiness and Integrate request-builder validation. |
 | `TWITTER_SEARCH` | Yes | 10 | Purpose confirmed; access to attributable public posts and implementation feasibility not yet assessed. |
 | `SENTIMENT_ANALYSIS` | Yes | 19 | Purpose confirmed; overlap and evaluator-compatible local contract not yet assessed. |
 | `DOCUMENT_AUTHENTICITY` | Yes | 12 | Purpose confirmed; verified document-signature/timestamp data source and implementation feasibility not yet assessed. |
@@ -147,7 +147,7 @@ The public live registry at <https://devnode.telegraphprotocol.com/engine/v1/int
 Current order of work:
 
 1. [x] Complete NEWS_SEARCH endpoint preparation: verify the real server route and request/response behavior, document Integrate fields, add route-level coverage, and preserve the 29-intent manifest gate. Remote Integrate validation remains blocked by its documented endpoint's 404 HTML response.
-2. Assess the remaining nine verified candidates against existing handlers, dependable attributable inputs, evaluation criteria, and safety boundaries; choose only a small feasible next batch.
+2. [x] Implement and test WEB_SEARCH using the verified Jina Search API. Continue feasibility assessment of the remaining eight candidates against overlap, dependable inputs, evaluation criteria, and safety boundaries.
 3. Inspect the complete canonical registry for duplicate or near-equivalent entries for the six proposed concepts, then prepare selected proposal drafts and evaluation plans. Do not represent proposals as canonical.
 4. Keep candidate manifests unchanged until the candidate's real route, request builder mapping, response contract, all manifest lists, and applicable validation checks are evidenced.
 5. Revisit remote validator recovery separately; its known 404 does not block local implementation or tests, but it blocks claiming remote YAML validation passed.

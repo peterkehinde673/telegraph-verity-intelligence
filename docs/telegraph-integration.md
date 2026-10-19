@@ -2,7 +2,7 @@
 
 ## Current state
 
-The local TypeScript catalogue contains 30 handler intents. The two miner manifests still advertise the original 29-intent set; `NEWS_SEARCH` remains local while its Integrate request-builder behavior is unverified.
+The local TypeScript catalogue contains 31 handler intents. The two miner manifests still advertise the original 29-intent set; `NEWS_SEARCH` and `WEB_SEARCH` remain local while Integrate request-builder behavior and deployment provider configuration are unverified.
 
 The Telegraph Miner YAML is intentionally **not** being registered yet.
 

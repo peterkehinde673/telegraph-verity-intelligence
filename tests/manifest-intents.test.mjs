@@ -20,15 +20,16 @@ function manifestIntentLists(text) {
   return [endpoint, inputSchema, supported];
 }
 
-test("NEWS_SEARCH stays local until manifest contract approval; original 29 stay consistent", async () => {
-  const expected = VERITY_INTENTS.filter(intent => intent !== "NEWS_SEARCH");
+test("new search intents stay local until manifest gates pass; original 29 stay consistent", async () => {
+  const unadvertised = ["NEWS_SEARCH", "WEB_SEARCH"];
+  const expected = VERITY_INTENTS.filter(intent => !unadvertised.includes(intent));
   assert.equal(expected.length, 29);
 
   for (const path of ["miner.yaml", "miner.yaml.template"]) {
     const text = await readFile(path, "utf8");
     for (const list of manifestIntentLists(text)) {
       assert.deepEqual(list, expected, `${path} intent list`);
-      assert.equal(list.includes("NEWS_SEARCH"), false);
+      for (const intent of unadvertised) assert.equal(list.includes(intent), false);
     }
   }
 });

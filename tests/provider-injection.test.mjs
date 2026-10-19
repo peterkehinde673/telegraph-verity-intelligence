@@ -25,6 +25,25 @@ test("provider dependencies can be injected without changing the Intent contract
   assert.equal(result?.confidence > 0, true);
 });
 
+test("WEB_SEARCH dispatches through its injected attributable search source", async () => {
+  const handlers = createIntentHandlers({
+    WEB_SEARCH: {
+      searchImpl: async query => [{
+        title: `Result for ${query}`,
+        url: "https://search.example/result",
+        source_id: "test-web:result",
+        source_type: "test-web-search"
+      }]
+    }
+  });
+  const result = await handlers.WEB_SEARCH?.({ query: "fresh information" });
+
+  assert.equal(result?.intent, "WEB_SEARCH");
+  assert.equal(result?.verdict, "confirmed");
+  assert.equal(result?.answer.results[0]?.title, "Result for fresh information");
+  assert.equal(result?.evidence[0]?.source_id, "test-web:result");
+});
+
 test("unconfigured providers continue to abstain", async () => {
   const handlers = createIntentHandlers();
   const result = await handlers.AI_TEXT_DETECTION?.({ text: "Example text" });

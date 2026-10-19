@@ -5,6 +5,7 @@ import { researchQuery, type ResearchQueryOptions } from "./intents/research-que
 import { researchSynthesis, type ResearchSynthesisOptions } from "./intents/research-synthesis.js";
 import { newsHeadlines, type NewsHeadlinesOptions } from "./intents/news-headlines.js";
 import { newsSearch, type NewsSearchOptions } from "./intents/news-search.js";
+import { webSearch, type WebSearchOptions } from "./intents/web-search.js";
 import { academicSearch, type AcademicSearchOptions } from "./intents/academic-search.js";
 import { contentExtraction, type ContentExtractionOptions } from "./intents/content-extraction.js";
 import { contentVerification, type ContentVerificationOptions } from "./intents/content-verification.js";
@@ -41,6 +42,7 @@ export interface IntentProviderDependencies {
   RESEARCH_SYNTHESIS?: ResearchSynthesisOptions;
   NEWS_HEADLINES?: NewsHeadlinesOptions;
   NEWS_SEARCH?: NewsSearchOptions;
+  WEB_SEARCH?: WebSearchOptions;
   ACADEMIC_SEARCH?: AcademicSearchOptions;
   CONTENT_EXTRACTION?: ContentExtractionOptions;
   CONTENT_VERIFICATION?: ContentVerificationOptions;
@@ -78,6 +80,11 @@ function handler(
   return fn;
 }
 
+function defaultWebSearchOptions(): WebSearchOptions {
+  const apiKey = process.env.JINA_API_KEY?.trim();
+  return apiKey ? { apiKey } : {};
+}
+
 export function createIntentHandlers(
   providers: IntentProviderDependencies = {}
 ): Partial<Record<VerityIntent, IntentHandler>> {
@@ -94,6 +101,10 @@ export function createIntentHandlers(
     }),
     NEWS_HEADLINES: handler((input) => newsHeadlines(stringInput(input, "topic"), providers.NEWS_HEADLINES ?? { fetchImpl: googleNewsRss })),
     NEWS_SEARCH: handler((input) => newsSearch(stringInput(input, "query"), providers.NEWS_SEARCH ?? { searchImpl: googleNewsRss })),
+    WEB_SEARCH: handler((input) => webSearch(
+      stringInput(input, "query"),
+      providers.WEB_SEARCH ?? defaultWebSearchOptions()
+    )),
     ACADEMIC_SEARCH: handler((input) => academicSearch(stringInput(input, "query"), providers.ACADEMIC_SEARCH ?? { searchImpl: crossrefSearch })),
     CONTENT_EXTRACTION: handler((input) => contentExtraction(stringInput(input, "source"), providers.CONTENT_EXTRACTION ?? { extractImpl: (source) => readUrl(source, process.env.JINA_API_KEY) })),
     CONTENT_VERIFICATION: handler((input) => contentVerification(stringInput(input, "content"), providers.CONTENT_VERIFICATION)),

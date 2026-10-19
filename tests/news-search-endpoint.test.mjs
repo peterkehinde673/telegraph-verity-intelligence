@@ -15,7 +15,7 @@ async function unusedPort() {
   return address.port;
 }
 
-test("NEWS_SEARCH is reachable through the real POST /v1/intent route", async () => {
+test("search intents are reachable through the real POST /v1/intent route", async () => {
   const port = await unusedPort();
   const child = spawn(process.execPath, ["dist/server.js"], {
     cwd: process.cwd(),
@@ -55,6 +55,27 @@ test("NEWS_SEARCH is reachable through the real POST /v1/intent route", async ()
       answer: { query: "", results: [] },
       evidence: [],
       uncertainty: [{ code: "empty_query", message: "A news search query is required." }]
+    });
+
+    const webResponse = await fetch(`http://127.0.0.1:${port}/v1/intent`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ intent: "WEB_SEARCH", input: { query: "current climate policy" } })
+    });
+    assert.equal(webResponse.status, 200);
+    const webResult = await webResponse.json();
+    assert.match(webResult.retrieved_at, /^\d{4}-\d{2}-\d{2}T.*Z$/);
+    delete webResult.retrieved_at;
+    assert.deepEqual(webResult, {
+      intent: "WEB_SEARCH",
+      verdict: "insufficient_evidence",
+      confidence: 0,
+      answer: { query: "current climate policy", results: [] },
+      evidence: [],
+      uncertainty: [{
+        code: "web_search_source_unconfigured",
+        message: "A Jina Search API key is required to search the web in this deployment."
+      }]
     });
   } finally {
     if (child.exitCode === null) {

@@ -67,7 +67,7 @@ Active plan: `.verity-work/MASTER_PLAN.md`. Season 2 has not started. The ten ta
 - [x] Hardened validator response parsing to reject non-JSON, malformed JSON, and JSON missing the documented boolean `valid` field without echoing the response body. Added unit coverage for those failures and the documented response envelope.
 - [x] Checks: `npm run typecheck`, `npm run build`, `npm test` (285 passing), `npm run preflight:registration`, and `git diff --check` passed. The no-credential `npm run validate:miner` invocation exits 1 with a sanitized HTTP 404 / HTML diagnostic; validation did not occur.
 - [ ] Validator route remains unavailable. Safe manual next step: test the unchanged YAML in Telegraph Integrate's documented validation UI without registering; if it fails too, request a restored/current API endpoint from Telegraph. Do not change the validator URL or add authentication based on a guess.
-- [x] Investigation commit `e78dfd213a5c81fb5523fdbda8634837ca9f37e0` was pushed; GitHub Actions CI passed (typecheck, build, tests, Telegraph canonical check, template preflight): https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39227519646. Keep `NEWS_SEARCH` unadvertised until Telegraph confirms its per-intent contract.
+- [x] Investigation commit `e78dfd213a5c81fb5523fdbda8634837ca9f37e0` was pushed; GitHub Actions CI passed (typecheck, build, tests, Telegraph canonical check, template preflight): https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39227519646. Keep `NEWS_SEARCH` unadvertised until the request-builder and YAML validation gates are met.
 
 ## Batch 2 — NEWS_SEARCH endpoint preparation (2026-10-19)
 
@@ -84,7 +84,35 @@ Active plan: `.verity-work/MASTER_PLAN.md`. Season 2 has not started. The ten ta
 - [x] `npm run typecheck`, `npm run build`, `npm test` (286 passing), `node --test tests/news-search-endpoint.test.mjs` (1 passing), `npm run verify:telegraph` (all 30 local names canonical), `npm run preflight:miner`, `npm run preflight:registration`, `npm run smoke:render` (production service healthy with the existing 29 intents and three provider-backed checks), and `git diff --check` passed.
 - [ ] `npm run validate:miner` did not validate: the documented endpoint returned HTTP 404 HTML (`text/html`), and the safe parser produced no validation result. No auth, endpoint substitution, or HTML bypass was used.
 - [x] Reviewed the complete tracked diff and both new files; the manifests and production settings are unchanged, and no credentials or private evaluation data were added.
-- [ ] Commit and push only if the checks pass, then confirm remote SHA and Actions result.
+- [x] Commit `5ea6d78967e45efa1869a96a6f42709799fda49f` was pushed to the target branch; remote SHA matched. GitHub Actions run `39240080251` passed: https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/39240080251.
+
+## Batch 3 — WEB_SEARCH implementation (in progress, 2026-10-19)
+
+- [x] Reverified live canonical `WEB_SEARCH`; registry returned canonical `true`, 25 miners, and a description for current/live/external web information. It is distinct from `NEWS_SEARCH` and Verity's Wikipedia-backed `RESEARCH_QUERY`.
+- [x] Verified provider feasibility against Jina's official [Reader/Search docs](https://jina.ai/reader/) and [OpenAPI](https://docs.jina.ai/openapi.json): the Search API at `https://s.jina.ai/` supports query search and JSON result records including URL, title, description, and publication time. Jina requires an API key and documents token usage/rate limits. No live or billable request was made.
+- [x] Began an isolated handler/provider implementation with optional `JINA_API_KEY`, bounded inputs/results/response bytes, HTTP(S)-only source URLs, provenance, timeout, safe errors, and abstention. It is not included in either miner manifest.
+- [x] Added provider/handler tests for normal and empty responses, malformed inputs/envelopes, unsafe result URLs, missing credentials, timeouts as passed to fetch, and sanitized provider failures.
+- [x] `npm run typecheck`, `npm run build`, focused WEB_SEARCH/provider/dispatch/manifest tests (19 passing), and `npm test` (300 passing) passed.
+- [x] `npm run verify:telegraph` and `npm run preflight:registration` passed; all 31 local catalogue names are canonical and the unchanged template passed its repository preflight.
+- [x] `npm run smoke:render` passed against the existing production service: it remains healthy with 29 intents and all 12 safe validation cases and three live provider-backed smoke cases passed. No deployment or production setting was changed.
+- [ ] `npm run validate:miner` exited 1: the documented endpoint returned HTTP 404 HTML, so no YAML validation result was produced. Credential variables were removed; no fallback URL or HTML bypass was used.
+- [x] Reviewed the full tracked and new-file diff, verified both miner manifests are unchanged, ran whitespace and secret-pattern checks, and confirmed no credentials or private evaluation data were added.
+- [ ] Commit/push this isolated batch and confirm remote SHA and CI.
+
+### Current classification
+
+- **Completed and verified:** NEWS_SEARCH route preparation; commit `5ea6d78967e45efa1869a96a6f42709799fda49f` and CI run `39240080251` passed.
+- **Implemented and locally verified, pending push/CI:** WEB_SEARCH with Jina Search, based on current canonical registry and official provider schema. Credential provisioning and Integrate request-building remain later deployment/manifest gates.
+- **Canonical but feasibility not established:** TWITTER_SEARCH, SENTIMENT_ANALYSIS, DOCUMENT_AUTHENTICITY, ONCHAIN_METRIC_VERIFY, CONTRACT_OBLIGATION_AUDIT, SLA_COMPLIANCE, SHIPMENT_DELAY_RISK, FRAUD_DETECTION.
+- **Still blocked for manifest integration:** NEWS_SEARCH and WEB_SEARCH until Integrate can build the nested project request and current miner YAML validation succeeds. The provider key must also be available externally before WEB_SEARCH is useful in a deployment.
+- **External:** The documented Integrate validator remains HTTP 404 HTML; local implementation proceeds, but remote YAML validation is not passed.
+
+### Implementation and response limits
+
+- The provider adapter uses the official Jina Search API's JSON response envelope and `no-content` mode. It requires `JINA_API_KEY`, uses a 10-second request timeout, caps response bytes at 512 KiB and results at 10, and keeps only bounded title/URL/snippet fields with valid HTTP(S) links.
+- `publishedTime` is retained when parseable. The response records source URLs/IDs, provider type, and retrieval time. Results are not treated as claim verification.
+- Tests use mocked provider responses only. No Jina credential was read, no live Jina query was made, and no billable search was triggered.
+- Both search intents remain out of `miner.yaml` and `miner.yaml.template`; the manifests still contain the original 29. The local catalogue contains 31.
 
 ### Work classification
 
