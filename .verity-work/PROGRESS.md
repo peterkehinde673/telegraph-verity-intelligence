@@ -154,6 +154,31 @@ Active plan: `.verity-work/MASTER_PLAN.md`. Season 2 has not started. The ten ta
 - X's current listed Posts Read price is $0.005 per returned post: https://docs.x.com/x-api/getting-started/pricing. Actual prices can change; at `max_results=10`, the API may return up to 10 billable posts/request.
 - Project route and Integrate fields are described in `docs/integrate-endpoint-guide.md`. This project contract is not a Telegraph guarantee.
 
+## Batch 5 — SENTIMENT_ANALYSIS implementation (2026-10-19)
+
+- [x] Rechecked Telegraph's live registry: HTTP 200, 134 entries. `SENTIMENT_ANALYSIS` is exact/canonical, lists 19 miners, and its description expects user-supplied text and a sentiment/tone classification. It distinguishes sentiment from category classification. No underserved claim is made.
+- [x] Inspected repo overlap: no sentiment handler, model, or sentiment-specific classifier tests existed. The closest local capability is category/moderation classification, which solves a different task.
+- [x] Verified the provider/model with official Hugging Face sources: text-classification docs recommend CardiffNLP's model for tweets; the model card maps negative/neutral/positive and states English suitability; public Hub metadata for `cardiffnlp/twitter-roberta-base-sentiment-latest` returned a live `hf-inference` mapping on 2026-10-19. Hugging Face docs specify text-classification input/output and bearer-token permission. The official HF JavaScript client source establishes the router URL pattern. No inference call or token access occurred.
+- [x] Implemented `SENTIMENT_ANALYSIS` with a runtime-only `HF_TOKEN`, no outbound request when unconfigured, 4,000-character input cap, ten-second timeout, 64 KiB response cap, redirect rejection, score labels/range/normalization checks, sanitized failure abstention, and model URL/source attribution. It returns model-reported negative/neutral/positive scores and flags that they are not calibrated probabilities; below 0.55 it reports `uncertain`. The model is English/social-media oriented and the implementation reports polarity only, not discrete emotions or reliable non-English results.
+- [x] Added mocked provider and handler tests for normal/empty/malformed/error/oversize provider cases, input validation, empty/unconfigured source, uncertainty, provenance, and sanitized abstention. Added dispatch, manifest regression, and route tests. `SENTIMENT_ANALYSIS` remains absent from both manifests; existing 29 advertised intents are unchanged.
+- [x] Focused checks passed: `npm run typecheck`, `npm run build`, and 15 targeted provider/handler/catalogue/manifest/route tests.
+- [x] `npm run typecheck`, `npm run build`, and full `npm test` passed (317 tests).
+- [x] `npm run preflight:registration` passed: all 33 local intents are currently canonical and the template preflight passed; both manifest files remain unchanged at the original 29.
+- [x] `npm run smoke:render` passed against the existing production service: healthy, 29 advertised intents, 12 safe validation cases, three live provider cases. No deployment or production configuration was changed.
+- [x] `git diff --check` passed; full review found no credential values or miner manifest changes.
+- [ ] `npm run validate:miner` again returned HTTP 404 HTML rather than JSON; no remote YAML validation result was produced.
+- [ ] Commit, push, and verify exact-commit GitHub Actions result.
+- [ ] Manifest gate remains closed: Telegraph does not publish a per-intent schema; Integrate nested `{ intent, input: { text } }` construction and saved YAML validation remain unverified. Provider token access/credits and external text processing require separate operational review before enabling.
+
+### SENTIMENT_ANALYSIS sources
+
+- Telegraph live registry: https://devnode.telegraphprotocol.com/engine/v1/intents (`SENTIMENT_ANALYSIS`, canonical, 19 miners; rechecked 2026-10-19).
+- Hugging Face Text Classification API: https://huggingface.co/docs/inference-providers/tasks/text-classification.
+- CardiffNLP model card (English suitability and negative/neutral/positive labels): https://huggingface.co/cardiffnlp/twitter-roberta-base-sentiment-latest.
+- Live model/provider mapping, read from Hugging Face Hub public metadata: https://huggingface.co/api/models/cardiffnlp/twitter-roberta-base-sentiment-latest?expand%5B%5D=pipeline_tag&expand%5B%5D=inferenceProviderMapping (pipeline `text-classification`, `hf-inference` status `live`; no inference request made).
+- Hugging Face client route/response behavior: https://github.com/huggingface/huggingface.js/blob/main/packages/inference/src/providers/hf-inference.ts.
+- Hugging Face provider pricing/credits: https://huggingface.co/docs/inference-providers/pricing.
+
 ### Relevant sources
 
 - Live registry: https://devnode.telegraphprotocol.com/engine/v1/intents

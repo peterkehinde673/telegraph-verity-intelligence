@@ -98,6 +98,27 @@ test("search intents are reachable through the real POST /v1/intent route", asyn
         message: "An X API bearer token is required to search public X posts in this deployment."
       }]
     });
+
+    const sentimentResponse = await fetch(`http://127.0.0.1:${port}/v1/intent`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ intent: "SENTIMENT_ANALYSIS", input: { text: "This is a pleasant experience." } })
+    });
+    assert.equal(sentimentResponse.status, 200);
+    const sentimentResult = await sentimentResponse.json();
+    assert.match(sentimentResult.retrieved_at, /^\d{4}-\d{2}-\d{2}T.*Z$/);
+    delete sentimentResult.retrieved_at;
+    assert.deepEqual(sentimentResult, {
+      intent: "SENTIMENT_ANALYSIS",
+      verdict: "insufficient_evidence",
+      confidence: 0,
+      answer: { text: "This is a pleasant experience.", sentiment: null },
+      evidence: [],
+      uncertainty: [{
+        code: "sentiment_source_unconfigured",
+        message: "A Hugging Face Inference Providers token is required to classify text in this deployment."
+      }]
+    });
   } finally {
     if (child.exitCode === null) {
       const exitPromise = new Promise(resolve => child.once("exit", resolve));

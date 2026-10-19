@@ -7,6 +7,7 @@ import { newsHeadlines, type NewsHeadlinesOptions } from "./intents/news-headlin
 import { newsSearch, type NewsSearchOptions } from "./intents/news-search.js";
 import { webSearch, type WebSearchOptions } from "./intents/web-search.js";
 import { twitterSearch, type TwitterSearchOptions } from "./intents/twitter-search.js";
+import { sentimentAnalysis, type SentimentAnalysisOptions } from "./intents/sentiment-analysis.js";
 import { academicSearch, type AcademicSearchOptions } from "./intents/academic-search.js";
 import { contentExtraction, type ContentExtractionOptions } from "./intents/content-extraction.js";
 import { contentVerification, type ContentVerificationOptions } from "./intents/content-verification.js";
@@ -45,6 +46,7 @@ export interface IntentProviderDependencies {
   NEWS_SEARCH?: NewsSearchOptions;
   WEB_SEARCH?: WebSearchOptions;
   TWITTER_SEARCH?: TwitterSearchOptions;
+  SENTIMENT_ANALYSIS?: SentimentAnalysisOptions;
   ACADEMIC_SEARCH?: AcademicSearchOptions;
   CONTENT_EXTRACTION?: ContentExtractionOptions;
   CONTENT_VERIFICATION?: ContentVerificationOptions;
@@ -92,6 +94,11 @@ function defaultTwitterSearchOptions(): TwitterSearchOptions {
   return bearerToken ? { bearerToken } : {};
 }
 
+function defaultSentimentAnalysisOptions(): SentimentAnalysisOptions {
+  const token = process.env.HF_TOKEN?.trim();
+  return token ? { token } : {};
+}
+
 export function createIntentHandlers(
   providers: IntentProviderDependencies = {}
 ): Partial<Record<VerityIntent, IntentHandler>> {
@@ -115,6 +122,10 @@ export function createIntentHandlers(
     TWITTER_SEARCH: handler((input) => twitterSearch(
       stringInput(input, "query"),
       providers.TWITTER_SEARCH ?? defaultTwitterSearchOptions()
+    )),
+    SENTIMENT_ANALYSIS: handler((input) => sentimentAnalysis(
+      stringInput(input, "text"),
+      providers.SENTIMENT_ANALYSIS ?? defaultSentimentAnalysisOptions()
     )),
     ACADEMIC_SEARCH: handler((input) => academicSearch(stringInput(input, "query"), providers.ACADEMIC_SEARCH ?? { searchImpl: crossrefSearch })),
     CONTENT_EXTRACTION: handler((input) => contentExtraction(stringInput(input, "source"), providers.CONTENT_EXTRACTION ?? { extractImpl: (source) => readUrl(source, process.env.JINA_API_KEY) })),

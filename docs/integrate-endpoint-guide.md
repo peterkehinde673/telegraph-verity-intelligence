@@ -128,3 +128,22 @@ When configured, Verity calls X's official `GET https://api.x.com/2/tweets/searc
 X's current published pay-per-use rate is $0.005 per post returned, so one query may return up to 10 billable posts (up to $0.05 at that listed rate, subject to pricing changes). No live request or billable call was made. Configure `X_API_BEARER_TOKEN` only after setting an appropriate spending limit in X Developer Console. The provider uses a ten-second timeout, 512 KiB response cap, strict response validation, and sanitized abstention on API errors.
 
 Telegraph's registry confirms the canonical intent name, description, and current miner count, but does not publish an intent-specific schema. The request and response above are Verity contracts; Integrate nested input construction and saved YAML validation remain unverified. Keep `TWITTER_SEARCH` out of both manifests until those gates pass.
+
+## SENTIMENT_ANALYSIS local endpoint mapping
+
+This intent uses the shared route:
+
+```json
+{
+  "intent": "SENTIMENT_ANALYSIS",
+  "input": {
+    "text": "The service was helpful and the result arrived quickly."
+  }
+}
+```
+
+The local handler accepts non-empty text up to 4,000 characters. With no server-side `HF_TOKEN`, it returns an `insufficient_evidence` response without contacting a provider. When configured, the token must have Hugging Face Inference Providers permission; it is a server-side secret, not incoming endpoint authentication, and must not be placed in Integrate params or a miner manifest.
+
+The configured provider sends the text to Hugging Face's inference router and uses `cardiffnlp/twitter-roberta-base-sentiment-latest`. The response returns one of `negative`, `neutral`, or `positive`, the provider model scores, and model provenance. This model card says the model is suitable for English and was trained on social media text; this implementation does not claim a separate emotion taxonomy or reliable performance for other languages/domains. The model's score is returned as reported and is not a calibrated probability. The no-provider sample contract is `verdict: insufficient_evidence`, `confidence: 0`, `answer: { text, sentiment: null }`, and empty evidence.
+
+Hugging Face Inference Providers may use monthly included credits and pay-as-you-go billing after credits are exhausted; current account terms/limits can change. No inference request was made for this implementation or tests. Configure account controls and consider the external text processing before setting `HF_TOKEN`. Telegraph's registry confirms the canonical intent name, purpose, and current miner count but does not publish a per-intent schema. Keep this intent out of both manifests pending Integrate nested-input and YAML validation.

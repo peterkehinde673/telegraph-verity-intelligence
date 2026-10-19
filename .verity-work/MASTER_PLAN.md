@@ -136,7 +136,7 @@ The public live registry at <https://devnode.telegraphprotocol.com/engine/v1/int
 | `NEWS_SEARCH` | Yes | 18 | Implemented locally; route guide and real-server test completed. Manifest remains gated on verifying Integrate can construct nested `input.query` and validating the saved config. |
 | `WEB_SEARCH` | Yes | 25 | Implemented and tested locally using Jina Search's attributable result API. It uses `JINA_API_KEY`, abstains without it, and remains out of manifests pending credential readiness and Integrate request-builder validation. |
 | `TWITTER_SEARCH` | Yes | 10 | Implemented locally using X recent search; the API's seven-day window, bearer requirement, minimum 10-result request, response structure, and current per-post pricing are documented. Not in manifests. |
-| `SENTIMENT_ANALYSIS` | Yes | 19 | Purpose confirmed; overlap and evaluator-compatible local contract not yet assessed. |
+| `SENTIMENT_ANALYSIS` | Yes | 19 | Implemented locally with an optional Hugging Face CardiffNLP model. English three-way sentiment polarity only; provider scores are uncalibrated and emotion categories are not claimed. Not in manifests. |
 | `DOCUMENT_AUTHENTICITY` | Yes | 12 | Purpose confirmed; verified document-signature/timestamp data source and implementation feasibility not yet assessed. |
 | `ONCHAIN_METRIC_VERIFY` | Yes | 34 | Purpose confirmed; chain/RPC coverage, block anchoring, and implementation feasibility not yet assessed. |
 | `CONTRACT_OBLIGATION_AUDIT` | Yes | 13 | Purpose confirmed; overlap with text/document handlers and contract/evaluation scope not yet assessed. |
@@ -149,9 +149,10 @@ Current order of work:
 1. [x] Complete NEWS_SEARCH endpoint preparation and preserve the original 29-intent manifest gate. Remote Integrate validation remains blocked by its documented endpoint's 404 HTML response.
 2. [x] Implement and test WEB_SEARCH using the verified Jina Search API; keep it local pending credentials and Integrate request-builder validation.
 3. [x] Reverify TWITTER_SEARCH canonical status and implement/test a bounded optional X recent-search provider. Keep it local pending Integrate request-builder validation.
-4. Assess SENTIMENT_ANALYSIS, then continue the remaining Phase 1A candidates in listed order. For each, verify current canonical status/count, overlap, dependable evidence/input, evaluation fit, and implementation risk before choosing whether to build or defer.
-5. After candidate feasibility reviews, inspect the complete canonical registry for duplicates or near-equivalents to the six Phase 1B proposals; prepare selected proposal/evaluation drafts without representing them as canonical.
-6. Keep manifests unchanged until each candidate's route, request-builder mapping, response behavior, canonical name, and applicable validation gates are evidenced. Revisit remote validator recovery separately; its known 404 does not block local work but prevents claiming remote YAML validation passed.
-7. Finish the implementation/configuration guide and preflight review. Live Integrate registration remains a separate manual action requiring the user's explicit approval.
+4. [x] Verify and implement SENTIMENT_ANALYSIS using a real, optional model provider; keep it local pending Integrate schema/request-builder validation.
+5. Assess DOCUMENT_AUTHENTICITY, then continue ONCHAIN_METRIC_VERIFY, CONTRACT_OBLIGATION_AUDIT, SLA_COMPLIANCE, SHIPMENT_DELAY_RISK, and FRAUD_DETECTION in the master-plan order. For each, verify canonical status/count, overlap, dependable evidence/input, evaluation fit, and implementation risk before choosing whether to build or defer.
+6. After Phase 1A feasibility reviews, inspect the complete canonical registry for duplicates or near-equivalents to the six Phase 1B proposals; prepare selected proposal/evaluation drafts without representing them as canonical.
+7. Keep manifests unchanged until each candidate's route, request-builder mapping, response behavior, canonical name, and applicable validation gates are evidenced. Revisit remote validator recovery separately; its known 404 does not block local work but prevents claiming remote YAML validation passed.
+8. Finish the implementation/configuration guide and preflight review. Live Integrate registration remains a separate manual action requiring the user's explicit approval.
 
 The live registry check confirms canonical names and counts, not that any intent is underserved or suitable for this miner. The Integrate screen fields described by the user are used as the dashboard field inventory; no screenshot file was present in the checkout. Telegraph's public docs explain generic params but not nested per-property schemas, so the exact `input.query` builder behavior remains a dashboard validation question.
