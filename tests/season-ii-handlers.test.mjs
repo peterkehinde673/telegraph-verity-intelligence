@@ -256,6 +256,26 @@ test("Google Safe Browsing surfaces sanitized 403 reason codes without leaking c
   );
 });
 
+test("Google Safe Browsing keeps valid threat matches when a response contains malformed entries", async () => {
+  const matches = await googleSafeBrowsingLookup(
+    "https://example.com/",
+    "test-secret-key",
+    async () => new Response(JSON.stringify({
+      matches: [null, {}, {
+        threatType: "MALWARE",
+        platformType: "ANY_PLATFORM",
+        threat: { url: "https://example.com/" }
+      }]
+    }), { status: 200, headers: { "content-type": "application/json" } })
+  );
+
+  assert.deepEqual(matches, [{
+    threat_type: "MALWARE",
+    platform_type: "ANY_PLATFORM",
+    threat_entry: "https://example.com/"
+  }]);
+});
+
 
 import { EventEmitter } from "node:events";
 import { verifySsl } from "../dist/intents/ssl-verification.js";
