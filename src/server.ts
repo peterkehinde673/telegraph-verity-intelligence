@@ -60,7 +60,7 @@ const server = createServer(async (request, response) => {
         return;
       }
 
-      const responseErrors = validateVerityResponse(result);
+      const responseErrors = validateVerityResponse(result, intentRequest.intent);
       if (responseErrors.length > 0) {
         sendJson(response, 502, {
           error: "invalid_intent_response",
