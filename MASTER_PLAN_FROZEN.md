@@ -1,234 +1,142 @@
 # TELEGRAPH HACKATHON SEASON II — FROZEN MASTER PLAN
 
-**Project:** Telegraph Verity Intelligence  
+**Status:** Frozen scope; owner approval is required to change this plan.  
 **Repository:** https://github.com/peterkehinde673/telegraph-verity-intelligence  
-**Production API:** https://telegraph-verity-intelligence-api.onrender.com  
-**Known Miner ID:** `5530`  
-**Known release commit:** `e43d60cef64b6b937b738b992a7b57f0c8e06025`  
-**Status:** FROZEN — no scope or phase changes without the owner's explicit approval.
+**Known engineering release:** `e43d60cef64b6b937b738b992a7b57f0c8e06025`  
+**Engineering branch reviewed:** `verity/score-improvements-batch-1`  
+**Miner slug / ID:** `telegraph-verity-intelligence` / `5530`  
+**Production API:** https://telegraph-verity-intelligence-api.onrender.com
 
-## 0. Frozen-plan rules
+## 1. Mandatory operating rules
 
-1. This is the single source of truth. Do not create a competing roadmap.
-2. Codex must not add phases, tracks, features, intents, dependencies, infrastructure, or “nice-to-have” improvements outside this plan.
-3. Do not rewrite this plan to make work appear complete. Update `PROGRESS.md` only when completion is evidenced.
-4. Evidence before implementation: inspect current official Season II rules, docs, missions, platform v2 registration, and repository state first.
-5. Read-only discovery first. Do not change code, manifests, registration, Render settings, or production configuration without explicit owner approval.
-6. Do not send production inference POST requests during discovery unless the owner separately approves the exact request and potential side effects.
-7. Never infer registration, eligibility, routing, ranking, or quality from a successful build, health check, `/intents` response, repository manifest, or registry-presence check alone.
-8. Never fabricate or manipulate Explorer request counters, usage, ranking, evaluation data, or purchase/payment activity.
-9. Keep scoring/WASM separate from the miner API. Do not start an evaluator/scoring module unless an official mission and the owner explicitly authorize it.
-10. Work in one bounded unit at a time, with tests and evidence. Stop at any blocked gate; report evidence and ask for the smallest necessary decision.
-11. All three tracks are covered below, but that does not authorize building three products simultaneously. Choose one primary track from evidence.
-12. Only the owner may approve a plan change. Codex may propose a change but must not silently apply it.
+1. This file is the single forward plan. Do not create a competing roadmap.
+2. Do not repeat completed engineering work just because an old note says it is pending. Check the repository, commit history, tests, workflows, deployment and official platform evidence first.
+3. Do not treat local implementation, a candidate YAML, or a successful build as proof of live registration, accepted configuration, routed requests, ranking or eligibility.
+4. Preserve the existing work. No broad refactor, intent expansion, new feature batch, or second product without the owner's explicit approval.
+5. Keep three tracks visible—Providers, Apps & Agents, Evaluators—but select one primary track based on the current official Season II missions. Do not build all three in parallel.
+6. No fake usage, fabricated evaluation results, request-counter manipulation, or false claims about payments, ranking or quality.
+7. No production inference POST, dashboard registration/re-registration, manifest swap, scorer upload, or on-chain transaction during the read-only audit. Any such action requires an explicit, separate approval after its exact effect is explained.
+8. Never expose secrets or copy credentials into repository files, logs, plans or reports.
+9. Update `PROGRESS.md` only with evidence-backed status. Preserve corrections and history rather than silently rewriting reality.
+10. If a fact cannot be verified, label it **unknown** and identify the exact evidence needed. Do not turn unknowns into coding tasks by default.
 
-## 1. Known repository baseline — facts to verify
+## 2. Repository inventory already found — do not rebuild
 
-- The service exposes `GET /health`, `GET /intents`, and `POST /v1/intent`.
-- `miner.yaml` declares Miner ID `5530`, slug `telegraph-verity-intelligence`, and the Render API URL.
-- `miner.yaml` advertises **29 intents**, while `src/intents/catalogue.ts` contains **35**.
-- The six additional local catalogue entries are `NEWS_SEARCH`, `WEB_SEARCH`, `TWITTER_SEARCH`, `SENTIMENT_ANALYSIS`, `ONCHAIN_METRIC_VERIFY`, and `SLA_COMPLIANCE`. Their presence in a local list does not prove implementation, official availability, or registration.
-- The README warns that dashboard registration is separate from editing `miner.yaml`; registry presence alone does not prove the intended configuration is registered.
-- Some integrations require provider keys, including Google Safe Browsing, AbuseIPDB, and AlienVault OTX. Missing credentials may lead to abstention.
-- The last release report says commit `e43d60cef64b6b937b738b992a7b57f0c8e06025` was deployed to Render, with health and catalogue GETs returning HTTP 200 and the local catalogue reporting 35 intents. This proves basic API availability, not inference quality, live routing, or eligibility.
-- Season II describes **Apps & Agents**, **Providers**, and **Evaluators**. Current mission-specific rules and judging criteria must be checked before selecting a deliverable.
-- The project's previous focus includes research, evidence/content verification, media authenticity, and cybersecurity. This is a possible positioning, not proof that it matches a current commercial mission.
+The engineering branch reviewed at `e43d60c` already contains substantial implementation. Treat these as existing assets to inspect/reuse, not new tasks:
 
-## 2. Immediate next decision: no coding yet
+### Provider/API foundation
+- TypeScript HTTP API with `GET /health`, `GET /intents`, and `POST /v1/intent`.
+- Shared dispatcher, response contract validation, evidence normalization/provenance utilities, configuration, and normalized response fields.
+- 35 names in `src/intents/catalogue.ts` and corresponding intent modules/tests across research, content verification, media authenticity, safety, cybersecurity, news/web/social search, sentiment, on-chain metric verification, and SLA calculation.
+- Provider adapters include public-source retrieval, Jina Reader/Search, Google Fact Check, Hugging Face sentiment, Ethereum RPC, CISA KEV, MalwareBazaar, and X search. Some external integrations require credentials or have bounded coverage.
+- A broad suite of intent/provider/API contract tests and CI workflows.
+- Adapter hardening already completed in commits:
+  - response contract: `5d5e3d6789bb69e20d171c91f313f884e1e3c54c`
+  - URL_SAFE: `87abfb8dc4cf6a374e492b34c2e2b4728218c943`
+  - MalwareBazaar attribution: `e43d60cef64b6b937b738b992a7b57f0c8e06025`
 
-Perform a read-only **registration, eligibility, and mission-fit audit**. Answer:
-1. Is Miner ID `5530` still registered after the v2 migration?
-2. Does the current platform show the expected slug, endpoint, intents, and registration/update state?
-3. Does the registered configuration match the intended repository configuration?
-4. What official Season II missions exist, and what exact deliverables, integration/purchase requirements, judging criteria, deadlines, and submission evidence do they require?
-5. Which mission genuinely needs intelligence this repository can supply?
-6. Which intents have real handlers, tested integrations, required secrets configured, provenance, safe abstention, and mission-relevant quality evidence?
-7. Which track is feasible for one builder and the remaining time?
-8. What can be reused, what is only scaffolding, and what is missing?
+### Intent manifests — important exact distinction
+- `miner-integrate-candidate.yaml` already contains a **35-intent candidate**: the 29 established entries plus `NEWS_SEARCH`, `WEB_SEARCH`, `TWITTER_SEARCH`, `SENTIMENT_ANALYSIS`, `ONCHAIN_METRIC_VERIFY`, and `SLA_COMPLIANCE`.
+- The version of `miner.yaml` and `miner.yaml.template` inspected on branch `verity/score-improvements-batch-1` still declares the original **29 intents**.
+- Therefore, do **not** implement these six handlers again. First determine which YAML is the intended/current submission artifact, whether the 35-intent candidate was validated and accepted, and what is actually registered in the Telegraph dashboard/Explorer. A candidate file is not proof of accepted live registration.
+- The branch README and integration guide also describe the 35 local catalogue / 29 manifest split and say dashboard/request-builder validation was unresolved at the time those docs were written. Those notes may be stale; verify current evidence before acting.
+- Do not modify any YAML during the audit.
 
-### Gate A — required audit output
+### Evaluator/scoring work already present
+- `wasm/verity-fact-check-scorer/` exists as a Rust FACT_CHECK scorer prototype using deterministic lexical-overlap token precision/recall F1. Its own README explicitly says lexical overlap is not semantic fact verification and that it should not be registered without benchmark evidence.
+- `.github/workflows/wasm-scorer.yml` builds/tests the standalone WASM module and checks its ABI/size/import constraints.
+- `.github/workflows/fact-check-eval-harness.yml` contains a benchmark/evaluation workflow that compares scorer builds and captures public Telegraph scorer/score endpoints.
+- `eval-artifacts/public-cases/fact-check.json` and related documentation exist.
+- Consequently, “build a WASM scorer from scratch” and “create an evaluation harness from scratch” are **not** next steps. The open question is whether this existing prototype/evaluation evidence satisfies a current official Evaluator mission and whether its benchmark results justify any further work. Do not upload/register it without owner approval.
 
-Produce `docs/SEASON2_READINESS_AUDIT.md` with:
-- Official rules/docs URLs and date checked.
-- Candidate missions, requirements, judging criteria, submission rules, and links.
-- Current registration facts from the official platform, timestamps, and links/screenshots where available.
-- Comparison of the 29-intent manifest and 35-entry local catalogue, listing the six extra names.
-- For each mission-relevant intent: handler status, provider dependency, required secret (never reveal its value), tests, limitations, and quality evidence.
-- Known deployment SHA and read-only health/catalogue observations, noting what these do **not** prove.
-- Track recommendation, rationale, risks, unknowns, smallest viable deliverable, and stop/go decision.
+### Release evidence already recorded
+- Final code commit: `e43d60cef64b6b937b738b992a7b57f0c8e06025`.
+- GitHub Actions run `40754411719` was reported successful with typecheck/build and 336 tests passing.
+- Render deployment `dep-dbh60n0mkps73dcebcg` was reported live on that SHA; read-only `GET /health` and `GET /intents` returned HTTP 200, with 35 local runtime intents.
+- These are recorded release facts, not proof of the current dashboard registration, end-to-end Telegraph request construction, mission eligibility, scorer quality, or competition success. Re-check only if a decision depends on current state.
 
-**Acceptance:** facts and assumptions are clearly separated and the recommended track is justified. If official rules or registration cannot be verified, record the blocker and stop. Do not begin feature development.
+## 3. Immediate next step — read-only Season II decision audit
 
-## 3. Track plans
+Do **not** code yet. Inspect the latest official Season II announcement, all three tracks and their actual missions, eligibility/submission requirements, current deadlines, scoring/judging criteria, and any purchase/payment or registration requirements. Then reconcile that with the repository and official live platform state.
 
-These are bounded paths to assess and, if selected, implement. They are not permission to build all tracks concurrently.
+Create/update `docs/SEASON2_READINESS_AUDIT.md` with:
+- Official URLs and date checked.
+- Each relevant mission and its exact mandatory deliverables, judging criteria, eligibility, deadline and submission evidence.
+- Current miner registration and dashboard/Explorer intent list, including timestamp and evidence links. Distinguish registry presence from the registered configuration.
+- YAML state table for `miner.yaml`, `miner.yaml.template`, and `miner-integrate-candidate.yaml`: count, purpose, validation status, and whether each was submitted/accepted.
+- The 35-intent implementation map: handler exists, provider dependency, credentials/config needed (names only), tests, known limitations and whether relevant to a selected mission.
+- Existing scorer prototype and evaluation workflow status, actual available benchmark output, comparison methodology, limitations, and whether an official Evaluator mission requires them.
+- Which parts of the Apps & Agents track can reuse this provider and what is missing for a real end-to-end app.
+- Facts vs assumptions, blockers, mission-fit comparison, recommendation and smallest viable deliverable.
 
-### Track 1 — Providers: make Verity a credible intelligence provider
+If official rules or live registration cannot be verified, document the blocker and stop. Do not “fix” manifests based on assumptions.
 
-**Goal:** dependable, mission-relevant intelligence, not merely a large intent list.
+## 4. Three track plans — reuse first
 
-**Candidate deliverable**
-- Correct current-v2 registration and provider configuration matching one mission.
-- A narrow set of official, mission-relevant intents with a documented request/response contract.
-- Real provider-backed results with attributable evidence, timestamps, uncertainty, and safe abstention when evidence or credentials are missing.
-- Reproducible representative test cases and expected behavior.
-- Operational evidence, authorized routing test, limitations, and concise demo.
-- Honest limits for heuristics; do not market static checks as a full audit, deepfake detector, or internet-wide plagiarism search.
+### Track A — Providers
+**Existing base:** 35-entry local catalogue, 35-intent candidate YAML, 29-intent active manifest on the reviewed engineering branch, handlers, providers, evidence contract, tests and registration/preflight scripts.
 
-**Sequence after owner approval**
-1. Confirm current v2 provider contract and registration.
-2. Select only the minimum intents required for one mission.
-3. Reconcile manifest, catalogue, handlers, provider configuration, docs, and registration only in an approved change.
-4. Check configuration and required secrets without exposing secret values.
-5. Test mission cases, malformed inputs, upstream errors, attribution, uncertainty, and abstention.
-6. Run local tests and safe non-production integration tests.
-7. Use an official/authorized end-to-end path only after documenting side effects and receiving required approval.
-8. Prepare demo and reproducible evidence; stop when acceptance criteria pass.
+**Potential remaining work, only if the audit proves it is needed:**
+1. Verify the exact current official mission and provider acceptance requirements.
+2. Verify the 35-intent candidate YAML and live dashboard/Explorer configuration; do not rewrite the six already implemented handlers.
+3. Review validation output and request-builder compatibility for the 35-intent candidate. The previous guide reports that the documented validator endpoint returned HTTP 404; verify current behavior rather than assuming it remains broken.
+4. Identify only mission-critical gaps in real provider configuration, attribution, abstention, safety, or reproducibility.
+5. After owner approval, make the smallest necessary correction, test, validate, and document it.
+6. Prove actual mission-relevant routing/behavior through an authorized test path.
 
-**Acceptance criteria**
-- Selected intents are currently supported and correctly registered.
-- No selected advertised intent is a stub or fabricates success.
-- Evidence is attributable to real sources.
-- Missing keys, malformed provider data, rate limits, and empty results are safe.
-- Mission-specific tests pass and limitations are documented.
-- Another person can reproduce the demo.
+**Acceptance:** official mission fit is clear; intended configuration is accepted/registered; selected intents work with attributable evidence and safe abstention; mission-specific integration and demo are reproducible.
 
-### Track 2 — Apps & Agents: build a commercial workflow using Telegraph
+### Track B — Apps & Agents
+**Candidate concept, not pre-approved:** a Verity Risk Brief workflow using an existing registered provider through the official Telegraph call path. The workflow accepts a user query/URL/indicator, calls the relevant provider, and presents a useful evidence-backed brief with sources, uncertainty and next steps.
 
-**Goal:** solve one real user problem through a working application/agent and satisfy the official Telegraph integration requirements.
+**Only proceed if a current mission fits.**
+1. Identify exact mission, user and problem from official criteria.
+2. Prove how the app must discover/call a provider and whether machine-to-machine purchase/payment is mandatory.
+3. Reuse the existing provider and intent; build only the smallest missing user-facing workflow.
+4. Test success, invalid input, no evidence, provider unavailable and uncertainty.
+5. Capture genuine integration/demo evidence; never fake requests or payments.
 
-**Candidate direction, not approved yet:** a **Verity Risk Brief** workflow. A user submits a URL, claim, document, or security indicator; the app calls a suitable registered intelligence provider through the documented Telegraph mechanism; the app returns a concise evidence-backed brief with sources, uncertainty, and next steps. Replace this candidate if mission research identifies a better fit.
+**Acceptance:** one reproducible end-to-end workflow, real Telegraph integration, useful output, visible failure/uncertainty handling, and all mission submission criteria satisfied.
 
-**Minimum deliverable**
-- One specific user persona and commercial problem.
-- One end-to-end flow with clear input, real Telegraph-routed intelligence request, useful output, and uncertainty handling.
-- Minimal UI or CLI/demo.
-- Error, timeout, no-evidence, and provider-unavailable states.
-- Verifiable proof of required Telegraph integration and any mandated machine-to-machine purchase/payment.
-- Representative tests and reproducible demo instructions.
-- README covering value, architecture, setup, limitations, and reproduction.
+### Track C — Evaluators
+**Existing base:** Rust FACT_CHECK WASM scorer prototype, build/ABI workflow, evaluation workflow and public evaluation case file.
 
-**Sequence after owner approval**
-1. Select one mission and verify qualification rules.
-2. Define user, problem, success measure, and one happy path.
-3. Verify official provider discovery/call and any purchase/payment process from current docs.
-4. Build the smallest complete workflow, not a broad product.
-5. Integrate only a verified provider/intent.
-6. Test success, provider unavailable, invalid input, and no evidence.
-7. Capture genuine demo evidence; never fake network activity or payments.
-8. Stop when mission criteria and demo are satisfied.
+**Only proceed if a current official Evaluator mission fits.**
+1. Read current official evaluator contract and mission rubric.
+2. Inspect existing workflow artifacts/results and compare the scorer against the actual champion/default baseline, using valid, reproducible evaluation—not just compilation.
+3. Determine whether the mission requires a scorer, a dataset, evaluation analysis, or another specific artifact.
+4. Identify known weaknesses: lexical overlap is not semantic truth checking and may reward superficial word overlap.
+5. Only after owner approval, improve or extend the existing artifact to address a demonstrated benchmark weakness; do not rebuild the crate or harness.
+6. Keep scorer/WASM separate from the Miner API and do not register/upload it without explicit approval.
 
-**Acceptance criteria**
-- User/problem and commercial value are clear.
-- Workflow runs end-to-end reproducibly.
-- Required Telegraph integration/purchase is real and verifiable.
-- Output helps a user decide or act rather than only exposing raw JSON.
-- Failures and uncertainty are visible.
-- Demo and documentation match official rules.
+**Acceptance:** official evaluator contract is satisfied; reproducible benchmark evidence supports the claims; weaknesses and gaming risks are reported; registration/upload requirements are independently verified.
 
-### Track 3 — Evaluators: make intelligence quality measurable
+## 5. Track selection
+Score each track 0–5 against documented evidence:
+- official mission fit;
+- reuse of completed work;
+- certainty of eligibility and required integration;
+- feasible delivery by one builder before the deadline;
+- meaningful differentiation;
+- ability for judges to reproduce/evaluate the result.
 
-**Goal:** create an evaluation contribution only if a current mission rewards it and its official contract is understood.
+Select **one primary track**. A second track is allowed only when it directly supports the same entry and adds little extra scope. If mission/eligibility fit is unproven, resolve that before coding.
 
-**Candidate deliverable**
-- Versioned benchmark/test material with expected properties/outcomes, provenance, and reuse/licensing notes.
-- Reproducible rubric for correctness, evidence quality, attribution, uncertainty, robustness, and safe abstention where relevant.
-- Repeatable harness/report comparing outputs without rewarding unsupported confidence or fabricated evidence.
-- A scoring module only if the mission explicitly requires one, built separately using the current official guide/toolchain.
-- Results, failure cases, sample-size context, limitations, and reproduction instructions.
+## 6. Frozen phases and decision gates
 
-**Sequence after owner approval**
-1. Confirm the exact evaluator mission and current official interface/contract.
-2. Determine whether it needs evaluation material, a scoring implementation, or both.
-3. Define measurable criteria and ground-truth requirements before coding.
-4. Use only permitted data with documented provenance.
-5. Validate a small set of labels manually before expanding it.
-6. Test determinism, edge cases, and scoring loopholes.
-7. If required, build and validate the scoring module separately from the miner API.
-8. Publish reproducible materials and a limitations report.
-
-**Acceptance criteria**
-- Artifact matches the official mission and interface.
-- Criteria are explicit and repeatable.
-- Data permissions/provenance are documented.
-- Results can be reproduced.
-- Limitations and gaming risks are disclosed.
-- Required scoring registration is verified separately from miner registration.
-
-## 4. Track selection rule
-
-After Gate A, score each track 0–5 using evidence, not enthusiasm or code volume.
-
-| Criterion | Question |
-|---|---|
-| Official mission fit | Is there a specific mission this deliverable satisfies? |
-| Existing-code reuse | Does the repository materially reduce work? |
-| Qualification certainty | Can mandatory registration, integration, and submission rules be proven? |
-| Feasibility | Can one person deliver it reliably before the deadline? |
-| Differentiation | Is the value meaningfully better than a generic API/demo? |
-| Evidence quality | Can judges reproduce and evaluate it? |
-
-Choose **one primary track** with the strongest evidence-backed score. A supporting track is allowed only if it directly strengthens the same mission without becoming a second independent product. If qualification certainty is weak, resolve that first.
-
-## 5. Frozen phases and gates
-
-### Phase 0 — preserve baseline
-Record repository/branch, latest known release SHA, production URL, Miner ID, manifest/catalogue, test command, and deployment evidence. Confirm working tree state before edits. Make no code or production changes.
-
-**Gate 0:** baseline is recorded and the working release remains untouched.
-
-### Phase 1 — extract official missions
-Read current official rules and docs. Record mission requirements, qualification, judging, deadlines, deliverables, integration/payment requirements, and submission process. Separate facts from interpretation.
-
-**Gate 1:** at least one concrete candidate mission and its mandatory criteria are evidenced. Otherwise stop.
-
-### Phase 2 — registration and architecture audit
-Check current v2 registration. Compare platform configuration with `miner.yaml` and local catalogue. Check selected handler/provider/test readiness. Define a safe authorized end-to-end test method; no production inference POST during discovery without explicit approval.
-
-**Gate 2:** registration and the actual gap are evidenced, or a precise blocker/owner action is recorded.
-
-### Phase 3 — select and freeze deliverable
-Score all tracks, select one mission and primary track, define acceptance tests, non-goals, safety/rollback, and demo evidence. Obtain owner approval.
-
-**Gate 3:** owner explicitly approves the bounded deliverable.
-
-### Phase 4 — implement minimum viable entry
-Use a dedicated feature branch. Make one logical change at a time. Add relevant tests. Run typecheck, build, all tests, and official validation. No unrelated intents, WASM, manifest, registration, or production-setting changes outside approved scope.
-
-**Gate 4:** tests pass and review confirms scope compliance.
-
-### Phase 5 — integration/evidence
-Test safely outside production first. Use production only after exact test and side effects are documented and approved. Verify actual registration/routing/integration and mission behavior through supported official tools. Record timestamp, SHA, non-sensitive test inputs, outcomes, and limitations.
-
-**Gate 5:** mission behavior is proven; health/catalogue checks alone are insufficient.
-
-### Phase 6 — submission freeze
-Prepare demo, setup instructions, architecture summary, test/evaluation evidence, limitations, and required submission material. Check every official requirement. Freeze features; fix submission-blocking defects only with approval. Record final SHA and submission evidence.
-
-**Gate 6:** checklist is complete and evidence is reproducible.
-
-## 6. Required project documents
-
-- `MASTER_PLAN_FROZEN.md` — this document; immutable unless the owner explicitly approves a plan change.
-- `PROGRESS.md` — verified completed items only, with evidence.
-- `docs/SEASON2_READINESS_AUDIT.md` — factual findings from Phases 1–2, with links; not another competing plan.
+- **Phase 0 — Baseline inventory:** confirm reviewed branch/SHA, worktree status, manifests and candidate file, existing tests/workflows, release evidence. No changes.
+- **Phase 1 — Official mission review:** collect current official requirements for Providers, Apps & Agents and Evaluators. No implementation.
+- **Phase 2 — Live-state reconciliation:** check current registration, accepted intent list, candidate validation and relevant existing scorer/evaluation evidence. No manifest or production changes.
+- **Gate 1:** publish the readiness audit with proven facts, unknowns and track scores.
+- **Phase 3 — Owner decision:** recommend one primary track and one bounded deliverable with measurable acceptance tests. Wait for explicit owner approval.
+- **Phase 4 — Minimal implementation:** only the approved gap; dedicated branch; no unrelated feature batch; test, typecheck, build and CI.
+- **Phase 5 — Authorized integration evidence:** after explaining side effects and receiving approval, verify the real official integration and mission behavior.
+- **Phase 6 — Submission freeze:** prepare reproducible demo, required materials, evidence, limitations, final SHA and submission confirmation. No new features.
 
 ## 7. Definition of done
+A working build or live health endpoint is not enough. The selected entry is done only when the official mission is identified, eligibility and registration/integration are verified, the required deliverable meets its acceptance criteria, genuine evidence is reproducible, all submission items are complete, and limitations are disclosed.
 
-The chosen entry is complete only when:
-- A specific official mission is selected and its qualification rules are understood.
-- Registration and integration requirements are satisfied and verified.
-- The deliverable meets mission acceptance criteria.
-- Evidence supports claims about real behavior and quality.
-- Tests, demo, docs, and submission materials are complete.
-- Final commit and deployment/submission state are recorded.
-- Limitations are disclosed.
-- No activity, metrics, evaluations, payments, or claims are fabricated.
+## 8. First authorized action
+Perform **Phase 0–2 only** and produce `docs/SEASON2_READINESS_AUDIT.md`. Do not re-implement the 35 local intents, recreate the WASM scorer/harness, edit YAML, deploy, register, or send production inference POST requests. Stop for the owner's track decision.
 
-A build, deployment, health check, or catalogue response alone is not competition completion.
-
-## 8. First authorized action when work resumes
-
-Perform **Phase 0, Phase 1, and Phase 2 only**. Do not implement features. Produce the readiness audit and recommend a primary track. Stop for owner approval before Phase 3 or any code, manifest, registration, deployment, or production behavior change.
-
-**Frozen-plan declaration:** Codex and future sessions must follow this plan as written. They may report blockers or propose changes, but must not silently alter the plan or mark planned work complete.
+**Frozen-plan rule:** report proposed changes separately; never silently expand or rewrite this plan.
