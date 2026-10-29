@@ -1,57 +1,61 @@
 # TELEGRAPH VERITY INTELLIGENCE — PROGRESS LEDGER
 
-**Purpose:** factual record of verified completed work for `MASTER_PLAN_FROZEN.md`. This is not a second roadmap.
+This file records completed work and evidence. The forward plan is `MASTER_PLAN_FROZEN.md`; do not use this file as a second roadmap.
 
-**Rule:** add or check off work only when completion is demonstrated by a commit, CI run, official dashboard state, deployment record, or dated test evidence. Planned or inferred work must remain unchecked.
+**Repository:** https://github.com/peterkehinde673/telegraph-verity-intelligence  
+**Reviewed engineering branch:** `verity/score-improvements-batch-1`  
+**Reviewed release SHA:** `e43d60cef64b6b937b738b992a7b57f0c8e06025`  
+**Production API:** https://telegraph-verity-intelligence-api.onrender.com
 
-## Project baseline
+## Completed engineering work — evidenced in repository/history
 
-- Repository: https://github.com/peterkehinde673/telegraph-verity-intelligence
-- Known release branch at last report: `verity/score-improvements-batch-1`
-- Known final release commit: `e43d60cef64b6b937b738b992a7b57f0c8e06025`
-- Miner slug: `telegraph-verity-intelligence`
-- Miner ID in repository manifest: `5530`
-- Production API: https://telegraph-verity-intelligence-api.onrender.com
-- Frozen plan: `MASTER_PLAN_FROZEN.md`
+- [x] TypeScript provider API with `GET /health`, `GET /intents`, and `POST /v1/intent`. Evidence: `src/server.ts`.
+- [x] 35 local intent names in `src/intents/catalogue.ts`, with handler modules and intent/provider tests across the repository.
+- [x] Shared response contract and validation. Evidence: [commit 5d5e3d6](https://github.com/peterkehinde673/telegraph-verity-intelligence/commit/5d5e3d6789bb69e20d171c91f313f884e1e3c54c).
+- [x] URL_SAFE malformed-provider-response hardening. Evidence: [commit 87abfb8](https://github.com/peterkehinde673/telegraph-verity-intelligence/commit/87abfb8dc4cf6a374e492b34c2e2b4728218c943).
+- [x] MalwareBazaar hash-attribution and malformed-peer hardening. Evidence: [commit e43d60c](https://github.com/peterkehinde673/telegraph-verity-intelligence/commit/e43d60cef64b6b937b738b992a7b57f0c8e06025).
+- [x] Existing evidence normalization/provenance modules and provider adapters are present.
+- [x] 35-intent candidate YAML exists at `miner-integrate-candidate.yaml` on the reviewed engineering branch.
+- [x] Rust FACT_CHECK WASM scorer prototype exists at `wasm/verity-fact-check-scorer/`.
+- [x] Scorer build/test/ABI workflow exists at `.github/workflows/wasm-scorer.yml`.
+- [x] FACT_CHECK scorer investigation/evaluation workflow exists at `.github/workflows/fact-check-eval-harness.yml`.
+- [x] Public evaluation case file exists at `eval-artifacts/public-cases/fact-check.json`.
+- [x] Integration/preflight/registration helper scripts exist under `scripts/`.
+- [x] GitHub Actions run [40754411719](https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/40754411719) was reported successful; the final release report recorded typecheck/build success and 336 tests passing.
+- [x] Final release report recorded Render deployment `dep-dbh60n0mkps73dcebcg` live on SHA `e43d60cef64b6b937b738b992a7b57f0c8e06025`.
+- [x] Final release report recorded read-only `GET /health` and `GET /intents` as HTTP 200, with 35 runtime catalogue entries.
 
-## Verified completed work
+## Important configuration distinction — do not lose this
 
-### Existing provider foundation
+- [x] `miner-integrate-candidate.yaml` contains the 35-intent candidate list on the reviewed engineering branch.
+- [x] The same branch's `miner.yaml` and `miner.yaml.template` still contained 29-intent lists at the time inspected.
+- [x] The six extra local/candidate entries are `NEWS_SEARCH`, `WEB_SEARCH`, `TWITTER_SEARCH`, `SENTIMENT_ANALYSIS`, `ONCHAIN_METRIC_VERIFY`, and `SLA_COMPLIANCE`; their handlers already exist in the repository.
+- [ ] Current Telegraph dashboard/Explorer state proves that the 35-intent candidate YAML has been validated, submitted and accepted as the active registered configuration.
+- [ ] Current official validation/request-builder evidence confirms all 35 intents can be constructed and routed as intended.
 
-- [x] Node.js/TypeScript HTTP API contains `GET /health`, `GET /intents`, and `POST /v1/intent`. Evidence: `src/server.ts` on the release branch.
-- [x] `miner.yaml` defines Miner ID `5530`, slug `telegraph-verity-intelligence`, the Render base URL, and a unified `/v1/intent` endpoint. Evidence: `miner.yaml` on the release branch.
-- [x] Normalized response contract and handler-response validation were added. Evidence: [commit 5d5e3d6](https://github.com/peterkehinde673/telegraph-verity-intelligence/commit/5d5e3d6789bb69e20d171c91f313f884e1e3c54c).
-- [x] URL_SAFE adapter was hardened to ignore malformed peer entries while retaining valid matches and safely handle malformed top-level envelopes. Evidence: [commit 87abfb8](https://github.com/peterkehinde673/telegraph-verity-intelligence/commit/87abfb8dc4cf6a374e492b34c2e2b4728218c943).
-- [x] MalwareBazaar adapter requires hash attribution to the requested indicator and ignores malformed peer records. Evidence: [commit e43d60c](https://github.com/peterkehinde673/telegraph-verity-intelligence/commit/e43d60cef64b6b937b738b992a7b57f0c8e06025).
-- [x] Final release report recorded typecheck/build success, all 336 tests passing, and GitHub Actions run 40754411719 passing. Evidence: [GitHub Actions run](https://github.com/peterkehinde673/telegraph-verity-intelligence/actions/runs/40754411719).
-- [x] Final release report stated Render deployment `dep-dbh60n0mkps73dcebcg` was live on commit `e43d60cef64b6b937b738b992a7b57f0c8e06025`, deployed without clearing build cache.
-- [x] Final release report stated `GET /health` returned HTTP 200 and `GET /intents` returned HTTP 200 with 35 catalogue entries. This proves API availability/catalogue response only, not current miner registration, inference quality, routing, ranking, or eligibility.
+The first three checked items are repository facts. The last two are intentionally unchecked because repository presence is not proof of live registration or accepted configuration. Do not repeat handler implementation; resolve only the actual external/configuration state.
 
-## Open items — not completed
+## Open work — do not mark complete without new evidence
 
-- [ ] Confirm current v2 registration state for Miner ID `5530` and slug `telegraph-verity-intelligence` after migration.
-- [ ] Confirm registered configuration matches the intended repository configuration.
-- [ ] Reconcile `miner.yaml` advertising 29 intents with `src/intents/catalogue.ts` containing 35.
-- [ ] Verify whether `NEWS_SEARCH`, `WEB_SEARCH`, `TWITTER_SEARCH`, `SENTIMENT_ANALYSIS`, `ONCHAIN_METRIC_VERIFY`, and `SLA_COMPLIANCE` are officially supported, implemented, tested, and relevant before changing manifest or registration.
-- [ ] Extract current official Season II mission requirements, judging criteria, deliverables, and submission rules into an evidence-linked audit.
-- [ ] Select one primary track based on official mission fit and feasibility.
-- [ ] Verify mission-specific end-to-end integration/routing through an approved test method.
-- [ ] Deliver and validate the chosen competition entry and its reproducible evidence package.
+- [ ] Read current official Season II mission requirements for Providers, Apps & Agents and Evaluators; capture URLs, deadlines, judging criteria, qualification and submission requirements.
+- [ ] Verify current dashboard registration and actual accepted intent list for Miner ID `5530`.
+- [ ] Determine whether `miner-integrate-candidate.yaml` passed the official validator and was actually submitted/accepted; capture validation/dashboard/Explorer evidence.
+- [ ] Review existing scorer/evaluation workflow results against the current official Evaluator mission and baseline. Compilation alone is not proof of scoring quality.
+- [ ] Create `docs/SEASON2_READINESS_AUDIT.md` with current facts, unknowns, mission fit, track comparison and recommendation.
+- [ ] Obtain the owner's explicit choice of one primary track and bounded deliverable.
+- [ ] Complete only the chosen mission's proven gaps, then collect genuine end-to-end and submission evidence.
 
-## Progress entry template
+## Historical notes
+- The older `.verity-work/MASTER_PLAN.md` and `.verity-work/PROGRESS.md` contain useful history and older gate decisions. Some statements may be stale relative to later candidate files, code and workflows. Use them as history, not as a substitute for current repository/platform verification.
+- The last release's health/catalogue checks prove API availability and returned catalogue only; they do not prove registration, routing, mission eligibility, ranking or evaluator quality.
 
-Use this format for new completed milestones:
-
+## Progress update template
 ```md
-### YYYY-MM-DD — Short completed milestone
+### YYYY-MM-DD — Completed milestone
 - Result:
-- Evidence: commit/URL/test report/dashboard record
+- Evidence: commit, CI run, official dashboard/Explorer link, deployment or test report
 - Verification performed:
-- Limitations or remaining caveats:
+- Remaining caveats:
 ```
 
-Do not erase completed history silently. If a previous claim is found incorrect, append a dated correction with evidence.
-
-## Current stopping point
-
-The last recorded engineering milestone is deployment of `e43d60cef64b6b937b738b992a7b57f0c8e06025` plus successful read-only `/health` and `/intents` checks. The next authorized activity is a **read-only official-rules, registration, and mission-fit audit**. No new feature work is authorized until that audit is complete and the owner approves a specific track and bounded deliverable.
+Never silently erase history or convert an assumption into a completed item. Append a dated correction when prior information is shown to be inaccurate.
