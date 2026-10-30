@@ -1,0 +1,180 @@
+import type { IntentHandler } from "./api.js";
+import type { VerityIntent } from "./intents/catalogue.js";
+import { factCheck, type FactCheckOptions } from "./intents/fact-check.js";
+import { researchQuery, type ResearchQueryOptions } from "./intents/research-query.js";
+import { researchSynthesis, type ResearchSynthesisOptions } from "./intents/research-synthesis.js";
+import { newsHeadlines, type NewsHeadlinesOptions } from "./intents/news-headlines.js";
+import { newsSearch, type NewsSearchOptions } from "./intents/news-search.js";
+import { webSearch, type WebSearchOptions } from "./intents/web-search.js";
+import { twitterSearch, type TwitterSearchOptions } from "./intents/twitter-search.js";
+import { sentimentAnalysis, type SentimentAnalysisOptions } from "./intents/sentiment-analysis.js";
+import { onchainMetricVerify, type OnchainMetricVerifyOptions } from "./intents/onchain-metric-verify.js";
+import { slaCompliance } from "./intents/sla-compliance.js";
+import { academicSearch, type AcademicSearchOptions } from "./intents/academic-search.js";
+import { contentExtraction, type ContentExtractionOptions } from "./intents/content-extraction.js";
+import { contentVerification, type ContentVerificationOptions } from "./intents/content-verification.js";
+import { checkTextAuthenticity, type TextAuthenticityOptions } from "./intents/text-authenticity.js";
+import { detectAiText, type AiTextDetectionOptions } from "./intents/ai-text-detection.js";
+import { detectDeepfake, type DeepfakeDetectionOptions } from "./intents/deepfake-detection.js";
+import { checkMediaAuthenticity, type MediaAuthenticityOptions } from "./intents/media-authenticity.js";
+import { verifyImage, type ImageVerificationOptions } from "./intents/image-verification.js";
+import { verifyVideo, type VideoVerificationOptions } from "./intents/video-verification.js";
+import { moderateContent, type ContentModerationOptions } from "./intents/content-moderation.js";
+import { scanUrl, type UrlScanOptions } from "./intents/url-scan.js";
+import { checkEmailSecurity, type EmailSecurityOptions } from "./intents/email-security.js";
+import { detectMalware, type MalwareDetectionOptions } from "./intents/malware-detection.js";
+import { lookupCve, type CveLookupOptions } from "./intents/cve-lookup.js";
+import { verifySsl, type SslVerificationOptions } from "./intents/ssl-verification.js";
+import { lookupDnsRecord, type DnsLookupOptions } from "./intents/dns-record-lookup.js";
+import { reviewCode } from "./intents/code-review.js";
+import { checkUrlSafe } from "./intents/url-safe.js";
+import { checkThreatIpReputation } from "./intents/threat-ip-reputation.js";
+import { lookupThreatIntelligence } from "./intents/threat-intelligence.js";
+import { detectPlagiarism } from "./intents/plagiarism-detection.js";
+import { reviewSecurity } from "./intents/security-review.js";
+import { verifyRegression } from "./intents/regression-verify.js";
+import { verifyCodePatch } from "./intents/code-patch-verify.js";
+import { triageVulnerabilities } from "./intents/vulnerability-triage.js";
+import { wikipediaSearch, crossrefSearch, googleNewsRss } from "./providers/public-sources.js";
+import { malwareBazaarLookup } from "./providers/malware-bazaar.js";
+import { googleFactCheck } from "./providers/google-fact-check.js";
+import { readUrl } from "./providers/jina-reader.js";
+
+export interface IntentProviderDependencies {
+  FACT_CHECK?: FactCheckOptions;
+  RESEARCH_QUERY?: ResearchQueryOptions;
+  RESEARCH_SYNTHESIS?: ResearchSynthesisOptions;
+  NEWS_HEADLINES?: NewsHeadlinesOptions;
+  NEWS_SEARCH?: NewsSearchOptions;
+  WEB_SEARCH?: WebSearchOptions;
+  TWITTER_SEARCH?: TwitterSearchOptions;
+  SENTIMENT_ANALYSIS?: SentimentAnalysisOptions;
+  ONCHAIN_METRIC_VERIFY?: OnchainMetricVerifyOptions;
+  ACADEMIC_SEARCH?: AcademicSearchOptions;
+  CONTENT_EXTRACTION?: ContentExtractionOptions;
+  CONTENT_VERIFICATION?: ContentVerificationOptions;
+  TEXT_AUTHENTICITY_CHECK?: TextAuthenticityOptions;
+  AI_TEXT_DETECTION?: AiTextDetectionOptions;
+  DEEPFAKE_DETECTION?: DeepfakeDetectionOptions;
+  MEDIA_AUTHENTICITY_CHECK?: MediaAuthenticityOptions;
+  IMAGE_VERIFICATION?: ImageVerificationOptions;
+  VIDEO_VERIFICATION?: VideoVerificationOptions;
+  CONTENT_MODERATION?: ContentModerationOptions;
+  URL_SCAN?: UrlScanOptions;
+  EMAIL_SECURITY?: EmailSecurityOptions;
+  MALWARE_DETECTION?: MalwareDetectionOptions;
+  CVE_LOOKUP?: CveLookupOptions;
+  SSL_VERIFICATION?: SslVerificationOptions;
+  DNS_RECORD_LOOKUP?: DnsLookupOptions;
+}
+
+function stringInput(input: unknown, field: string): string {
+  if (typeof input === "string") return input;
+  if (input && typeof input === "object") {
+    const value = (input as Record<string, unknown>)[field];
+    if (typeof value === "string") return value;
+  }
+  return "";
+}
+
+function objectInput(input: unknown): Record<string, unknown> {
+  return input && typeof input === "object" ? input as Record<string, unknown> : {};
+}
+
+function handler(
+  fn: (input: unknown) => ReturnType<IntentHandler>
+): IntentHandler {
+  return fn;
+}
+
+function defaultWebSearchOptions(): WebSearchOptions {
+  const apiKey = process.env.JINA_API_KEY?.trim();
+  return apiKey ? { apiKey } : {};
+}
+
+function defaultTwitterSearchOptions(): TwitterSearchOptions {
+  const bearerToken = process.env.X_API_BEARER_TOKEN?.trim();
+  return bearerToken ? { bearerToken } : {};
+}
+
+function defaultSentimentAnalysisOptions(): SentimentAnalysisOptions {
+  const token = process.env.HF_TOKEN?.trim();
+  return token ? { token } : {};
+}
+
+function defaultEthereumRpcOptions(): OnchainMetricVerifyOptions {
+  const rpcUrl = process.env.ETHEREUM_RPC_URL?.trim();
+  return rpcUrl ? { rpcUrl } : {};
+}
+
+export function createIntentHandlers(
+  providers: IntentProviderDependencies = {}
+): Partial<Record<VerityIntent, IntentHandler>> {
+  return {
+    FACT_CHECK: handler((input) => factCheck(stringInput(input, "claim"), providers.FACT_CHECK ?? (process.env.GOOGLE_FACT_CHECK_API_KEY ? { checkImpl: async (claim) => { const results = await googleFactCheck(claim, process.env.GOOGLE_FACT_CHECK_API_KEY!); const reviews = results.flatMap((item) => item.claimReview ?? []); const evidence = reviews.filter((review) => review.url).map((review) => ({ source_id: `google-fact-check:${review.url!}`, source_type: "google-fact-check", title: review.title ?? "Fact-check review", ...(review.url ? { url: review.url } : {}), ...(review.textualRating ? { excerpt: review.textualRating } : {}), ...(review.reviewDate ? { published_at: review.reviewDate } : {}) })); const ratings = reviews.map((review) => (review.textualRating ?? "").toLowerCase()); const falseLike = ratings.some((r) => /false|incorrect|misleading|pants on fire/.test(r)); const trueLike = ratings.some((r) => /true|correct|accurate/.test(r)); const verdict = falseLike && trueLike ? "mixed" : falseLike ? "false" : trueLike ? "true" : "unverified"; return { verdict, explanation: reviews[0]?.textualRating ? `Published fact-check rating: ${reviews[0].textualRating}.` : "No matching published rating was returned.", evidence }; } } : undefined))),
+    RESEARCH_QUERY: handler((input) => researchQuery(stringInput(input, "query"), providers.RESEARCH_QUERY ?? { searchImpl: wikipediaSearch })),
+    RESEARCH_SYNTHESIS: handler((input) => {
+      const value = objectInput(input);
+      const evidence = Array.isArray(value.evidence) ? value.evidence as never[] : [];
+      return researchSynthesis(stringInput(input, "question"), {
+        ...providers.RESEARCH_SYNTHESIS,
+        evidence: evidence as never
+      });
+    }),
+    NEWS_HEADLINES: handler((input) => newsHeadlines(stringInput(input, "topic"), providers.NEWS_HEADLINES ?? { fetchImpl: googleNewsRss })),
+    NEWS_SEARCH: handler((input) => newsSearch(stringInput(input, "query"), providers.NEWS_SEARCH ?? { searchImpl: googleNewsRss })),
+    WEB_SEARCH: handler((input) => webSearch(
+      stringInput(input, "query"),
+      providers.WEB_SEARCH ?? defaultWebSearchOptions()
+    )),
+    TWITTER_SEARCH: handler((input) => twitterSearch(
+      stringInput(input, "query"),
+      providers.TWITTER_SEARCH ?? defaultTwitterSearchOptions()
+    )),
+    SENTIMENT_ANALYSIS: handler((input) => sentimentAnalysis(
+      stringInput(input, "text"),
+      providers.SENTIMENT_ANALYSIS ?? defaultSentimentAnalysisOptions()
+    )),
+    ONCHAIN_METRIC_VERIFY: handler((input) => onchainMetricVerify(input, providers.ONCHAIN_METRIC_VERIFY ?? defaultEthereumRpcOptions())),
+    SLA_COMPLIANCE: handler(async (input) => slaCompliance(input)),
+    ACADEMIC_SEARCH: handler((input) => academicSearch(stringInput(input, "query"), providers.ACADEMIC_SEARCH ?? { searchImpl: crossrefSearch })),
+    CONTENT_EXTRACTION: handler((input) => contentExtraction(stringInput(input, "source"), providers.CONTENT_EXTRACTION ?? { extractImpl: (source) => readUrl(source, process.env.JINA_API_KEY) })),
+    CONTENT_VERIFICATION: handler((input) => contentVerification(stringInput(input, "content"), providers.CONTENT_VERIFICATION)),
+    TEXT_AUTHENTICITY_CHECK: handler((input) => checkTextAuthenticity(stringInput(input, "text"), providers.TEXT_AUTHENTICITY_CHECK)),
+    AI_TEXT_DETECTION: handler((input) => detectAiText(stringInput(input, "text"), providers.AI_TEXT_DETECTION)),
+    DEEPFAKE_DETECTION: handler((input) => detectDeepfake(stringInput(input, "input"), providers.DEEPFAKE_DETECTION)),
+    MEDIA_AUTHENTICITY_CHECK: handler((input) => checkMediaAuthenticity(stringInput(input, "input"), providers.MEDIA_AUTHENTICITY_CHECK)),
+    IMAGE_VERIFICATION: handler((input) => verifyImage(stringInput(input, "input"), providers.IMAGE_VERIFICATION)),
+    VIDEO_VERIFICATION: handler((input) => verifyVideo(stringInput(input, "input"), providers.VIDEO_VERIFICATION)),
+    CONTENT_MODERATION: handler((input) => moderateContent(stringInput(input, "text"), providers.CONTENT_MODERATION)),
+    URL_SCAN: handler((input) => scanUrl(stringInput(input, "url"), providers.URL_SCAN)),
+    EMAIL_SECURITY: handler((input) => checkEmailSecurity(stringInput(input, "domain"), providers.EMAIL_SECURITY)),
+    MALWARE_DETECTION: handler((input) => detectMalware(stringInput(input, "indicator"), providers.MALWARE_DETECTION ?? (process.env.MALWAREBAZAAR_AUTH_KEY ? { lookupImpl: (indicator, type) => malwareBazaarLookup(indicator, process.env.MALWAREBAZAAR_AUTH_KEY!) } : undefined))),
+    CVE_LOOKUP: handler((input) => lookupCve(stringInput(input, "cve_id"), providers.CVE_LOOKUP)),
+    SSL_VERIFICATION: handler((input) => {
+      const value = objectInput(input);
+      const port = typeof value.port === "number" ? value.port : 443;
+      return verifySsl(stringInput(input, "hostname"), port, providers.SSL_VERIFICATION);
+    }),
+    URL_SAFE: handler((input) => checkUrlSafe(stringInput(input, "url"))),
+    THREAT_IP_REPUTATION: handler((input) => checkThreatIpReputation(stringInput(input, "ip_address") || stringInput(input, "ip"))),
+    THREAT_INTELLIGENCE: handler((input) => lookupThreatIntelligence(input)),
+    PLAGIARISM_DETECTION: handler((input) => detectPlagiarism(input)),
+    SECURITY_REVIEW: handler((input) => reviewSecurity(input)),
+    REGRESSION_VERIFY: handler((input) => verifyRegression(input)),
+    CODE_PATCH_VERIFY: handler((input) => verifyCodePatch(input)),
+    VULNERABILITY_TRIAGE: handler(async (input) => triageVulnerabilities(input)),
+    CODE_REVIEW: handler((input) => reviewCode(
+      stringInput(input, "code") || stringInput(input, "source_code") || stringInput(input, "diff")
+    )),
+    DNS_RECORD_LOOKUP: handler((input) => {
+      const value = objectInput(input);
+      const recordType = typeof value.record_type === "string"
+        ? value.record_type.toUpperCase()
+        : "A";
+      return lookupDnsRecord(stringInput(input, "hostname"), recordType as never, providers.DNS_RECORD_LOOKUP);
+    })
+  };
+}
+
+export const INTENT_HANDLERS = createIntentHandlers();

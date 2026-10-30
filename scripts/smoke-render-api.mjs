@@ -1,0 +1,191 @@
+#!/usr/bin/env node
+const baseUrl = process.argv[2] ?? "https://telegraph-verity-intelligence-api.onrender.com";
+const expectedCount = Number(process.env.VERITY_EXPECTED_INTENT_COUNT ?? 29);
+if (!Number.isSafeInteger(expectedCount) || expectedCount < 1) {
+  throw new Error("VERITY_EXPECTED_INTENT_COUNT must be a positive integer.");
+}
+
+async function request(path, options = {}) {
+  const method = options.method ?? "GET";
+  const attempts = method === "GET" ? 3 : 1;
+  let response;
+  let lastError;
+
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    try {
+      response = await fetch(new URL(path, baseUrl), {
+        signal: AbortSignal.timeout(15_000),
+        ...options
+      });
+      // Retry only idempotent GETs for transient deployment/proxy errors.
+      if (method === "GET" && [502, 503, 504].includes(response.status) && attempt < attempts) {
+        await response.arrayBuffer();
+        await new Promise(resolve => setTimeout(resolve, attempt * 1000));
+        continue;
+      }
+      break;
+    } catch (error) {
+      lastError = error;
+      if (attempt >= attempts) throw error;
+      await new Promise(resolve => setTimeout(resolve, attempt * 1000));
+    }
+  }
+
+  if (!response) throw lastError ?? new Error(`Request failed for ${method} ${path}.`);
+  const body = await response.text();
+  let json;
+  try {
+    json = JSON.parse(body);
+  } catch {
+    throw new Error(`${method} ${path} did not return valid JSON (HTTP ${response.status}).`);
+  }
+  return { status: response.status, body: json };
+}
+
+async function get(path) {
+  const result = await request(path);
+  if (result.status < 200 || result.status >= 300) {
+    throw new Error(`GET ${path} returned HTTP ${result.status}: ${JSON.stringify(result.body)}`);
+  }
+  return result.body;
+}
+
+const health = await get("/health");
+if (health.status !== "ok" || health.service !== "telegraph-verity-intelligence") {
+  throw new Error("Health endpoint did not identify the expected service as healthy.");
+}
+
+const catalogue = await get("/intents");
+if (!Array.isArray(catalogue.intents)) {
+  throw new Error("Intent catalogue response does not contain an intents array.");
+}
+if (catalogue.count !== expectedCount || catalogue.intents.length !== expectedCount) {
+  throw new Error(`Expected exactly ${expectedCount} Verity Intents, received count=${catalogue.count}, array length=${catalogue.intents.length}.`);
+}
+if (new Set(catalogue.intents).size !== expectedCount) {
+  throw new Error("Intent catalogue contains duplicate names.");
+}
+if (catalogue.intents.some((intent) => typeof intent !== "string" || !/^[A-Z][A-Z0-9_]*$/.test(intent))) {
+  throw new Error("Intent catalogue contains an invalid canonical intent name.");
+}
+const validationCases = [
+  ["URL_SAFE", { url: "file:///etc/passwd" }, "rejected"],
+  ["THREAT_IP_REPUTATION", { ip_address: "999.999.1.1" }, "rejected"],
+  ["THREAT_INTELLIGENCE", { indicator: "example.com", indicator_type: "invalid" }, "rejected"],
+  ["SECURITY_REVIEW", {}, "rejected"],
+  ["REGRESSION_VERIFY", { base_url: "http://example.com", checks: [{ path: "/health" }] }, "insufficient_evidence"],
+  ["CODE_PATCH_VERIFY", { repository: "peterkehinde673/telegraph-verity-intelligence", commit_sha: "not-a-sha" }, "rejected"],
+  ["VULNERABILITY_TRIAGE", { findings: [] }, "rejected"],
+  ["URL_SCAN", { url: "file:///etc/passwd" }, "rejected"],
+  ["MALWARE_DETECTION", { indicator: "not-a-hash" }, "rejected"],
+  ["CVE_LOOKUP", { cve_id: "not-a-cve" }, "rejected"],
+  ["SSL_VERIFICATION", { hostname: "" }, "rejected"],
+  ["DNS_RECORD_LOOKUP", { hostname: "bad..example" }, "rejected"]
+];
+
+const seasonIIIntents = new Set([
+  "URL_SAFE", "THREAT_IP_REPUTATION", "THREAT_INTELLIGENCE",
+  "SECURITY_REVIEW", "REGRESSION_VERIFY", "CODE_PATCH_VERIFY", "VULNERABILITY_TRIAGE"
+]);
+
+for (const [intent, input, expectedVerdict] of validationCases) {
+  if (!catalogue.intents.includes(intent)) throw new Error(`Required intent is missing: ${intent}`);
+  const result = await request("/v1/intent", {
+    method: "POST",
+    headers: { "content-type": "application/json", accept: "application/json" },
+    body: JSON.stringify({ intent, input })
+  });
+  if (result.status !== 200) {
+    throw new Error(`POST /v1/intent for ${intent} returned HTTP ${result.status}: ${JSON.stringify(result.body)}`);
+  }
+  const body = result.body;
+  if (body.intent !== intent || body.verdict !== expectedVerdict) {
+    throw new Error(`Unexpected safe-validation response for ${intent}: ${JSON.stringify(body)}`);
+  }
+  if (!Number.isFinite(body.confidence) || body.confidence < 0 || body.confidence > 1 ||
+      !Array.isArray(body.evidence) || !Array.isArray(body.uncertainty) ||
+      typeof body.retrieved_at !== "string") {
+    throw new Error(`Response contract failed for ${intent}: ${JSON.stringify(body)}`);
+  }
+}
+
+
+const liveCases = [
+  ["URL_SAFE", { url: "https://example.com/" }],
+  ["THREAT_IP_REPUTATION", { ip_address: "8.8.8.8" }],
+  ["THREAT_INTELLIGENCE", { indicator: "example.com", indicator_type: "domain" }]
+];
+const liveResults = [];
+const providerFailures = [];
+for (const [intent, input] of liveCases) {
+  const result = await request("/v1/intent", {
+    method: "POST",
+    headers: { "content-type": "application/json", accept: "application/json" },
+    body: JSON.stringify({ intent, input })
+  });
+  if (result.status !== 200) {
+    throw new Error(`Real-world smoke request for ${intent} returned HTTP ${result.status}: ${JSON.stringify(result.body)}`);
+  }
+  const body = result.body;
+  if (body.intent !== intent ||
+      !["confirmed", "likely", "uncertain", "not_found", "insufficient_evidence", "rejected"].includes(body.verdict) ||
+      !Number.isFinite(body.confidence) || body.confidence < 0 || body.confidence > 1 ||
+      !Array.isArray(body.evidence) || !Array.isArray(body.uncertainty) ||
+      typeof body.retrieved_at !== "string") {
+    throw new Error(`Real-world smoke response contract failed for ${intent}: ${JSON.stringify(body)}`);
+  }
+  if (body.verdict === "insufficient_evidence" && body.evidence.length !== 0) {
+    throw new Error(`${intent} abstained but incorrectly returned evidence.`);
+  }
+  if (intent === "URL_SAFE" &&
+      (body.answer?.provider !== "google-safe-browsing" ||
+       !Array.isArray(body.answer?.matches) ||
+       typeof body.answer?.safe_on_checked_feeds !== "boolean")) {
+    throw new Error("URL_SAFE did not return the expected Google Safe Browsing answer contract.");
+  }
+  if (intent === "THREAT_IP_REPUTATION" &&
+      body.answer?.provider !== "abuseipdb") {
+    throw new Error("THREAT_IP_REPUTATION did not identify AbuseIPDB as its provider.");
+  }
+  if (intent === "THREAT_INTELLIGENCE" &&
+      body.answer?.provider !== "alienvault-otx") {
+    throw new Error("THREAT_INTELLIGENCE did not identify AlienVault OTX as its provider.");
+  }
+  const uncertaintyCodes = body.uncertainty.map(item => item.code).filter(Boolean);
+  const providerNotConfigured = uncertaintyCodes.some(code =>
+    ["reputation_source_unconfigured", "threat_feed_unconfigured"].includes(code)
+  );
+  const providerLookupFailed = uncertaintyCodes.some(code =>
+    ["reputation_lookup_failed", "threat_feed_lookup_failed"].includes(code)
+  );
+  liveResults.push({
+    intent,
+    verdict: body.verdict,
+    confidence: body.confidence,
+    evidence_count: body.evidence.length,
+    provider_configured: !providerNotConfigured,
+    provider_lookup_succeeded: !providerLookupFailed && body.evidence.length > 0,
+    uncertainty_codes: uncertaintyCodes,
+    uncertainty_messages: body.uncertainty.map(item => ({
+      code: item.code,
+      message: typeof item.message === "string" ? item.message.slice(0, 180) : undefined
+    }))
+  });
+  if (providerNotConfigured || providerLookupFailed || body.evidence.length === 0) {
+    providerFailures.push(intent);
+  }
+}
+
+console.log(JSON.stringify({
+  base_url: baseUrl,
+  health,
+  intent_count: catalogue.intents.length,
+  season_ii_intents_verified: seasonIIIntents.size,
+  safe_validation_cases: validationCases.length,
+  real_world_provider_cases: liveCases.length,
+  provider_diagnostics: liveResults,
+  post_response_contracts_verified: true
+}, null, 2));
+if (providerFailures.length > 0) {
+  throw new Error(`Live provider checks failed for: ${providerFailures.join(", ")}. See the safe provider diagnostics above; no credential values are logged.`);
+}

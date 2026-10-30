@@ -1,0 +1,45 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+
+const expectedIntents = [
+  "FACT_CHECK",
+  "RESEARCH_QUERY",
+  "RESEARCH_SYNTHESIS",
+  "NEWS_HEADLINES",
+  "NEWS_SEARCH",
+  "WEB_SEARCH",
+  "TWITTER_SEARCH",
+  "SENTIMENT_ANALYSIS",
+  "ONCHAIN_METRIC_VERIFY",
+  "SLA_COMPLIANCE",
+  "ACADEMIC_SEARCH",
+  "CONTENT_EXTRACTION",
+  "CONTENT_VERIFICATION",
+  "TEXT_AUTHENTICITY_CHECK",
+  "AI_TEXT_DETECTION",
+  "DEEPFAKE_DETECTION",
+  "MEDIA_AUTHENTICITY_CHECK",
+  "IMAGE_VERIFICATION",
+  "VIDEO_VERIFICATION",
+  "CONTENT_MODERATION",
+  "URL_SCAN",
+  "EMAIL_SECURITY",
+  "MALWARE_DETECTION",
+  "CVE_LOOKUP",
+  "SSL_VERIFICATION",
+  "DNS_RECORD_LOOKUP",
+  "CODE_REVIEW",
+  "URL_SAFE",
+  "THREAT_IP_REPUTATION",
+  "THREAT_INTELLIGENCE",
+  "PLAGIARISM_DETECTION",
+  "SECURITY_REVIEW",
+  "REGRESSION_VERIFY",
+  "CODE_PATCH_VERIFY",
+  "VULNERABILITY_TRIAGE"
+];
+
+test("the Verity scope contains the configured intents", () => {
+  assert.equal(expectedIntents.length, 35);
+  assert.equal(new Set(expectedIntents).size, 35);
+});

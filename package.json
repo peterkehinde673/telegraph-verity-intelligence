@@ -1,0 +1,28 @@
+{
+  "name": "telegraph-verity-intelligence",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Telegraph Verity Intelligence provider foundation.",
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/server.js",
+    "test": "node --test",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "verify:telegraph": "npm run build && node scripts/verify-telegraph-registration.mjs",
+    "validate:miner": "node scripts/validate-miner-yaml.mjs",
+    "preflight:miner": "node scripts/preflight-miner-template.mjs",
+    "preflight:registration": "npm run verify:telegraph && npm run preflight:miner",
+    "smoke:render": "node scripts/smoke-render-api.mjs",
+    "preflight:deployment": "npm run build && npm run smoke:render",
+    "verify:miner-live": "node scripts/verify-live-miner.mjs",
+    "validate:miner-integrate": "node scripts/validate-miner-integrate.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.0.0"
+  }
+}

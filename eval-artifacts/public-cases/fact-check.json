@@ -1,0 +1,55 @@
+{
+  "intent": "FACT_CHECK",
+  "cases": [
+    {
+      "question": "Did the study find a benefit?",
+      "ground_truth": "The study found a benefit.",
+      "answers": [
+        {"label":"exact truth","text":"The study found a benefit.","tier":"high"},
+        {"label":"paraphrase","text":"The study reported a positive benefit.","tier":"mid"},
+        {"label":"negated claim","text":"The study did not find a benefit.","tier":"low"},
+        {"label":"unrelated","text":"The Moon orbits Earth.","tier":"low"}
+      ]
+    },
+    {
+      "question": "Which company reported Q3 revenue of $3.42 billion?",
+      "ground_truth": "Apple reported Q3 revenue of $3.42 billion.",
+      "answers": [
+        {"label":"exact truth","text":"Apple reported Q3 revenue of $3.42 billion.","tier":"high"},
+        {"label":"cross-unit paraphrase","text":"Apple's Q3 revenue was 3,420 million dollars.","tier":"high"},
+        {"label":"wrong company, same number","text":"Microsoft reported Q3 revenue of $3.42 billion.","tier":"low"},
+        {"label":"right company, wrong number","text":"Apple reported Q3 revenue of $4.32 billion.","tier":"low"}
+      ]
+    },
+    {
+      "question": "What was the reported change in mortality?",
+      "ground_truth": "The treatment reduced mortality by 30% relative to placebo.",
+      "answers": [
+        {"label":"correct paraphrase","text":"Mortality fell 30% versus placebo under the treatment.","tier":"high"},
+        {"label":"exact fact, shorter","text":"Treatment reduced mortality by 30%.","tier":"high"},
+        {"label":"opposite direction, same number","text":"The treatment increased mortality by 30% relative to placebo.","tier":"low"},
+        {"label":"wrong number","text":"The treatment reduced mortality by 3% relative to placebo.","tier":"low"}
+      ]
+    },
+    {
+      "question": "Is this URL safe to visit?",
+      "ground_truth": "The URL is a scam.",
+      "answers": [
+        {"label":"correct verdict","text":"This URL is a scam.","tier":"high"},
+        {"label":"synonym","text":"The URL appears fraudulent.","tier":"mid"},
+        {"label":"opposite verdict","text":"The URL is safe and legitimate.","tier":"low"},
+        {"label":"unrelated","text":"The URL uses HTTPS encryption.","tier":"low"}
+      ]
+    },
+    {
+      "question": "Summarise the finding about the drug.",
+      "ground_truth": "The drug lowered blood pressure without increasing serious adverse events.",
+      "answers": [
+        {"label":"correct paraphrase","text":"The drug reduced blood pressure and did not raise serious adverse events.","tier":"high"},
+        {"label":"partial answer","text":"The drug lowered blood pressure.","tier":"mid"},
+        {"label":"contradictory adverse event claim","text":"The drug lowered blood pressure but increased serious adverse events.","tier":"low"},
+        {"label":"unrelated","text":"The trial enrolled 400 participants.","tier":"low"}
+      ]
+    }
+  ]
+}

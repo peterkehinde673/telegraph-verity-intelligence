@@ -1,0 +1,742 @@
+name: FACT_CHECK local scorer investigation
+
+on:
+  push:
+    branches: ["foundation/**"]
+    paths:
+      - ".github/workflows/fact-check-eval-harness.yml"
+      - "wasm/verity-fact-check-scorer/**"
+  pull_request:
+    branches: ["foundation/**"]
+    paths:
+      - ".github/workflows/fact-check-eval-harness.yml"
+      - "wasm/verity-fact-check-scorer/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe-scorers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout Verity repository
+        uses: actions/checkout@v6
+
+      - name: Install Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install exact Go toolchain for official tester
+        uses: actions/setup-go@v6
+        with:
+          go-version: "1.26.1"
+          cache: false
+
+      - name: Build official Telegraph WASM tester
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --depth 1 https://github.com/telegraphprotocol/telegraph-examples.git /tmp/telegraph-examples
+          cd /tmp/telegraph-examples/wasm-scoring-module/go-tester
+          go version
+          go build -o "$RUNNER_TEMP/telegraph-wasm-tester" .
+
+      - name: Install Rust and WASM target
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Build clean V15 baseline for direct comparison
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin foundation/verity-fact-check-discrimination-v15
+          git worktree add /tmp/verity-v15-baseline FETCH_HEAD
+          cargo test --manifest-path /tmp/verity-v15-baseline/wasm/verity-fact-check-scorer/Cargo.toml
+          cargo build --manifest-path /tmp/verity-v15-baseline/wasm/verity-fact-check-scorer/Cargo.toml --release --target wasm32-unknown-unknown
+          mkdir -p eval-artifacts/wasm
+          cp /tmp/verity-v15-baseline/wasm/verity-fact-check-scorer/target/wasm32-unknown-unknown/release/verity_fact_check_scorer.wasm eval-artifacts/wasm/verity-v15-baseline.wasm
+
+      - name: Build and test PR candidate WASM
+        shell: bash
+        run: |
+          set -euo pipefail
+          cargo test --manifest-path wasm/verity-fact-check-scorer/Cargo.toml
+          cargo build --manifest-path wasm/verity-fact-check-scorer/Cargo.toml --release --target wasm32-unknown-unknown
+          cp wasm/verity-fact-check-scorer/target/wasm32-unknown-unknown/release/verity_fact_check_scorer.wasm eval-artifacts-candidate.wasm
+          mv eval-artifacts-candidate.wasm "$RUNNER_TEMP/verity-pr-candidate.wasm"
+          cp "$RUNNER_TEMP/verity-pr-candidate.wasm" /tmp/verity-pr-candidate.wasm
+          python -m pip install --quiet pycryptodome
+          python - <<'PY'
+          from pathlib import Path
+          from Crypto.Hash import keccak
+          p=Path("/tmp/verity-pr-candidate.wasm")
+          h=keccak.new(digest_bits=256); h.update(p.read_bytes())
+          print("PR candidate WASM bytes:", p.stat().st_size)
+          print("PR candidate Keccak-256: 0x"+h.hexdigest())
+          PY
+
+      - name: Capture public champion and score endpoints
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p eval-artifacts/public-api
+          for spec in \
+            "wasm|https://devnode.telegraphprotocol.com/api/wasm" \
+            "fact-check-miners|https://devnode.telegraphprotocol.com/engine/v1/intents/FACT_CHECK/miners" \
+            "fact-check-scores|https://devnode.telegraphprotocol.com/scores?intent=FACT_CHECK" \
+            "fact-check-intent-wasm|https://devnode.telegraphprotocol.com/engine/v1/intents/FACT_CHECK/wasm"; do
+            name="${spec%%|*}"
+            url="${spec#*|}"
+            code="$(curl -sSL --retry 2 -w '%{http_code}' "$url" -o "eval-artifacts/public-api/$name.json" || true)"
+            echo "$name HTTP $code bytes $(wc -c < "eval-artifacts/public-api/$name.json" 2>/dev/null || echo 0)"
+          done
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          for p in sorted(Path("eval-artifacts/public-api").glob("*.json")):
+              try:
+                  obj=json.loads(p.read_text())
+                  print(f"\\n--- {p.name} ({type(obj).__name__}) ---")
+                  if isinstance(obj, dict):
+                      print("top-level keys:", list(obj.keys())[:40])
+                      print(json.dumps(obj, indent=2)[:3500])
+                  elif isinstance(obj, list):
+                      print("rows:", len(obj))
+                      print(json.dumps(obj[:3], indent=2)[:3500])
+                  else:
+                      print(str(obj)[:1000])
+              except Exception as e:
+                  print(f"{p.name}: not JSON: {e}")
+          PY
+
+      - name: Verify live registration records and active champion
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p eval-artifacts/registration-audit
+          for id in 3229 3230; do
+            url="https://devnode.telegraphprotocol.com/engine/validator/v1/wasm/$id"
+            code="$(curl -sSL --retry 2 -w '%{http_code}' "$url" -o "eval-artifacts/registration-audit/$id.json")"
+            echo "registration $id HTTP $code"
+          done
+          curl -fsSL --retry 2 \
+            "https://devnode.telegraphprotocol.com/engine/v1/intents/FACT_CHECK/wasm" \
+            -o eval-artifacts/registration-audit/intent-wasm.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          for rid in (3229, 3230):
+              p=Path(f"eval-artifacts/registration-audit/{rid}.json")
+              try:
+                  obj=json.loads(p.read_text())
+              except Exception as e:
+                  print(f"Registration {rid}: response not JSON: {e}")
+                  continue
+              row=obj.get("wasm", obj)
+              print(f"REGISTRATION {rid}:")
+              for k in ("RegistrationID","ActivationStatus","IntentID","WasmHash","WasmURL","EvalScore","EvalDetails","RejectionReason","EvalErrorCount","UpdatedAt"):
+                  if k in row: print(f"  {k}: {row[k]}")
+          p=Path("eval-artifacts/registration-audit/intent-wasm.json")
+          obj=json.loads(p.read_text())
+          rows=obj.get("wasm", [])
+          active=[r for r in rows if str(r.get("ActivationStatus","")).lower()=="active"]
+          print("FACT_CHECK active entries:", len(active))
+          for row in active:
+              print("ACTIVE CHAMPION:")
+              for k in ("RegistrationID","ActivationStatus","IntentID","WasmHash","WasmURL","EvalScore","UpdatedAt"):
+                  if k in row: print(f"  {k}: {row[k]}")
+          PY
+
+      - name: Download and verify current FACT_CHECK champion WASM
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          data=json.loads(Path("eval-artifacts/public-api/wasm.json").read_text())
+          champion=data.get("intents",{}).get("FACT_CHECK",{}).get("champion")
+          if not champion or not champion.get("wasm_url") or not champion.get("wasm_hash"):
+              raise SystemExit("Public API did not expose a FACT_CHECK champion WASM URL/hash")
+          Path("eval-artifacts/champion-manifest.json").write_text(json.dumps(champion,indent=2))
+          print("Champion registration:", champion.get("registration_id"))
+          print("Champion URL:", champion["wasm_url"])
+          print("Champion expected hash:", champion["wasm_hash"])
+          PY
+          CHAMPION_URL="$(python -c 'import json;print(json.load(open("eval-artifacts/champion-manifest.json"))["wasm_url"])')"
+          EXPECTED_CHAMPION_HASH="$(python -c 'import json;print("0x"+json.load(open("eval-artifacts/champion-manifest.json"))["wasm_hash"].removeprefix("0x"))')"
+          curl -fLsS --retry 3 "$CHAMPION_URL" -o eval-artifacts/wasm/verity-current-champion.wasm
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from Crypto.Hash import keccak
+          p=Path("eval-artifacts/wasm/verity-current-champion.wasm")
+          if not p.read_bytes().startswith(bytes.fromhex("0061736d01000000")):
+              raise SystemExit("Current champion is not a valid WASM v1 binary")
+          h=keccak.new(digest_bits=256); h.update(p.read_bytes())
+          actual="0x"+h.hexdigest()
+          expected="0x"+json.loads(Path("eval-artifacts/public-api/wasm.json").read_text())["intents"]["FACT_CHECK"]["champion"]["wasm_hash"].removeprefix("0x")
+          print("Current champion bytes:",p.stat().st_size)
+          print("Current champion actual Keccak:",actual)
+          print("Current champion expected Keccak:",expected)
+          if actual.lower()!=expected.lower(): raise SystemExit("Champion WASM hash mismatch")
+          PY
+
+      - name: Download V16 and public FACT_CHECK registration data
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p eval-artifacts/wasm
+          cp /tmp/verity-pr-candidate.wasm eval-artifacts/wasm/verity-pr-candidate.wasm
+          python - <<'PY'
+          from pathlib import Path
+          from Crypto.Hash import keccak
+          for p in sorted(Path("eval-artifacts/wasm").glob("*.wasm")):
+              h=keccak.new(digest_bits=256); h.update(p.read_bytes())
+              print(f"{p.name}: bytes={p.stat().st_size} keccak=0x{h.hexdigest()}")
+          PY
+          curl -fsSL --retry 3 \
+            "https://github.com/peterkehinde673/telegraph-verity-intelligence/releases/download/verity-fact-check-scorer-731be5bde59c2800211a365f9d1886be5cbac1dd/verity_fact_check_scorer.wasm" \
+            -o eval-artifacts/wasm/verity-v16.wasm
+          curl -fsSL --retry 3 \
+            "https://devnode.telegraphprotocol.com/engine/v1/intents/FACT_CHECK/wasm" \
+            -o eval-artifacts/fact-check-registrations.json
+          python -m pip install --quiet pycryptodome
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from Crypto.Hash import keccak
+
+          path = Path("eval-artifacts/wasm/verity-v16.wasm")
+          b = path.read_bytes()
+          if not b.startswith(b"\x00asm\x01\x00\x00\x00"):
+              raise SystemExit("V16 is not a valid WASM v1 binary")
+          h = keccak.new(digest_bits=256); h.update(b)
+          actual = "0x" + h.hexdigest()
+          expected = "0xfc020cf5f9245f54ce6b0eab83830b31236708c3b25bf4cffed7cd3f37beefb1"
+          print("V16 Keccak:", actual)
+          if actual != expected:
+              raise SystemExit(f"V16 hash mismatch: expected {expected}")
+          data = json.loads(Path("eval-artifacts/fact-check-registrations.json").read_text())
+          all_rows = data.get("wasm", [])
+          rows = [r for r in all_rows if str(r.get("IntentID", "")).upper() == "FACT_CHECK"]
+          print("Public endpoint rows:", len(all_rows))
+          print("Rows actually tagged FACT_CHECK:", len(rows))
+          if not rows:
+              print("NO COMPARABLE FACT_CHECK BINARIES: endpoint response is tagged FACT_CHECK at top level, but its records belong to other intents.")
+          active = [r for r in rows if str(r.get("ActivationStatus", "")).lower() in ("active", "champion", "active_champion")]
+          if active:
+              print("Active-looking public rows:")
+              for row in active:
+                  print(json.dumps({k: row.get(k) for k in ("RegistrationID","ActivationStatus","WasmURL","WasmHash")}, sort_keys=True))
+          else:
+              print("NO CURRENT CHAMPION IDENTIFIED: endpoint only returned historical/non-active registration rows.")
+          PY
+
+      - name: Download public historical scorer binaries
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, subprocess
+          from pathlib import Path
+          data = json.loads(Path("eval-artifacts/fact-check-registrations.json").read_text())
+          out = Path("eval-artifacts/wasm")
+          rows = [r for r in data.get("wasm", []) if str(r.get("IntentID", "")).upper() == "FACT_CHECK"]
+          if not rows:
+              print("Skipping historical downloads: no rows are explicitly tagged FACT_CHECK.")
+          manifest = []
+          for row in rows:
+              url = row.get("WasmURL")
+              rid = row.get("RegistrationID")
+              if not url or rid is None:
+                  continue
+              path = out / f"registration-{rid}.wasm"
+              try:
+                  subprocess.run(["curl","-fsSL","--retry","2",url,"-o",str(path)],check=True,timeout=90)
+                  manifest.append({"registration_id":rid,"status":row.get("ActivationStatus"),"url":url,"file":str(path),"hash":row.get("WasmHash")})
+                  print(f"Downloaded registration {rid}: {path.stat().st_size} bytes")
+              except Exception as exc:
+                  print(f"Could not download registration {rid}: {exc}")
+          Path("eval-artifacts/wasm-manifest.json").write_text(json.dumps(manifest,indent=2))
+          PY
+
+      - name: Sweep V15 calibration powers against the same corpus
+        shell: bash
+        run: |
+          set -euo pipefail
+          SRC="/tmp/verity-v15-baseline/wasm/verity-fact-check-scorer/src/lib.rs"
+          ORIGINAL="$RUNNER_TEMP/verity-v15-original.rs"
+          cp "$SRC" "$ORIGINAL"
+          restore_source() { cp "$ORIGINAL" "$SRC"; }
+          trap restore_source EXIT
+          for power in 6 8 10 12 14; do
+            POWER="$power" SRC="$SRC" python - <<'PY'
+          import os
+          from pathlib import Path
+          p=Path(os.environ["SRC"])
+          s=p.read_text()
+          old="""    let hit2 = overlap * overlap;
+              let hit4 = hit2 * hit2;
+              let hit8 = hit4 * hit4;
+              let hit10 = hit8 * hit2;
+              let miss = 1.0 - overlap;
+              let miss2 = miss * miss;
+              let miss4 = miss2 * miss2;
+              let miss8 = miss4 * miss4;
+              let miss10 = miss8 * miss2;
+              let denominator = hit10 + miss10;
+              let mut score = if denominator > 0.0 { hit10 / denominator } else { 0.0 };"""
+          power=int(os.environ["POWER"])
+          new=f"""    let mut hit = 1.0f32;
+              let mut miss = 1.0f32;
+              for _ in 0..{power} {{
+                  hit *= overlap;
+                  miss *= 1.0 - overlap;
+              }}
+              let denominator = hit + miss;
+              let mut score = if denominator > 0.0 {{ hit / denominator }} else {{ 0.0 }};"""
+          if old not in s:
+              raise SystemExit("Could not find exact V15 calibration block; refusing to build an unintended variant")
+          p.write_text(s.replace(old,new,1))
+          PY
+            cargo build --manifest-path /tmp/verity-v15-baseline/wasm/verity-fact-check-scorer/Cargo.toml --release --target wasm32-unknown-unknown
+            cp /tmp/verity-v15-baseline/wasm/verity-fact-check-scorer/target/wasm32-unknown-unknown/release/verity_fact_check_scorer.wasm "eval-artifacts/wasm/verity-v15-p${power}.wasm"
+            cp "$ORIGINAL" "$SRC"
+            echo "Built V15 calibration power ${power}"
+          done
+          restore_source
+          trap - EXIT
+
+      - name: Test a sentence-aware entity contradiction guard on V15
+        shell: bash
+        run: |
+          set -euo pipefail
+          SRC="/tmp/verity-v15-baseline/wasm/verity-fact-check-scorer/src/lib.rs"
+          ORIGINAL="$RUNNER_TEMP/verity-v15-original.rs"
+          cp "$SRC" "$ORIGINAL"
+          restore_source() { cp "$ORIGINAL" "$SRC"; }
+          trap restore_source EXIT
+          for power in 10 14; do
+            cp "$ORIGINAL" "$SRC"
+            POWER="$power" SRC="$SRC" python - <<'PY'
+          import os
+          from pathlib import Path
+          p=Path(os.environ["SRC"])
+          s=p.read_text()
+          old="""    let hit2 = overlap * overlap;
+              let hit4 = hit2 * hit2;
+              let hit8 = hit4 * hit4;
+              let hit10 = hit8 * hit2;
+              let miss = 1.0 - overlap;
+              let miss2 = miss * miss;
+              let miss4 = miss2 * miss2;
+              let miss8 = miss4 * miss4;
+              let miss10 = miss8 * miss2;
+              let denominator = hit10 + miss10;
+              let mut score = if denominator > 0.0 { hit10 / denominator } else { 0.0 };"""
+          power=int(os.environ["POWER"])
+          calibration=f"""    let mut hit = 1.0f32;
+              let mut miss = 1.0f32;
+              for _ in 0..{power} {{
+                  hit *= overlap;
+                  miss *= 1.0 - overlap;
+              }}
+              let denominator = hit + miss;
+              let mut score = if denominator > 0.0 {{ hit / denominator }} else {{ 0.0 }};"""
+          if old not in s:
+              raise SystemExit("Could not find exact V15 calibration block")
+          s=s.replace(old,calibration,1)
+          helper="""// Detect changed proper names without treating sentence-initial words like
+          // "The" as entities. This is deliberately lexical and conservative.
+          fn has_unmatched_capitalized_entity(source: &[u8], other: &[u8]) -> bool {
+              let mut cursor = 0usize;
+              let mut sentence_start = true;
+              while let Some((start, end, next)) = next_token(source, cursor) {
+                  if source[cursor..start].iter().any(|b| *b == b'.' || *b == b'!' || *b == b'?' || *b == b'\\n') {
+                      sentence_start = true;
+                  }
+                  let token = &source[start..end];
+                  let begins_upper = token.first().map(|b| *b >= b'A' && *b <= b'Z').unwrap_or(false);
+                  let mut lower = [0u8; 64];
+                  let len = normalized_token(token, &mut lower);
+                  let word = &lower[..len];
+                  let sentence_opener = [
+                      b"the".as_slice(), b"a", b"an", b"this", b"that", b"these", b"those",
+                      b"it", b"he", b"she", b"they", b"we", b"i", b"there", b"according",
+                      b"in", b"on", b"at", b"by", b"for", b"from", b"with", b"as",
+                      b"after", b"before",
+                  ].iter().any(|candidate| *candidate == word);
+                  if begins_upper && len > 1 && !(sentence_start && sentence_opener) {
+                      let wanted = token_hash(token);
+                      let mut other_cursor = 0usize;
+                      let mut found = false;
+                      while let Some((os, oe, onext)) = next_token(other, other_cursor) {
+                          if token_hash(&other[os..oe]) == wanted { found = true; break; }
+                          other_cursor = onext;
+                      }
+                      if !found { return true; }
+                  }
+                  sentence_start = false;
+                  cursor = next;
+              }
+              false
+          }
+
+          """
+          insert_at="fn score_bytes(_question: &[u8], truth: &[u8], answer: &[u8]) -> f32 {"
+          if insert_at not in s: raise SystemExit("score_bytes insertion point missing")
+          s=s.replace(insert_at,helper+insert_at,1)
+          old_guard="""    if has_unmatched_number(truth, answer) {
+                  score *= 0.05;
+              }
+              score.clamp(0.0, 1.0)"""
+          new_guard="""    if has_unmatched_number(truth, answer) {
+                  score *= 0.05;
+              }
+              if has_unmatched_capitalized_entity(truth, answer)
+                  || has_unmatched_capitalized_entity(answer, truth) {
+                  score *= 0.02;
+              }
+              score.clamp(0.0, 1.0)"""
+          if old_guard not in s: raise SystemExit("numeric-guard insertion point missing")
+          s=s.replace(old_guard,new_guard,1)
+          p.write_text(s)
+          PY
+            cargo build --manifest-path /tmp/verity-v15-baseline/wasm/verity-fact-check-scorer/Cargo.toml --release --target wasm32-unknown-unknown
+            cp /tmp/verity-v15-baseline/wasm/verity-fact-check-scorer/target/wasm32-unknown-unknown/release/verity_fact_check_scorer.wasm "eval-artifacts/wasm/verity-v15-entity-p${power}.wasm"
+            echo "Built sentence-aware entity guard, calibration power ${power}"
+          done
+          restore_source
+          trap - EXIT
+
+      - name: Test conservative opposite-verdict guard on V15
+        shell: bash
+        run: |
+          set -euo pipefail
+          SRC="/tmp/verity-v15-baseline/wasm/verity-fact-check-scorer/src/lib.rs"
+          ORIGINAL="$RUNNER_TEMP/verity-v15-original.rs"
+          cp "$SRC" "$ORIGINAL"
+          restore_source() { cp "$ORIGINAL" "$SRC"; }
+          trap restore_source EXIT
+          for power in 10 14; do
+            cp "$ORIGINAL" "$SRC"
+            POWER="$power" SRC="$SRC" python - <<'PY'
+          import os
+          from pathlib import Path
+          p=Path(os.environ["SRC"])
+          s=p.read_text()
+          old="""    let hit2 = overlap * overlap;
+              let hit4 = hit2 * hit2;
+              let hit8 = hit4 * hit4;
+              let hit10 = hit8 * hit2;
+              let miss = 1.0 - overlap;
+              let miss2 = miss * miss;
+              let miss4 = miss2 * miss2;
+              let miss8 = miss4 * miss4;
+              let miss10 = miss8 * miss2;
+              let denominator = hit10 + miss10;
+              let mut score = if denominator > 0.0 { hit10 / denominator } else { 0.0 };"""
+          power=int(os.environ["POWER"])
+          calibration=f"""    let mut hit = 1.0f32;
+              let mut miss = 1.0f32;
+              for _ in 0..{power} {{
+                  hit *= overlap;
+                  miss *= 1.0 - overlap;
+              }}
+              let denominator = hit + miss;
+              let mut score = if denominator > 0.0 {{ hit / denominator }} else {{ 0.0 }};"""
+          if old not in s: raise SystemExit("V15 calibration block missing")
+          s=s.replace(old,calibration,1)
+          helper="""fn contains_normalized_token(bytes: &[u8], wanted: &[u8]) -> bool {
+              let wanted_hash = token_hash(wanted);
+              let mut cursor = 0usize;
+              while let Some((start, end, next)) = next_token(bytes, cursor) {
+                  if token_hash(&bytes[start..end]) == wanted_hash { return true; }
+                  cursor = next;
+              }
+              false
+          }
+
+          // Only penalize an opposite verdict when the reference contains one
+          // side exclusively and the answer contains the other side exclusively.
+          // This avoids false positives when both labels are discussed as context.
+          fn has_opposite_verdict(truth: &[u8], answer: &[u8]) -> bool {
+              const PAIRS: [(&[u8], &[u8]); 6] = [
+                  (b"true", b"false"),
+                  (b"correct", b"incorrect"),
+                  (b"original", b"plagiarised"),
+                  (b"verified", b"refuted"),
+                  (b"confirmed", b"denied"),
+                  (b"approved", b"rejected"),
+              ];
+              for (left, right) in PAIRS {
+                  let tl = contains_normalized_token(truth, left);
+                  let tr = contains_normalized_token(truth, right);
+                  let al = contains_normalized_token(answer, left);
+                  let ar = contains_normalized_token(answer, right);
+                  if (tl && !tr && ar && !al) || (tr && !tl && al && !ar) {
+                      return true;
+                  }
+              }
+              false
+          }
+
+          """
+          insert_at="fn score_bytes(_question: &[u8], truth: &[u8], answer: &[u8]) -> f32 {"
+          if insert_at not in s: raise SystemExit("score_bytes insertion point missing")
+          s=s.replace(insert_at,helper+insert_at,1)
+          old_guard="""    if has_unmatched_number(truth, answer) {
+                  score *= 0.05;
+              }
+              score.clamp(0.0, 1.0)"""
+          new_guard="""    if has_unmatched_number(truth, answer) {
+                  score *= 0.05;
+              }
+              if has_opposite_verdict(truth, answer) {
+                  score *= 0.02;
+              }
+              score.clamp(0.0, 1.0)"""
+          if old_guard not in s: raise SystemExit("numeric guard insertion point missing")
+          s=s.replace(old_guard,new_guard,1)
+          p.write_text(s)
+          PY
+            cargo build --manifest-path /tmp/verity-v15-baseline/wasm/verity-fact-check-scorer/Cargo.toml --release --target wasm32-unknown-unknown
+            cp /tmp/verity-v15-baseline/wasm/verity-fact-check-scorer/target/wasm32-unknown-unknown/release/verity_fact_check_scorer.wasm "eval-artifacts/wasm/verity-v15-verdict-p${power}.wasm"
+            echo "Built opposite-verdict guard, calibration power ${power}"
+          done
+          restore_source
+          trap - EXIT
+
+      - name: Test coverage-aware opposite-verdict guard on V15
+        shell: bash
+        run: |
+          set -euo pipefail
+          SRC="/tmp/verity-v15-baseline/wasm/verity-fact-check-scorer/src/lib.rs"
+          ORIGINAL="$RUNNER_TEMP/verity-v15-original.rs"
+          cp "$SRC" "$ORIGINAL"
+          restore_source() { cp "$ORIGINAL" "$SRC"; }
+          trap restore_source EXIT
+          cp "$ORIGINAL" "$SRC"
+          SRC="$SRC" python - <<'PY'
+          import os
+          from pathlib import Path
+          p=Path(os.environ["SRC"])
+          s=p.read_text()
+          old="""    let hit2 = overlap * overlap;
+              let hit4 = hit2 * hit2;
+              let hit8 = hit4 * hit4;
+              let hit10 = hit8 * hit2;
+              let miss = 1.0 - overlap;
+              let miss2 = miss * miss;
+              let miss4 = miss2 * miss2;
+              let miss8 = miss4 * miss4;
+              let miss10 = miss8 * miss2;
+              let denominator = hit10 + miss10;
+              let mut score = if denominator > 0.0 { hit10 / denominator } else { 0.0 };"""
+          calibration="""    let mut hit = 1.0f32;
+              let mut miss = 1.0f32;
+              for _ in 0..14 {
+                  hit *= overlap;
+                  miss *= 1.0 - overlap;
+              }
+              let denominator = hit + miss;
+              let mut score = if denominator > 0.0 { hit / denominator } else { 0.0 };"""
+          if old not in s: raise SystemExit("V15 calibration block missing")
+          s=s.replace(old,calibration,1)
+          helper="""fn contains_normalized_token(bytes: &[u8], wanted: &[u8]) -> bool {
+              let wanted_hash = token_hash(wanted);
+              let mut cursor = 0usize;
+              while let Some((start, end, next)) = next_token(bytes, cursor) {
+                  if token_hash(&bytes[start..end]) == wanted_hash { return true; }
+                  cursor = next;
+              }
+              false
+          }
+
+          fn has_opposite_verdict(truth: &[u8], answer: &[u8]) -> bool {
+              const PAIRS: [(&[u8], &[u8]); 6] = [
+                  (b"true", b"false"),
+                  (b"correct", b"incorrect"),
+                  (b"original", b"plagiarised"),
+                  (b"verified", b"refuted"),
+                  (b"confirmed", b"denied"),
+                  (b"approved", b"rejected"),
+              ];
+              for (left, right) in PAIRS {
+                  let tl = contains_normalized_token(truth, left);
+                  let tr = contains_normalized_token(truth, right);
+                  let al = contains_normalized_token(answer, left);
+                  let ar = contains_normalized_token(answer, right);
+                  if (tl && !tr && ar && !al) || (tr && !tl && al && !ar) { return true; }
+              }
+              false
+          }
+
+          """
+          insert_at="fn score_bytes(_question: &[u8], truth: &[u8], answer: &[u8]) -> f32 {"
+          if insert_at not in s: raise SystemExit("score_bytes insertion point missing")
+          s=s.replace(insert_at,helper+insert_at,1)
+          old_guard="""    if has_unmatched_number(truth, answer) {
+                  score *= 0.05;
+              }
+              score.clamp(0.0, 1.0)"""
+          new_guard="""    if has_unmatched_number(truth, answer) {
+                  score *= 0.05;
+              }
+              let coverage = (matched_weight / truth_weight).clamp(0.0, 1.0);
+              score *= coverage;
+              if has_opposite_verdict(truth, answer) {
+                  score *= 0.02;
+              }
+              score.clamp(0.0, 1.0)"""
+          if old_guard not in s: raise SystemExit("numeric guard insertion point missing")
+          s=s.replace(old_guard,new_guard,1)
+          p.write_text(s)
+          PY
+          cargo build --manifest-path /tmp/verity-v15-baseline/wasm/verity-fact-check-scorer/Cargo.toml --release --target wasm32-unknown-unknown
+          cp /tmp/verity-v15-baseline/wasm/verity-fact-check-scorer/target/wasm32-unknown-unknown/release/verity_fact_check_scorer.wasm eval-artifacts/wasm/verity-v15-verdict-coverage-p14.wasm
+          restore_source
+          trap - EXIT
+
+      - name: Run local promotion-gate proxy on fact-verification examples
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --depth 1 https://github.com/shreshth006/telegraph-factscore.git "$RUNNER_TEMP/telegraph-factscore"
+          mkdir -p eval-artifacts/fact-check-corpus eval-artifacts/proxy-v15 eval-artifacts/proxy-candidate
+          FACTSCORE_DIR="$RUNNER_TEMP/telegraph-factscore" python - <<'PY'
+          import json, os
+          from pathlib import Path
+          src=Path(os.environ["FACTSCORE_DIR"])
+          out=Path("eval-artifacts/fact-check-corpus")
+          names=[
+              "CONTENT_VERIFICATION_CLEAN_PAIR.json",
+              "TEXT_AUTHENTICITY_CHECK.json",
+              "TEXT_AUTHENTICITY_CHECK_PARAPHRASE.json",
+          ]
+          total=0
+          for name in names:
+              p=src/"fixtures"/"synth"/name
+              if not p.exists():
+                  raise SystemExit(f"Missing public fixture file: {p}")
+              data=json.loads(p.read_text())
+              rows=data if isinstance(data,list) else data.get("fixtures")
+              if not isinstance(rows,list) or not rows:
+                  raise SystemExit(f"No fixtures found in {p}")
+              for row in rows:
+                  row["intent"]="FACT_CHECK"
+              if isinstance(data,dict): data["intent"]="FACT_CHECK"
+              (out/name).write_text(json.dumps(data,indent=2)+"\n")
+              total+=len(rows)
+              print(f"Prepared {name}: {len(rows)} fixtures")
+          print(f"Total public synthetic fact-verification fixtures: {total}")
+          PY
+          cp -R "$RUNNER_TEMP/telegraph-factscore/harness" eval-artifacts/public-harness
+          run_proxy() {
+            label="$1"; scorer="$2"; outdir="$3"
+            set +e
+            node eval-artifacts/public-harness/run-eval.mjs \
+              --scorer "$scorer" \
+              --against eval-artifacts/wasm/verity-current-champion.wasm \
+              --fixtures eval-artifacts/fact-check-corpus \
+              --intent FACT_CHECK \
+              --workers 2 \
+              --out "$outdir" > "eval-artifacts/$label-proxy.txt" 2>&1
+            rc=$?
+            set -e
+            echo "$label proxy exit code: $rc (nonzero can indicate a structural gate failure; report is retained for diagnosis)"
+            cat "eval-artifacts/$label-proxy.txt"
+            return 0
+          }
+          run_proxy v15 eval-artifacts/wasm/verity-v15-baseline.wasm eval-artifacts/proxy-v15
+          run_proxy candidate eval-artifacts/wasm/verity-pr-candidate.wasm eval-artifacts/proxy-candidate
+          for power in 6 8 10 12 14; do
+            run_proxy "v15-p${power}" "eval-artifacts/wasm/verity-v15-p${power}.wasm" "eval-artifacts/proxy-v15-p${power}"
+          done
+          for power in 10 14; do
+            run_proxy "v15-entity-p${power}" "eval-artifacts/wasm/verity-v15-entity-p${power}.wasm" "eval-artifacts/proxy-v15-entity-p${power}"
+          done
+          for power in 10 14; do
+            run_proxy "v15-verdict-p${power}" "eval-artifacts/wasm/verity-v15-verdict-p${power}.wasm" "eval-artifacts/proxy-v15-verdict-p${power}"
+          done
+          run_proxy v15-verdict-coverage-p14 eval-artifacts/wasm/verity-v15-verdict-coverage-p14.wasm eval-artifacts/proxy-v15-verdict-coverage-p14
+
+      - name: Run same behavioural probes against each available binary
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > eval-artifacts/probes.tsv <<'EOF'
+          id	question	ground_truth	answer
+          exact	What is the capital of France?	Paris is the capital of France.	Paris is the capital of France.
+          paraphrase	What is the capital of France?	Paris is the capital of France.	The capital of France is Paris.
+          unrelated	What is the capital of France?	Paris is the capital of France.	The Moon is a natural satellite of Earth.
+          negation	Did the study find a benefit?	The study found a benefit.	The study did not find a benefit.
+          number_conflict	What was the reported count?	The report recorded 120 cases.	The report recorded 12 cases.
+          number_omission	What was the reported count?	The report recorded 120 cases.	The report discussed the cases.
+          partial	Who founded the company and when?	Ada Lovelace founded the company in 1843.	Ada Lovelace founded the company.
+          entity_conflict	Who won the election?	Maria Chen won the election.	David Chen won the election.
+          same_meaning	Did the report confirm the result?	The report confirmed the result.	The result was confirmed by the report.
+          empty	What is the capital of France?	Paris is the capital of France.	
+          EOF
+          : > eval-artifacts/scores.tsv
+          printf "binary\tprobe\tscore\tstatus\n" >> eval-artifacts/scores.tsv
+          while IFS=$'\t' read -r id q gt answer; do
+            [ "$id" = "id" ] && continue
+            for wasm in eval-artifacts/wasm/*.wasm; do
+              [ -f "$wasm" ] || continue
+              name="$(basename "$wasm")"
+              if score=$("$RUNNER_TEMP/telegraph-wasm-tester" "$wasm" "$q" "$gt" "$answer" 2>&1); then
+                value="$(printf '%s' "$score" | sed -n 's/.*score: *//p' | tail -n1)"
+                printf "%s\t%s\t%s\tOK\n" "$name" "$id" "${value:-unknown}" >> eval-artifacts/scores.tsv
+              else
+                printf "%s\t%s\tNA\tERROR: %s\n" "$name" "$id" "$(printf '%s' "$score" | tr '\t\n' ' ' | cut -c1-180)" >> eval-artifacts/scores.tsv
+              fi
+            done
+          done < eval-artifacts/probes.tsv
+          cat eval-artifacts/scores.tsv
+
+      - name: Run public case-level evaluator against candidate, V15, and live champion
+        shell: bash
+        run: |
+          set -euo pipefail
+          TOOL_SHA="1685e5372cc83b9ae4f58a5d85f0cf81a43ac390"
+          git clone https://github.com/neromtoobad/telegraph-wasm-check.git /tmp/telegraph-wasm-check
+          git -C /tmp/telegraph-wasm-check checkout "$TOOL_SHA"
+          cd /tmp/telegraph-wasm-check
+          go build -o "$RUNNER_TEMP/telegraph-wasm-check" .
+          cd "$GITHUB_WORKSPACE"
+          mkdir -p eval-artifacts/public-cases/results
+          CHAMPION="eval-artifacts/wasm/verity-current-champion.wasm"
+          V15="eval-artifacts/wasm/verity-v15-baseline.wasm"
+          CANDIDATE="/tmp/verity-pr-candidate.wasm"
+          for corpus in \
+            "eval-artifacts/public-cases/fact-check.json" \
+            "/tmp/telegraph-wasm-check/examples/hard.json" \
+            "/tmp/telegraph-wasm-check/examples/labels.json"; do
+            name="$(basename "$corpus" .json)"
+            for spec in "v15:$V15" "candidate:$CANDIDATE"; do
+              label="${spec%%:*}"
+              module="${spec#*:}"
+              report="eval-artifacts/public-cases/results/${label}-vs-champion-${name}.txt"
+              echo "=== $label vs live champion on $name ===" | tee "$report"
+              "$RUNNER_TEMP/telegraph-wasm-check" "$module" \
+                --cases "$corpus" --compare "$CHAMPION" \
+                --no-color >> "$report" 2>&1 || true
+              grep -E '^(  candidate:|  baseline:|  FAIL|  WARN|  PASS|  [^ ]+\([0-9]|  resolved by candidate|  REGRESSED|  margin )|candidate:|baseline:|resolved by candidate|REGRESSED vs baseline|cases ordered correctly|worst inversion|did not beat' "$report" | tail -n 100 || true
+            done
+          done
+          echo "Public evaluator commit: $TOOL_SHA"
+          echo "These are diagnostic public cases, not the hidden promotion benchmark."
+      - name: Upload investigation outputs
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: fact-check-eval-investigation
+          path: eval-artifacts/
+          if-no-files-found: warn
+          retention-days: 14
