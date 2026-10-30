@@ -1,3 +1,28 @@
+## Current direction — evaluation material first (2026-10-30)
+
+Telegraph team feedback changed the immediate priority. The team explained that the low number of scored Intents after the Season migration is primarily related to missing evaluation adapters; the platform is optimizing the system, and participants need adapters for ranking. The team's recommended first step for participants is to prepare evaluation material because that is easier. **We are following that recommendation: evaluation material first; no adapter development now.** Material preparation is useful groundwork but does not itself guarantee scoring before Telegraph provides/accepts the required evaluation adapter path.
+
+- [x] Recorded the team's guidance and changed the project priority from intent expansion/implementation to evaluation-material preparation.
+- [ ] Ask Telegraph for the exact evaluation-material schema, accepted file format, submission route, case-count expectations, public/private data rules, licensing constraints, ground-truth standards, and review/acceptance process.
+- [ ] Define a canonical per-case format: Intent, input, expected result, ground-truth label/data, evidence/source URL, timestamp, judging rubric, uncertainty/abstention expectations, and reviewer/version metadata.
+- [ ] Prepare a small, high-quality pilot dataset with positive, negative, boundary, ambiguous, and adversarial cases as appropriate to the selected Intent.
+- [ ] Review each case for correctness, traceability, reproducibility, currentness, legal usability, and unambiguous scoring.
+- [ ] Have Telegraph confirm the pilot format and quality before scaling to more Intents.
+- [ ] Only after material acceptance and written/clear adapter requirements are known, propose a separate adapter phase for explicit approval.
+
+### Pilot selection note
+
+THREAT_INTELLIGENCE_INDICATOR is a candidate to discuss first because earlier diagnostics observed an active evaluation pool for it. This is not a final selection: confirm current eligibility, accepted data format, and pool requirements with Telegraph before producing the dataset.
+
+### Guardrails for this phase
+
+- No evaluation adapter/scoring-module implementation now.
+- No new handlers, catalogue expansion, manifest/YAML edits, miner re-registration, production configuration changes, deployment, release, or on-chain transaction.
+- Keep credentials and private evaluation answers out of public Git history.
+- Use exact canonical Telegraph Intent names. Do not substitute repository-local aliases.
+- Do not fabricate labels or evidence, manipulate scores, or imply that dataset preparation alone activates ranking.
+- Earlier scoring diagnostics are historical snapshots and must be rechecked before making current-state claims.
+
 # Verity Work Progress — Season 2
 
 Active plan: `.verity-work/MASTER_PLAN.md`. Season 2 has not started. The ten target intents are reviewed; intent expansion is now planned as a separate, gated workstream.
