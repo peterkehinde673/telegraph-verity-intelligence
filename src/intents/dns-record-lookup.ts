@@ -101,6 +101,17 @@ export async function lookupDnsRecord(
         retrieved_at: retrievedAt
       };
     }
-    throw error;
+    return {
+      intent: "DNS_RECORD_LOOKUP",
+      verdict: "insufficient_evidence",
+      confidence: 0,
+      answer: { hostname: normalizedHost, record_type: recordType, records: [] },
+      evidence: [],
+      uncertainty: [{
+        code: "dns_lookup_failed",
+        message: "The requested DNS record could not be retrieved because the DNS lookup failed."
+      }],
+      retrieved_at: retrievedAt
+    };
   }
 }

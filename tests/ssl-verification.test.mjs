@@ -72,3 +72,30 @@ test("SSL verification normalizes a socket timeout and destroys the socket", asy
   assert.equal(result.uncertainty[0]?.code, "tls_connection_failed");
   assert.equal(destroyed, true);
 });
+
+
+test("SSL verification does not expose raw certificate authorization diagnostics", async () => {
+  const { EventEmitter } = await import("node:events");
+  const { verifySsl } = await import("../dist/intents/ssl-verification.js");
+  const socket = new EventEmitter();
+  socket.authorized = false;
+  socket.authorizationError = "private internal hostname detail";
+  socket.setTimeout = () => socket;
+  socket.destroy = () => socket;
+  socket.getPeerCertificate = () => ({});
+  socket.getCipher = () => ({ name: "TLS_AES_128_GCM_SHA256" });
+  socket.getProtocol = () => "TLSv1.3";
+
+  const resultPromise = verifySsl("example.com", 443, {
+    connectImpl: () => socket,
+    now: () => "2026-10-17T00:00:00.000Z"
+  });
+  socket.emit("secureConnect");
+  const result = await resultPromise;
+
+  assert.equal(result.verdict, "rejected");
+  assert.equal(result.uncertainty[0]?.code, "certificate_not_authorized");
+  assert.equal(result.uncertainty[0]?.message, "The TLS certificate was not authorized by the local trust store.");
+  assert.equal(result.answer.authorization_error, "CERTIFICATE_NOT_AUTHORIZED");
+  assert.doesNotMatch(JSON.stringify(result), /private internal hostname detail/);
+});

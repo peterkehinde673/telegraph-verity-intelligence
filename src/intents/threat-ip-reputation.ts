@@ -125,7 +125,7 @@ export async function checkThreatIpReputation(
       confidence: 0,
       answer: { ip_address: ip, abuse_confidence_score: 0, total_reports: 0, provider: "abuseipdb" },
       evidence: [],
-      uncertainty: [{ code: "reputation_lookup_failed", message: error instanceof Error ? error.message : "IP reputation lookup failed." }],
+      uncertainty: [{ code: "reputation_lookup_failed", message: "The configured IP reputation source could not be reached or returned an invalid response." }],
       retrieved_at: retrievedAt
     };
   }

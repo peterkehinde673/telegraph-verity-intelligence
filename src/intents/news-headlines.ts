@@ -104,7 +104,7 @@ export async function newsHeadlines(
       evidence: [],
       uncertainty: [{
         code: "news_fetch_failed",
-        message: error instanceof Error ? error.message : "News retrieval failed."
+        message: "The configured news source could not be reached or returned an invalid response."
       }],
       retrieved_at: retrievedAt
     };

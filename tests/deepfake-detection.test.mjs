@@ -30,7 +30,8 @@ test("deepfake detection reports authentic-likely without claiming proof", async
     })
   });
 
-  assert.equal(result.verdict, "confirmed");
+  assert.equal(result.verdict, "likely");
+  assert.equal(result.confidence, 0.94);
   assert.equal(result.answer.signal, "authentic_likely");
   assert.equal(result.uncertainty[0]?.code, "deepfake_detection_is_probabilistic");
 });
@@ -74,4 +75,25 @@ test("deepfake detection rejects empty input before detector access", async () =
 
   assert.equal(result.verdict, "rejected");
   assert.equal(called, false);
+});
+
+
+test("deepfake detection does not expose raw detector errors", async () => {
+  const result = await detectDeepfake("media://sample", {
+    detectImpl: async () => {
+      throw new Error("private endpoint https://detector.invalid/?token=secret-xyz internal stack trace");
+    },
+    now: () => "2026-10-17T00:00:00.000Z"
+  });
+
+  assert.equal(result.intent, "DEEPFAKE_DETECTION");
+  assert.equal(result.verdict, "insufficient_evidence");
+  assert.equal(result.confidence, 0);
+  assert.equal(result.uncertainty[0]?.code, "deepfake_detector_failed");
+  assert.equal(
+    result.uncertainty[0]?.message,
+    "The configured deepfake detector could not process the media reference."
+  );
+  assert.equal(result.uncertainty[0]?.message.includes("secret-xyz"), false);
+  assert.deepEqual(result.evidence, []);
 });

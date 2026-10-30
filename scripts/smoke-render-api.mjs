@@ -1,6 +1,9 @@
 #!/usr/bin/env node
 const baseUrl = process.argv[2] ?? "https://telegraph-verity-intelligence-api.onrender.com";
-const expectedCount = 29;
+const expectedCount = Number(process.env.VERITY_EXPECTED_INTENT_COUNT ?? 29);
+if (!Number.isSafeInteger(expectedCount) || expectedCount < 1) {
+  throw new Error("VERITY_EXPECTED_INTENT_COUNT must be a positive integer.");
+}
 
 async function request(path, options = {}) {
   const method = options.method ?? "GET";

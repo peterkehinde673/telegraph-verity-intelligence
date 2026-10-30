@@ -121,7 +121,7 @@ export async function researchSynthesis(
       evidence: [],
       uncertainty: [{
         code: "synthesis_failed",
-        message: error instanceof Error ? error.message : "Research synthesis failed."
+        message: "The configured research synthesis source failed or returned an invalid response."
       }],
       retrieved_at: retrievedAt
     };

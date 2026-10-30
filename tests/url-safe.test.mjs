@@ -32,3 +32,20 @@ test("URL_SAFE rejects invalid and non-HTTP URLs", async () => {
   assert.equal(invalid.verdict, "rejected");
   assert.equal(unsupported.verdict, "rejected");
 });
+
+
+test("URL_SAFE does not expose raw reputation provider errors", async () => {
+  const result = await checkUrlSafe("https://example.com", {
+    now: () => "2026-10-18T00:00:00.000Z",
+    lookupImpl: async () => {
+      throw new Error("private provider endpoint https://feed.invalid/?token=url-safe-secret-7");
+    }
+  });
+
+  assert.equal(result.verdict, "insufficient_evidence");
+  assert.equal(result.confidence, 0);
+  assert.equal(result.uncertainty[0]?.code, "reputation_lookup_failed");
+  assert.equal(result.uncertainty[0]?.message, "The configured URL reputation source failed or returned an invalid response.");
+  assert.doesNotMatch(result.uncertainty[0]?.message ?? "", /url-safe-secret-7|feed\.invalid/);
+  assert.deepEqual(result.evidence, []);
+});

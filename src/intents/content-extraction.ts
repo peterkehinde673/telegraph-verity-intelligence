@@ -77,6 +77,26 @@ export async function contentExtraction(
       };
     }
 
+    if (typeof extracted.content_type !== "string" || !extracted.content_type.trim()) {
+      return {
+        intent: "CONTENT_EXTRACTION",
+        verdict: "insufficient_evidence",
+        confidence: 0,
+        answer: {
+          source: normalized,
+          content: "",
+          content_type: "",
+          title: extracted.title ?? null
+        },
+        evidence: [],
+        uncertainty: [{
+          code: "invalid_extraction_response",
+          message: "The configured extractor returned content without a valid content type."
+        }],
+        retrieved_at: retrievedAt
+      };
+    }
+
     const evidence = [normalizeEvidence({
       source_id: extracted.source_id ?? normalized,
       source_type: extracted.content_type || "extracted-content",
@@ -109,7 +129,7 @@ export async function contentExtraction(
       evidence: [],
       uncertainty: [{
         code: "content_extraction_failed",
-        message: error instanceof Error ? error.message : "Content extraction failed."
+        message: "The configured content source could not be reached or returned an invalid response."
       }],
       retrieved_at: retrievedAt
     };

@@ -11,6 +11,6 @@ test("all scoped Intents have a callable deterministic handler", async () => {
 
     const result = await handler({});
     assert.equal(result.intent, intent);
-    assert.deepEqual(validateVerityResponse(result), [], `${intent} must return the Verity response contract`);
+    assert.deepEqual(validateVerityResponse(result, intent), [], `${intent} must return the Verity response contract`);
   }
 });

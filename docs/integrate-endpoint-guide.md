@@ -1,0 +1,198 @@
+# Proposed Telegraph Integrate endpoint configuration
+
+This guide describes the endpoint implemented by the Verity server and the fields that would be relevant in Telegraph Integrate. It is preparation for a later manual review, not registration-ready YAML. No miner manifest was changed in this batch.
+
+## NEWS_SEARCH endpoint proposal
+
+| Integrate field | Project-supported value | Evidence / status |
+| --- | --- | --- |
+| Intent association | `NEWS_SEARCH` | Exact canonical name confirmed in the live registry; currently 18 miners. Keep it out of the saved manifest until the Integrate request builder and validation checks have been reviewed. |
+| Telegraph path | `/v1/intent` | The server accepts this incoming path. |
+| API endpoint path | `/v1/intent` | The server routes `POST /v1/intent` to the intent dispatcher. |
+| HTTP method | `POST` | Implemented by `src/server.ts`. |
+| Endpoint base URL override | Blank | Use the manifest's top-level `base_url`; the current manifest points at the Render service. Do not change this production setting as part of this guide. |
+| Content type | `application/json` | The server reads a JSON request body and emits `application/json; charset=utf-8`. |
+| Multipart fields | None | The endpoint does not accept multipart data. |
+| Parameter mapping | None | The request body keys are passed through as `intent` and `input`; Telegraph's documented `param_map` is for renaming incoming query parameters. |
+| Authentication | None | The server exposes no authentication middleware and the existing manifest declares `auth.type: none`. |
+
+### Verity request shape
+
+The project-defined JSON request for this route is:
+
+```json
+{
+  "intent": "NEWS_SEARCH",
+  "input": {
+    "query": "non-empty news topic, entity, or search phrase"
+  }
+}
+```
+
+The shared endpoint requires a string `intent`. For `NEWS_SEARCH`, Verity's handler expects `input.query` to be a non-empty string. The shared HTTP layer leaves `input` opaque; a missing, non-string, or whitespace-only query reaches the handler as empty input and is rejected without contacting the provider.
+
+Telegraph's YAML documentation represents endpoint `params` as typed top-level fields grouped by location, and permits `object` as a parameter type. Therefore the closest documented parameter declaration for this route is two required body parameters, `intent: string` and `input: object`, with the `input` description explaining the NEWS_SEARCH `query` property. The docs do not specify nested per-property validation inside that object. The request builder must be confirmed to produce the nested `input.query` shape above; a flattened top-level `query` would not match this server route.
+
+If Integrate requires a more explicit nested JSON schema or parameter mapping than the documented `params` fields support, obtain Telegraph's instructions before changing the handler or manifest. Do not add `NEWS_SEARCH` to `endpoints[].intents`, `input_schema.intent.enum`, or `semantics.supported_intents` until this is resolved in dashboard validation.
+
+### Project response shape
+
+The route returns Verity's shared response envelope. A valid query with no valid provider records can produce this abstention response:
+
+```json
+{
+  "intent": "NEWS_SEARCH",
+  "verdict": "insufficient_evidence",
+  "confidence": 0,
+  "answer": {
+    "query": "example topic",
+    "results": []
+  },
+  "evidence": [],
+  "uncertainty": [
+    {
+      "code": "no_news_results",
+      "message": "The configured news source returned no valid results for this query."
+    }
+  ],
+  "retrieved_at": "<server-generated ISO 8601 timestamp>"
+}
+```
+
+When the provider returns valid articles, each result carries `title`, `url`, `excerpt` (nullable), `source_id`, and `published_at` (nullable). Evidence records preserve source ID/type, title, URL, publication time when supplied, and retrieval time. These are Verity's implementation fields, not a Telegraph-published NEWS_SEARCH response schema. Article coverage is not proof that an article's claims are true.
+
+## Telegraph protocol boundary
+
+Telegraph's [live registry](https://devnode.telegraphprotocol.com/engine/v1/intents) confirms the canonical name and intent description. Its [intent documentation](https://docs.telegraphprotocol.com/docs/using/intents) says the registry exposes canonical names, descriptions, and current miner counts. The [YAML guide](https://docs.telegraphprotocol.com/docs/miners/yaml-config) documents generic request-building metadata, and the [validation API](https://docs.telegraphprotocol.com/docs/miners/validation-api) checks YAML plus endpoint reachability. None of these publishes a NEWS_SEARCH-specific request or response schema, and the validator docs caution that validation does not verify that a correct intent-specific request can be built.
+
+The local handler contract and route have now been exercised together in a route-level integration test. The Integrate validator remains unavailable: its documented API returned HTTP 404 HTML in the prior investigation. The eventual dashboard check must confirm that the builder sends the nested body as expected and accepts the Verity response envelope before any manifest integration. Do not register the miner during that check.
+
+## WEB_SEARCH local endpoint mapping
+
+`WEB_SEARCH` uses the same Verity route and method; it does not need a separate HTTP endpoint:
+
+```json
+{
+  "intent": "WEB_SEARCH",
+  "input": {
+    "query": "current information to find on the web"
+  }
+}
+```
+
+For the local handler, `query` must be a non-empty string of at most 500 characters. The result envelope uses the same shared fields as NEWS_SEARCH and returns `answer.query`, `answer.results`, source evidence, uncertainty, and `retrieved_at`. When the Jina provider is not configured, the route returns an `insufficient_evidence` result with no evidence and the `web_search_source_unconfigured` uncertainty code.
+
+Example of that configured-provider-missing response:
+
+```json
+{
+  "intent": "WEB_SEARCH",
+  "verdict": "insufficient_evidence",
+  "confidence": 0,
+  "answer": {
+    "query": "current climate policy",
+    "results": []
+  },
+  "evidence": [],
+  "uncertainty": [
+    {
+      "code": "web_search_source_unconfigured",
+      "message": "A Jina Search API key is required to search the web in this deployment."
+    }
+  ],
+  "retrieved_at": "<server-generated ISO 8601 timestamp>"
+}
+```
+
+The external Jina Search API credential is a server-side `JINA_API_KEY` environment secret. It is not Telegraph endpoint authentication and must not be placed in Integrate params, `miner.yaml`, or this guide. The current inbound miner endpoint remains unauthenticated per the existing server and manifest. The test suite exercises the WEB_SEARCH route with no key and provider behavior through controlled fixtures; it makes no live or billable Jina request.
+
+Before any future manifest edit, add `WEB_SEARCH` only to the shared endpoint's intent association, `input_schema.intent.enum`, and `semantics.supported_intents` after confirming Integrate can build the nested `input.query` request and validating the saved YAML. Keep the search intents out of the current manifests until those checks pass.
+
+## TWITTER_SEARCH local endpoint mapping
+
+`TWITTER_SEARCH` also uses `POST /v1/intent` with JSON. The project-defined body is:
+
+```json
+{
+  "intent": "TWITTER_SEARCH",
+  "input": {
+    "query": "public X posts to find"
+  }
+}
+```
+
+Verity requires a non-empty query of at most 500 characters. With no `X_API_BEARER_TOKEN`, the route returns an `insufficient_evidence` result and makes no provider request. The token is a server-side runtime secret, not Integrate endpoint authentication, and must never be placed in endpoint params or either miner manifest.
+
+When configured, Verity calls X's official `GET https://api.x.com/2/tweets/search/recent` endpoint with a bearer token and requests at most 10 recent posts, author IDs/usernames, post text, and creation times. X documents recent search as covering the previous seven days and requires `max_results` between 10 and 100. Verity retains at most five well-formed records, each with an X post URL, ID, text, author handle when returned, provider timestamp when valid, and retrieval time in evidence. Returned posts are search results, not proof of their claims.
+
+X's current published pay-per-use rate is $0.005 per post returned, so one query may return up to 10 billable posts (up to $0.05 at that listed rate, subject to pricing changes). No live request or billable call was made. Configure `X_API_BEARER_TOKEN` only after setting an appropriate spending limit in X Developer Console. The provider uses a ten-second timeout, 512 KiB response cap, strict response validation, and sanitized abstention on API errors.
+
+Telegraph's registry confirms the canonical intent name, description, and current miner count, but does not publish an intent-specific schema. The request and response above are Verity contracts; Integrate nested input construction and saved YAML validation remain unverified. Keep `TWITTER_SEARCH` out of both manifests until those gates pass.
+
+## SENTIMENT_ANALYSIS local endpoint mapping
+
+This intent uses the shared route:
+
+```json
+{
+  "intent": "SENTIMENT_ANALYSIS",
+  "input": {
+    "text": "The service was helpful and the result arrived quickly."
+  }
+}
+```
+
+The local handler accepts non-empty text up to 4,000 characters. With no server-side `HF_TOKEN`, it returns an `insufficient_evidence` response without contacting a provider. When configured, the token must have Hugging Face Inference Providers permission; it is a server-side secret, not incoming endpoint authentication, and must not be placed in Integrate params or a miner manifest.
+
+The configured provider sends the text to Hugging Face's inference router and uses `cardiffnlp/twitter-roberta-base-sentiment-latest`. The response returns one of `negative`, `neutral`, or `positive`, the provider model scores, and model provenance. This model card says the model is suitable for English and was trained on social media text; this implementation does not claim a separate emotion taxonomy or reliable performance for other languages/domains. The model's score is returned as reported and is not a calibrated probability. The no-provider sample contract is `verdict: insufficient_evidence`, `confidence: 0`, `answer: { text, sentiment: null }`, and empty evidence.
+
+Hugging Face Inference Providers may use monthly included credits and pay-as-you-go billing after credits are exhausted; current account terms/limits can change. No inference request was made for this implementation or tests. Configure account controls and consider the external text processing before setting `HF_TOKEN`. Telegraph's registry confirms the canonical intent name, purpose, and current miner count but does not publish a per-intent schema. Keep this intent out of both manifests pending Integrate nested-input and YAML validation.
+
+## ONCHAIN_METRIC_VERIFY local endpoint mapping
+
+The project-defined request is documented with its limited metric scope, RPC source, response example, and verification limits in [the intent guide](intents/onchain-metric-verify.md). It uses the shared `POST /v1/intent` JSON route. The endpoint is unauthenticated as currently implemented; the operator-configured `ETHEREUM_RPC_URL` is server-side only and is not an Integrate credential or request parameter. The top-level request fields are `intent: string` and `input: object`; Integrate's ability to construct `input.metric`, `input.transaction_hash`, `input.block_number`, and optional `input.expected_gas_used` must be verified through the dashboard. Telegraph's canonical registry description confirms the intent's block-specific metric purpose but publishes no intent-specific input/output schema. Keep it out of both manifests until that builder check and successful YAML validation are complete.
+
+## SLA_COMPLIANCE local endpoint mapping
+
+The limited local uptime calculation uses the shared JSON `POST /v1/intent` route. Its project-defined nested input is shown in [the intent guide](intents/sla-compliance.md). There are no external credentials, multipart fields, or parameter mapping. The route has no inbound authentication. Telegraph's canonical registry describes uptime and other service-level metrics, but does not publish a per-intent schema; Integrate's nested input construction and saved-YAML validation must be checked before manifest integration.
+
+## Consolidated Integrate configuration reference
+
+All current Verity intent handlers use the same server endpoint. There are no intent-specific upstream paths. The existing YAML and production service continue to advertise the original 29 intents; the six local-only candidates below are not ready for manifest association until the dashboard confirms nested request construction and the saved YAML validates. Telegraph publishes no per-intent JSON schema for these names, so these are Verity request/response contracts.
+
+### Shared endpoint fields
+
+| Integrate field | Value supported by the actual Verity server |
+| --- | --- |
+| Telegraph path | `/v1/intent` |
+| API endpoint path | `/v1/intent` |
+| HTTP method | `POST` |
+| Endpoint base URL override | Blank; use the existing top-level `base_url` |
+| Description | Dispatch a JSON Verity intent request and return the shared Verity response envelope |
+| Content-type override | `application/json` (or blank if Integrate supplies this default) |
+| Multipart fields | None |
+| Parameter mapping | None; pass the JSON body through as `intent` and `input` |
+| Inbound authentication | None in the existing server and manifest |
+| Top-level JSON params | Required `intent` string and required `input` object |
+
+The actual request shape is `{ "intent": "…", "input": { … } }`. The server keeps `input` opaque at the shared route and each handler validates its own fields. Confirm that the Integrate request builder can construct the nested `input` object; a flattened property is not equivalent. The `JINA_API_KEY`, `X_API_BEARER_TOKEN`, `HF_TOKEN`, and `ETHEREUM_RPC_URL` values listed below are server-side provider configuration, never Integrate request authentication or YAML parameters.
+
+### Additional local-only intent associations
+
+| Intent association | Project-defined JSON `input` shape | Runtime provider authentication/configuration | Representative `answer` fields |
+| --- | --- | --- | --- |
+| `NEWS_SEARCH` | `{ "query": "non-empty string" }` | No credential for the current Google News RSS adapter | `{ "query": "…", "results": [{ "title": "…", "url": "…", "excerpt": null, "source_id": "…", "published_at": null }] }`; valid articles also carry evidence URLs and retrieval time. |
+| `WEB_SEARCH` | `{ "query": "non-empty string, max 500 characters" }` | Server-side `JINA_API_KEY`; without it the handler abstains | `{ "query": "…", "results": [{ "title": "…", "url": "…", "excerpt": "…", "source_id": "…" }] }` with attributable result evidence. |
+| `TWITTER_SEARCH` | `{ "query": "non-empty string, max 500 characters" }` | Server-side `X_API_BEARER_TOKEN`; recent-search provider can return billable posts | `{ "query": "…", "results": [{ "id": "…", "text": "…", "url": "…", "author_username": null, "published_at": null, "source_id": "…" }] }` with X post provenance. |
+| `SENTIMENT_ANALYSIS` | `{ "text": "non-empty string, max 4,000 characters" }` | Server-side `HF_TOKEN`; no model call without it | `{ "sentiment": "positive", "model_score": 0.96, "class_scores": [{ "label": "positive", "score": 0.96 }, { "label": "neutral", "score": 0.03 }, { "label": "negative", "score": 0.01 }], "model": "cardiffnlp/twitter-roberta-base-sentiment-latest", "language_scope": "English" }`; scores are not calibrated probabilities. |
+| `ONCHAIN_METRIC_VERIFY` | `{ "metric": "transaction_gas_used", "transaction_hash": "0x…64 hex…", "block_number": "decimal", "expected_gas_used": "optional decimal" }` | Server-side operator-managed HTTPS `ETHEREUM_RPC_URL`; no caller-supplied endpoint | `{ "network": "ethereum-mainnet", "metric": "transaction_gas_used", "block_number": "…", "gas_used": "…", "matches_expected": true }`; evidence identifies the configured single RPC source. |
+| `SLA_COMPLIANCE` | `{ "metric": "uptime", "period_start": "UTC ISO timestamp", "period_end": "UTC ISO timestamp", "measured_seconds": 86400, "downtime_seconds": 60, "target_uptime_percent": 99.9 }` | No external provider; totals are caller-supplied | `{ "metric": "uptime", "observed_uptime_percent": 99.930556, "meets_target": true }`; evidence labels the measurement as user-provided. |
+
+Each route response wraps the intent-specific answer in the shared local envelope: `intent`, `verdict`, `confidence`, `answer`, `evidence`, `uncertainty`, and `retrieved_at`. See the linked intent pages above for full examples, rejection/abstention behavior, and limitations. The sample values in this table are illustrative contracts, not live provider results or Telegraph-guaranteed schemas.
+
+### Remaining integration gates
+
+1. In Integrate's non-registration validation flow, verify the body builder can emit `intent` plus the nested per-intent `input` shown above, including the extra nested object for `ONCHAIN_METRIC_VERIFY` and `SLA_COMPLIANCE`.
+2. Configure runtime provider credentials only through the existing service's approved secret mechanism, after separately reviewing provider cost, privacy, and account controls. No secret belongs in Integrate params or YAML.
+3. Validate the saved configuration in the dashboard or through a restored official validator. The documented validator currently returns HTTP 404 HTML and does not produce a result; this is not a pass.
+4. Only after all checks pass, prepare a reviewable YAML diff that adds each exact canonical intent consistently to endpoint association, input enum, and supported-intent declarations while preserving all original 29. Live registration remains separate and requires the user's explicit approval.

@@ -27,7 +27,7 @@ export async function verifyRegression(input: unknown, options: Options = {}): P
     const c = obj(v);
     return typeof c.path !== "string" || !c.path.startsWith("/") || c.path.startsWith("//") || c.path.includes("\\") ||
       (c.expected_status !== undefined && (!Number.isInteger(c.expected_status) || Number(c.expected_status) < 100 || Number(c.expected_status) > 599)) ||
-      (c.json_path !== undefined && typeof c.json_path !== "string") || (c.contains !== undefined && typeof c.contains !== "string");
+      (c.json_path !== undefined && (typeof c.json_path !== "string" || !Object.prototype.hasOwnProperty.call(c, "equals"))) || (c.contains !== undefined && typeof c.contains !== "string");
   })) return response("rejected", "invalid_checks", "Provide 1–10 checks with paths such as /health, optional expected_status, and optional json_path/equals or contains assertions.");
   const fetcher = options.fetchImpl ?? fetch;
   const results: Check[] = [];

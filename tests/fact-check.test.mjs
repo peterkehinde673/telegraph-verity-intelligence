@@ -71,3 +71,19 @@ test("fact check abstains without a configured checker", async () => {
   const result = await factCheck("A sample claim");
   assert.equal(result.verdict, "insufficient_evidence");
 });
+
+
+test("fact check does not expose raw checker exceptions", async () => {
+  const result = await factCheck("A sample claim", {
+    checkImpl: async () => {
+      throw new Error("private checker endpoint https://factcheck.invalid/?token=fact-secret-11");
+    }
+  });
+
+  assert.equal(result.verdict, "insufficient_evidence");
+  assert.equal(result.confidence, 0);
+  assert.equal(result.uncertainty[0]?.code, "fact_checker_failed");
+  assert.equal(result.uncertainty[0]?.message, "The configured fact-checking source failed or returned an invalid response.");
+  assert.doesNotMatch(result.uncertainty[0]?.message ?? "", /fact-secret-11|factcheck\.invalid/);
+  assert.deepEqual(result.evidence, []);
+});

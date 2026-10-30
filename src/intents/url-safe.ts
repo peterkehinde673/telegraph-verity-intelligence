@@ -20,6 +20,10 @@ export interface UrlSafeOptions {
   now?: () => string;
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
 export async function googleSafeBrowsingLookup(
   url: string,
   apiKey: string,
@@ -65,14 +69,23 @@ export async function googleSafeBrowsingLookup(
       `Google Safe Browsing returned HTTP ${response.status}${details ? ` (${details})` : ""}${safeMessage ? `: ${safeMessage}` : ""}.`
     );
   }
-  const data = await response.json() as {
-    matches?: Array<{ threatType?: string; platformType?: string; threat?: { url?: string } }>;
-  };
-  return (data.matches ?? []).map((match) => ({
-    threat_type: match.threatType ?? "UNKNOWN",
-    ...(match.platformType ? { platform_type: match.platformType } : {}),
-    ...(match.threat?.url ? { threat_entry: match.threat.url } : {})
-  }));
+  const data: unknown = await response.json();
+  if (!isRecord(data) || (data.matches !== undefined && !Array.isArray(data.matches))) {
+    throw new Error("Google Safe Browsing returned an invalid response.");
+  }
+
+  return (data.matches ?? []).flatMap((match): UrlSafeMatch[] => {
+    if (!isRecord(match) || typeof match.threatType !== "string" || !match.threatType.trim()) return [];
+
+    const threat = isRecord(match.threat) && typeof match.threat.url === "string"
+      ? match.threat.url
+      : undefined;
+    return [{
+      threat_type: match.threatType,
+      ...(typeof match.platformType === "string" && match.platformType ? { platform_type: match.platformType } : {}),
+      ...(threat ? { threat_entry: threat } : {})
+    }];
+  });
 }
 
 export async function checkUrlSafe(
@@ -161,7 +174,7 @@ export async function checkUrlSafe(
       confidence: 0,
       answer: { input_url: raw, normalized_url: normalizedUrl, safe_on_checked_feeds: false, matches: [], provider: "google-safe-browsing" },
       evidence: [],
-      uncertainty: [{ code: "reputation_lookup_failed", message: error instanceof Error ? error.message : "URL reputation lookup failed." }],
+      uncertainty: [{ code: "reputation_lookup_failed", message: "The configured URL reputation source failed or returned an invalid response." }],
       retrieved_at: retrievedAt
     };
   }
