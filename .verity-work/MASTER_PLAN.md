@@ -1,4 +1,43 @@
-# Verity Intelligence — Season 2 Targeted Improvement and Intent Expansion Plan
+> **CURRENT DIRECTION — updated 2026-10-30 (supersedes the implementation-first expansion phases below).** The immediate objective is to prepare high-quality evaluation material for Telegraph Intents. Do **not** build evaluation adapters, scoring modules, or new handlers as the next task. The Telegraph team explained that post-migration scoring is limited because the system does not yet have evaluation adapters for many Intents; participants need adapters for intelligence to be ranked, and the platform team is optimizing the system. Their recommended first step was evaluation material because it is easier to prepare. Evaluation material is prerequisite work; it does **not** by itself guarantee an Intent will score until Telegraph's evaluation path/adapter is available.
+
+## Active workstream: evaluation material first
+
+1. **Confirm Telegraph's evaluation-material contract before producing a large dataset.** Ask the team for the accepted schema/file format, submission location/process, minimum or target cases per Intent, public versus private data rules, licensing requirements, ground-truth review expectations, freshness rules, and how material is selected for an evaluation pool.
+2. **Build a reusable evaluation-material specification.** Each case should use the exact canonical Intent and include a representative input, expected outcome/answer, ground-truth label or structured result where applicable, authoritative evidence/source URLs and retrieval timestamps, judging rubric, and notes on uncertainty/abstention. Include positive, negative, boundary, ambiguous, and adversarial cases where relevant.
+3. **Prioritize quality over volume.** Ground truth must be independently checkable, traceable, current where time-sensitive, legally usable, and sufficiently unambiguous for two reviewers to reach the same judgment. Exclude unsupported, fabricated, unverifiable, or personally sensitive data. Keep private evaluation answers and credentials out of public source control unless Telegraph explicitly requires and authorizes a secure workflow.
+4. **Pilot one Intent before scaling.** THREAT_INTELLIGENCE_INDICATOR is a sensible candidate to discuss because prior diagnostics found an active evaluation pool for it; confirm with Telegraph that it is still eligible and that its material format is representative before selecting it. Do not assume the old pool guarantees scoring.
+5. **Review the material with Telegraph, then expand across the supported canonical Intent set** based on evaluator requirements, reliable ground-truth availability, and practical maintenance cost.
+6. **Only after the evaluation material is accepted and Telegraph confirms the adapter interface and scoring requirements**, plan any adapter implementation as a separate, explicitly approved phase. Adapter work is not authorized by this plan update.
+
+## Evaluation case quality checklist
+
+- Exact canonical Intent name; no local aliases substituted for canonical names.
+- Clear, realistic input matching the Intent's intended scope.
+- Expected result expressed in a form that can be judged consistently.
+- Evidence supports the expected result; source, timestamp, and relevant excerpt/identifier are recorded.
+- Explicit rubric for correct, partially correct, incorrect, unsupported, and abstaining responses.
+- Edge cases and known limitations are represented without making the expected answer ambiguous.
+- No fabricated evidence, score manipulation, leaked private labels, or unlicensed data.
+- Dataset version, provenance, reviewer, review date, and change history are recorded.
+
+## Current scoring context and limits
+
+- The owner reports that Telegraph's team attributed the post-migration scoring gap primarily to missing evaluation adapters and recommended preparing evaluation material first.
+- Earlier diagnostics for Miner 5530 found 35 supported Intent entries, but scoring routes/evaluation pools were not available for most Intents at that time; 33 were reported as not routed, while only a small number had scoring infrastructure. These are point-in-time diagnostics, not a promise of current platform state.
+- A historical score for THREAT_INTELLIGENCE_INDICATOR and an active pool were observed in earlier diagnostics. Recheck with Telegraph before using this as the pilot.
+- Do not claim that 33 Intents are scoring, that evaluation material alone activates scoring, or that any score/rank improvement is guaranteed.
+
+## Explicitly paused
+
+- Do not build evaluation adapters or new scoring modules now.
+- Do not add handlers, expand manifests, rename canonical Intents, or change the registered YAML as part of this evaluation-material phase.
+- Do not re-register Miner 5530, change production configuration, deploy, publish a release, or submit/sign an on-chain transaction for this work.
+- Do not resume the older candidate implementation batches below unless the evaluation-material phase is complete and the user explicitly approves a new implementation plan.
+
+---
+# Verity Intelligence — Evaluation Material First Plan
+
+**Historical implementation/intent-expansion plan follows below and is paused by the current direction above.**
 
 **Objective:** Preserve the completed target-ten quality work, then expand the miner in small, test-gated batches before Season 2. No future score, rank, traffic or revenue is guaranteed. Season 2 has not started as of this plan.
 
