@@ -1,5 +1,7 @@
 # TELEGRAPH HACKATHON SEASON II — FROZEN MASTER PLAN
 
+> **Historical-plan notice (2026-10-30):** This frozen audit plan records the earlier Telegraph Season II readiness work. The owner has since directed evaluation-material preparation through Anjoman, not Telegraph Integrate. The active execution status is maintained at `.verity-work/MASTER_PLAN.md`; the historical audit and implementation notes below are retained for context and are not current submission instructions.
+
 **Status:** Frozen scope; owner approval is required to change this plan.  
 **Repository:** https://github.com/peterkehinde673/telegraph-verity-intelligence  
 **Known engineering release:** `e43d60cef64b6b937b738b992a7b57f0c8e06025`  
@@ -9,7 +11,7 @@
 
 ## 1. Mandatory operating rules
 
-1. This file is the single forward plan. Do not create a competing roadmap.
+1. Historical rule: this was the forward plan when frozen. Current execution direction is recorded in `.verity-work/MASTER_PLAN.md`; retain this file as historical audit context.
 2. Do not repeat completed engineering work just because an old note says it is pending. Check the repository, commit history, tests, workflows, deployment and official platform evidence first.
 3. Do not treat local implementation, a candidate YAML, or a successful build as proof of live registration, accepted configuration, routed requests, ranking or eligibility.
 4. Preserve the existing work. No broad refactor, intent expansion, new feature batch, or second product without the owner's explicit approval.

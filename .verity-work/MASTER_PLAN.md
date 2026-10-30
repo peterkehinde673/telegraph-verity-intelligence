@@ -1,4 +1,29 @@
-> **CURRENT DIRECTION — updated 2026-10-30 (supersedes the implementation-first expansion phases below).** The immediate objective is to prepare high-quality evaluation material for Telegraph Intents. Do **not** build evaluation adapters, scoring modules, or new handlers as the next task. The Telegraph team explained that post-migration scoring is limited because the system does not yet have evaluation adapters for many Intents; participants need adapters for intelligence to be ranked, and the platform team is optimizing the system. Their recommended first step was evaluation material because it is easier to prepare. Evaluation material is prerequisite work; it does **not** by itself guarantee an Intent will score until Telegraph's evaluation path/adapter is available.
+> **CURRENT DIRECTION — owner update 2026-10-30 (supersedes older Integrate-submission and implementation-first instructions below).** Anjoman is the Season II evaluation-material platform. Telegraph Integrate is not the destination for these contributions. Prepare the first evaluation-material pilot for `THREAT_INTELLIGENCE_INDICATOR`; the owner will review and submit it through Anjoman. Preference-pair JSONL is the first format, using the three fields shown in the owner-provided interface description. Truth source is a separate path whose Anjoman-specific format remains unverified behind sign-in. Keep actual pairs, labels, evidence mappings, and review notes in ignored local storage; never commit them to public GitHub. Do not build/publish WASM scoring adapters now. Dataset acceptance, pool use, reward, or score/rank changes are not guaranteed.
+
+## Active workstream: Anjoman evaluation material
+
+1. Preserve and inspect the existing miner; do not change manifests, routing, or production behavior as part of dataset preparation.
+2. Use the exact canonical Intent name `THREAT_INTELLIGENCE_INDICATOR`. The owner reports it is present in Anjoman's selector; the live Telegraph registry confirmed that canonical name on 2026-10-30.
+3. Prepare a small, evidence-backed preference-pair pilot. Each upload JSONL record uses exactly `prompt`, `chosen`, and `rejected`, based on the owner-provided interface view. Keep source URLs, dates, evidence rationale, and reviewer status in a separate private evidence register.
+4. Investigate Truth source requirements independently before preparing or submitting one. Do not infer its schema from preference pairs or historical Telegraph Integrate docs.
+5. Use the local validator only for structural and evidence-register completeness. It cannot certify facts or guarantee platform acceptance.
+6. The owner performs the Anjoman upload and any signing personally. No wallet access, signing, upload, or submission is authorized here.
+
+## Verified pilot findings and limitations
+
+- Anjoman's public evaluation page returned HTTP 200 on 2026-10-30, but the unauthenticated page displayed “Sign in to see” the evaluation UI. Current limits, private preview behavior, Truth source schema, and signature steps could not be independently inspected. Use the owner-provided UI description for the preference-pair format and verify remaining details in the UI before final submission.
+- The live canonical registry describes `THREAT_INTELLIGENCE_INDICATOR` as an IP/domain/other-indicator reputation query and distinguishes URL scanning and hash malware verdicts. The repository's local handler remains under legacy name `THREAT_INTELLIGENCE`; it accepts IP/domain/URL/SHA-256 and queries AlienVault OTX. This pilot covers IP and domain cases only and does not repair the routing/manifest mismatch.
+- The 18-case private pilot is limited to dated CISA/NSA/MS-ISAC and FBI/CISA/DC3 reports, plus IETF TEST-NET documentation ranges. It evaluates historical source attribution, date sensitivity, overclaiming, and false-positive avoidance. It does not claim present-day feed status; no OTX API call or credentialed source was used.
+- The registration preflight and main-push GitHub workflows failed on this merge because existing checks expect old Intent names/count and the Integrate validator endpoint returns HTTP 404. Local typecheck, build, and unit tests passed. These failures are repository/platform compatibility blockers, not successful validation.
+
+### Current verified tasks
+
+- [x] Merge the complete feature branch into `main` preserving both remote histories; merge commit `127333833f035df88980fda5e7b3af6e5f5cee04` pushed to `origin/main`.
+- [x] Confirm `THREAT_INTELLIGENCE_INDICATOR` canonical status and retrieve authoritative public evidence for the private pilot.
+- [x] Create 18 private preference pairs and a case-level evidence register; keep both ignored by Git.
+- [x] Add a local validator, synthetic tests, public source inventory, and Anjoman workflow documentation.
+- [ ] Owner review and manual Anjoman submission; no upload or signing was performed.
+- [ ] Investigate/align repository's legacy Intent-name and smoke-check assumptions in a separately approved miner-maintenance task; no manifest or route was changed here.
 
 ## Active workstream: evaluation material first
 

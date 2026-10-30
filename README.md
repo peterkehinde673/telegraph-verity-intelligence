@@ -60,7 +60,7 @@ The active `miner.yaml` advertises the original 29 Telegraph Intents. This featu
 ## Project Status
 
 - **Miner registry presence:** The project has a recorded miner slug `telegraph-verity-intelligence` and Miner ID `5530`; the automated live-registry check only confirms catalogue presence/activation.
-- **Dashboard registration is separate:** Changes to `miner.yaml.template` or repository intent handlers do not update the registered miner configuration. After changing the intent list or endpoint schema, validate the final `miner.yaml` and submit/register the updated YAML through the Telegraph Integrate dashboard. Then verify the dashboard result and Explorer's displayed intent list. A passing registry-presence check is not proof that the updated YAML is registered.
+- **Historical registration note:** Earlier releases used Telegraph Integrate for miner registration. It is not the submission destination for the current evaluation-material workstream. The Season II pilot uses Anjoman Evaluate for preference pairs; the owner performs any upload and signing.
 - **Public explorer:** https://explorer.telegraphprotocol.com/miners/telegraph-verity-intelligence
 - **Production API:** https://telegraph-verity-intelligence-api.onrender.com
 - **API status endpoints:** `GET /health` and `GET /intents`.
@@ -70,12 +70,16 @@ The active `miner.yaml` advertises the original 29 Telegraph Intents. This featu
 
 ## Source of Intent Selection
 
-The active 29-intent manifest is in `miner.yaml`; the feature branch's 35-entry local API catalogue is in `src/intents/catalogue.ts`. Confirm current Telegraph protocol availability against the official catalogue before registering or advertising additional intents; commercial mission usage is not treated as proof that an Intent has or has not previously been implemented by another Miner.
+`miner.yaml` and the local runtime catalogue have different scopes and names. Do not infer platform registration from `/intents`; verify the exact names against the live canonical registry and Explorer. Evaluation-material preparation does not change either manifest.
+
+## Season II evaluation material
+
+The current evaluation-material pilot is for `THREAT_INTELLIGENCE_INDICATOR` in Anjoman. See [the Anjoman preparation guide](docs/evaluation/anjoman-threat-intelligence-indicator.md). Private evaluation pairs and evidence labels are stored locally under ignored `private-evaluation/` and must not be committed. The owner performs any Anjoman upload or signing.
 
 ## Next Steps
 
-1. Run `npm run smoke:render` to verify live health, the expected intent catalogue, and response contracts for safe validation requests to all seven Season II handlers. The expected count defaults to 29 for the active service; set `VERITY_EXPECTED_INTENT_COUNT=35` only when checking a reviewed feature deployment. The production health and catalogue endpoints have been manually confirmed by the project owner; the automated POST checks should be monitored in GitHub Actions.
+1. Run `npm run typecheck`, `npm run build`, and `npm test` for local checks. The Render smoke workflow sends production requests; do not run it unless those effects are explicitly approved.
 2. Configure `GOOGLE_SAFE_BROWSING_API_KEY`, `ABUSEIPDB_API_KEY`, and `OTX_API_KEY` in Render if provider-backed reputation results are required; without these, the handlers abstain with `insufficient_evidence`.
 3. Configure `REGRESSION_ALLOWED_HOSTS` before using REGRESSION_VERIFY; it only executes read-only GET probes. CODE_PATCH_VERIFY uses the public GitHub Checks API; configure `GITHUB_TOKEN` only if higher API rate limits are needed.
-4. Register the final `miner.yaml` through the Telegraph Integrate dashboard whenever the declared intents or endpoint configuration changes; verify the dashboard's registration/update result and confirm Explorer shows the same 29 intents.
+4. For the current evaluation-material pilot, use [Anjoman Evaluate](https://anjoman.ai/dashboard/eval). The owner performs the upload and any signing. Keep hidden evaluation material and evidence records out of public GitHub.
 5. Expand plagiarism checking only after adding a reliable, permissioned comparison corpus and measuring false positives/negatives.
