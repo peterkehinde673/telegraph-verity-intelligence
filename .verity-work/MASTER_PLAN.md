@@ -1,4 +1,8 @@
-> **CURRENT DIRECTION — owner update 2026-10-31 (supersedes older Integrate-submission and implementation-first instructions below).** Anjoman is the Season II evaluation-material platform. The first `THREAT_INTELLIGENCE_INDICATOR` preference-pair pilot has been submitted: 18 rows stored and 18 marked eligible by the dashboard on October 30, 2026. The next milestone is to monitor the epoch rollover and verify whether any cases were actually used. Telegraph Integrate is not the evaluation-material destination. Keep actual pairs, labels, evidence mappings, and review notes in ignored local storage; never commit them to public GitHub. Do not build/publish WASM scoring adapters now. Eligibility does not prove evaluator use, rewards, or score/rank changes.
+> **CURRENT DIRECTION — owner update 2026-10-31 (supersedes older Integrate-submission and implementation-first instructions below).** Anjoman is the Season II evaluation-material platform. The `THREAT_INTELLIGENCE_INDICATOR` preference-pair pilot is complete: all 18 rows were stored and marked eligible. The public pool API now reports a frozen active snapshot (activation epoch 1707; current epoch 1763 at the latest check), but no public per-row evaluator-use record or verified reward credit was found. The next active workstream is **Multi-Intent Evaluation Material Expansion**, selected from current official bounties, canonical Intent evidence, miner coverage, and reliable ground-truth availability. Telegraph Integrate is not the evaluation-material submission destination. Keep actual pairs, labels, evidence mappings, and review notes in ignored local storage; never commit them to public GitHub. Do not build/publish WASM scoring adapters now. Snapshot inclusion does not prove individual evaluator use; eligibility or support guidance does not guarantee rewards, scoring, or rank changes.
+
+## Telegraph Protocol Bounties — Official GitHub Repository
+
+Use the [official Telegraph Protocol Bounties repository](https://github.com/telegraphprotocol/bounties) as an ongoing discovery resource for open contribution opportunities, including evaluation material. Review it before choosing the next Intent and periodically thereafter. For every candidate issue, verify its current status, acceptance criteria, eligibility, reward terms, and any deadlines before recommending or starting work. The repository says evaluator-material opportunities may cover missing/stale test material and independently supported references; it also states reward status and terms are issue-specific. Do not assume every listed issue is active, funded, or suitable for this miner. Direct support guidance is strategic advice, not a bounty award or guaranteed income.
 
 ## Active workstream: Anjoman evaluation material
 
@@ -15,6 +19,9 @@
 - The live canonical registry describes `THREAT_INTELLIGENCE_INDICATOR` as an IP/domain/other-indicator reputation query and distinguishes URL scanning and hash malware verdicts. The repository's local handler remains under legacy name `THREAT_INTELLIGENCE`; it accepts IP/domain/URL/SHA-256 and queries AlienVault OTX. This pilot covers IP and domain cases only and does not repair the routing/manifest mismatch.
 - The 18-case private pilot is limited to dated CISA/NSA/MS-ISAC and FBI/CISA/DC3 reports, plus IETF TEST-NET documentation ranges. It evaluates historical source attribution, date sensitivity, overclaiming, and false-positive avoidance. It does not claim present-day feed status; no OTX API call or credentialed source was used.
 - On October 30, 2026, the Anjoman dashboard reported: 18 rows sent, 18 stored, 0 already existed, 0 refused, and 18 eligible for `THREAT_INTELLIGENCE_INDICATOR`; it displayed wallet `0xA560...B436` and time 9:34:18 PM. Its message says stored rows are checked and frozen at the next epoch rollover. This confirms submission, storage, and eligibility only.
+- On October 31, the public Telegraph GET endpoints returned all 18 wallet-attributed rows as `eligible`, each with provenance class `unverified`, and pool status of 141 eligible rows across 6 eligible contributors (minimum 5). Snapshot and active snapshot versions matched; activation epoch was 1707 and the snapshot was published at `2026-10-30T20:37:22Z`; current epoch was 1763. The public history endpoint exposes row/case identities and state, not row content or use events.
+- The public documentation says no public endpoint exposes the per-row evaluator-use record. The active snapshot supports that the pool is in use by the current epoch, but does not prove that any of these 18 specific pairs were selected or scored. A public Sepolia token-transfer check found one incoming MACHINA transfer before the submission and no verified post-submission transfer; the earlier transfer is not attributed to this contribution. Internal or pending reward entitlement cannot be ruled out. An authenticated Anjoman dashboard review has not been performed.
+- Telegraph support guidance received October 31, 2026 recommends contributing high-quality, independently sourced material across multiple Intents where capacity allows, prioritizing quality, reproducibility, and coverage. Support noted that on mainnet material admitted and actually used may earn evaluator-material rewards over time under protocol rules and allocation. This is conditional guidance, not a guarantee of use, eligibility for a particular allocation, or income.
 - The registration preflight and main-push GitHub workflows failed on this merge because existing checks expect old Intent names/count and the Integrate validator endpoint returns HTTP 404. Local typecheck, build, and unit tests passed. These failures are repository/platform compatibility blockers, not successful validation.
 
 ### Current verified tasks
@@ -24,21 +31,47 @@
 - [x] Create 18 private preference pairs and a case-level evidence register; keep both ignored by Git.
 - [x] Add a local validator, synthetic tests, public source inventory, and Anjoman workflow documentation.
 - [x] Owner submitted the 18-row preference-pair pilot; dashboard confirmed all 18 stored and eligible, with no duplicates or refusals.
-- [ ] Observe the next epoch rollover and record evidence that Anjoman froze/checked the stored rows.
-- [ ] Check for a dashboard or evaluator record showing actual use of any case; eligibility alone is not use.
-- [ ] Record reward evidence only if Anjoman explicitly displays a credited reward.
-- [ ] Choose any next Intent expansion based on what the first pilot's rollover/use results show.
+- [x] Recheck submission history and pool status through the public GET endpoints; all 18 rows remain eligible, and the latest snapshot matches the active snapshot (published October 30, activation epoch 1707).
+- [x] Investigate public per-row use and public reward evidence. No public use-record endpoint was found; no post-submission MACHINA credit was verified. This does not rule out internal or pending entitlement.
+- [ ] Ask the owner to inspect authenticated Anjoman evaluator/account pages if they expose use or reward details; do not connect or sign on the owner's behalf.
+- [ ] Start Multi-Intent Evaluation Material Expansion by reviewing the official Bounties repository, canonical Intent registry, and this miner's supported Intent list. Do not automatically expand the first Intent.
+- [ ] For each evidence-backed candidate, complete the selection framework below before preparing data; owner submits through Anjoman.
+- [ ] Continue tracking each Intent separately through submission, storage, eligibility, snapshot inclusion, actual use, and reward evidence. These are distinct states.
 - [ ] Investigate/align repository's legacy Intent-name and smoke-check assumptions in a separately approved miner-maintenance task; no manifest or route was changed here.
 - Workflow note: `.github/workflows/ci.yml` still runs legacy `npm run verify:telegraph`; `.github/workflows/render-smoke.yml` checks the production count, then runs Telegraph Integrate validation and legacy miner-registry checks. At the last check on SHA `309d9b9`, both workflows were red. A separate, narrowly scoped CI maintenance change should align the expected runtime catalogue and retire or replace obsolete Integrate validation only after the correct miner checks are confirmed. No workflow was changed in this milestone.
 
-## Active workstream: evaluation material first
+## Active workstream: Multi-Intent Evaluation Material Expansion
 
-1. **Confirm Telegraph's evaluation-material contract before producing a large dataset.** Ask the team for the accepted schema/file format, submission location/process, minimum or target cases per Intent, public versus private data rules, licensing requirements, ground-truth review expectations, freshness rules, and how material is selected for an evaluation pool.
-2. **Build a reusable evaluation-material specification.** Each case should use the exact canonical Intent and include a representative input, expected outcome/answer, ground-truth label or structured result where applicable, authoritative evidence/source URLs and retrieval timestamps, judging rubric, and notes on uncertainty/abstention. Include positive, negative, boundary, ambiguous, and adversarial cases where relevant.
-3. **Prioritize quality over volume.** Ground truth must be independently checkable, traceable, current where time-sensitive, legally usable, and sufficiently unambiguous for two reviewers to reach the same judgment. Exclude unsupported, fabricated, unverifiable, or personally sensitive data. Keep private evaluation answers and credentials out of public source control unless Telegraph explicitly requires and authorizes a secure workflow.
-4. **Pilot one Intent before scaling.** THREAT_INTELLIGENCE_INDICATOR is a sensible candidate to discuss because prior diagnostics found an active evaluation pool for it; confirm with Telegraph that it is still eligible and that its material format is representative before selecting it. Do not assume the old pool guarantees scoring.
-5. **Review the material with Telegraph, then expand across the supported canonical Intent set** based on evaluator requirements, reliable ground-truth availability, and practical maintenance cost.
-6. **Only after the evaluation material is accepted and Telegraph confirms the adapter interface and scoring requirements**, plan any adapter implementation as a separate, explicitly approved phase. Adapter work is not authorized by this plan update.
+The first `THREAT_INTELLIGENCE_INDICATOR` pilot is complete. Do not automatically generate another batch for that Intent. Select additional work only when canonical status, miner support, a real evaluation gap, source quality, and preparation feasibility are evidenced.
+
+1. Review the [official Telegraph Protocol Bounties repository](https://github.com/telegraphprotocol/bounties) and the relevant official documentation before selecting an Intent. Recheck each issue's current status, acceptance requirements, eligibility, reward terms, and deadline; a listing is not a commitment or an automatic fit.
+2. Compare potential contributions with the current canonical Intent registry and the miner's actual supported Intent list. Do not invent names, infer canonical status, duplicate an existing capability, or claim an Intent lacks material without evidence from a current pool/status source.
+3. Prioritize candidates for which independent, lawful, reproducible ground truth is realistically obtainable. Assess source reliability, licensing/privacy, freshness needs, evaluation difficulty, likely value, and preparation/maintenance effort. Quality, reproducibility, and coverage take priority over volume.
+4. Prepare small, quality-reviewed preference-pair datasets or truth-source contributions only after verifying the relevant Anjoman path and contract. Do not infer Truth source rules from preference-pair rules. The owner personally handles wallet operations, signing, and submissions.
+5. Validate structure and evidence completeness locally; this does not guarantee Anjoman acceptance or semantic correctness. Keep hidden rows, answers, and evidence mappings in ignored `private-evaluation/` storage and out of public fixtures, logs, documentation, and Git history.
+6. Track each Intent independently: prepared/validated; submitted; stored; eligible; present in a frozen snapshot; actually used by an evaluator; reward credited. Never treat an earlier state as proof of a later one.
+7. Revisit the official bounties repository and current protocol documentation on a recurring basis before choosing candidates. Record the review date and the evidence behind each selection.
+8. Keep WASM scoring adapters deferred. Any future adapter proposal or implementation needs its own evidence and explicit approval; this workstream does not authorize adapters.
+
+### Multi-Intent selection framework
+
+Before choosing a candidate, record these fields in a working review (without publishing private case content):
+
+| Field | Evidence to record |
+| --- | --- |
+| Canonical Intent | Exact current registry name and source URL/date checked |
+| Miner support | Whether the current miner supports it, verified against its current declared/runtime list |
+| Evaluation gap | Current pool counts/state/snapshot evidence; do not infer absence from leaderboard data |
+| Independent sources | Named sources, authority, access method, and corroboration |
+| Ground-truth reproducibility | Steps another reviewer can repeat and expected stable result |
+| Freshness | Update cadence, timestamps, expiry/staleness risks |
+| Licensing and privacy | Allowed use, redistribution limits, personal/sensitive data concerns |
+| Material feasibility | Preference-pair or truth-source fit, ambiguity, evaluator difficulty |
+| Potential value | Coverage or evaluation quality addressed, grounded in issue/registry evidence |
+| Effort | Preparation and ongoing maintenance cost |
+| Bounty | Link, current issue state, acceptance criteria, eligibility, reward terms, deadlines |
+
+No candidate is selected until this review supports it. Do not claim support or pool gaps that have not been checked.
 
 ## Evaluation case quality checklist
 
