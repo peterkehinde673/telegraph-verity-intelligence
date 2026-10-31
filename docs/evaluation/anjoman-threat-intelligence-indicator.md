@@ -1,6 +1,6 @@
 # Anjoman evaluation-material preparation
 
-Anjoman is the Season II evaluation-material destination. Telegraph Integrate remains historical miner-registration/validation context and is not the submission destination for this work. The owner will submit through [Anjoman Evaluate](https://anjoman.ai/dashboard/eval); this repository does not sign or upload material.
+Anjoman is the Season II evaluation-material destination. Telegraph Integrate remains historical miner-registration/validation context and is not the submission destination for this work. The owner submits through [Anjoman Evaluate](https://anjoman.ai/dashboard/eval); this repository does not sign or upload material.
 
 ## Current pilot
 
@@ -8,10 +8,26 @@ Anjoman is the Season II evaluation-material destination. Telegraph Integrate re
 - First contribution format: preference-pair JSONL, one object per line with exactly `prompt`, `chosen`, and `rejected`, following the interface format described by the owner.
 - Truth source is a separate contribution path. Its Anjoman-specific schema is not exposed before sign-in and was not assumed from the preference-pair format.
 - WASM scoring adapters are deferred.
-- Acceptance, pool inclusion, rewards, and scoring are not guaranteed.
+- The dashboard confirmed this submission stored and eligible; the next rollover, actual evaluator use, rewards, and scoring are not yet confirmed.
 - Hidden evaluation pairs, labels, evidence mappings, and review notes stay in ignored local `private-evaluation/`; never commit them to public GitHub.
 
-The unauthenticated public page at `https://anjoman.ai/dashboard/eval` returned HTTP 200 on 2026-10-30 but displayed “Sign in to see” the evaluation UI. Its private limits, preview behavior, Truth source requirements, and any signature flow were therefore not independently verified. The owner-provided UI description supplies the three-field preference-pair format used for this pilot. Do not claim that the local validator predicts Anjoman acceptance.
+## First submission outcome
+
+The owner reports that the dashboard confirmed the first submission on October 30, 2026 at 9:34:18 PM. The submission wallet was displayed as `0xA560...B436`.
+
+- Intent: `THREAT_INTELLIGENCE_INDICATOR`
+- Format: one preference pair per JSONL line, with `prompt`, `chosen`, and `rejected`
+- Rows sent: 18
+- Rows stored: 18
+- Already existed: 0
+- Refused: 0
+- Eligible: 18
+
+The dashboard message was: “Sent. 18 stored, 0 already there, 0 refused. Stored rows are checked and frozen at the next epoch rollover.” The dashboard also listed 18 eligible submissions.
+
+This confirms local preparation/validation, successful submission/storage, and eligibility. It does not confirm that the next rollover occurred, that an evaluator used any case, or that a reward was credited. No miner ranking or score change is claimed.
+
+The unauthenticated public page at `https://anjoman.ai/dashboard/eval` returned HTTP 200 on 2026-10-30 but displayed “Sign in to see” the evaluation UI. Its private limits, preview behavior, Truth source requirements, and any signature flow were therefore not independently verified. The owner-provided UI description supplies the three-field preference-pair format used for this pilot. The successful dashboard result applies to this submission; the local validator alone does not predict platform acceptance.
 
 ## Intent scope and limitations
 

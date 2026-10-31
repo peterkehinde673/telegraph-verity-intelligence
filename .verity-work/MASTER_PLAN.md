@@ -1,19 +1,20 @@
-> **CURRENT DIRECTION — owner update 2026-10-30 (supersedes older Integrate-submission and implementation-first instructions below).** Anjoman is the Season II evaluation-material platform. Telegraph Integrate is not the destination for these contributions. Prepare the first evaluation-material pilot for `THREAT_INTELLIGENCE_INDICATOR`; the owner will review and submit it through Anjoman. Preference-pair JSONL is the first format, using the three fields shown in the owner-provided interface description. Truth source is a separate path whose Anjoman-specific format remains unverified behind sign-in. Keep actual pairs, labels, evidence mappings, and review notes in ignored local storage; never commit them to public GitHub. Do not build/publish WASM scoring adapters now. Dataset acceptance, pool use, reward, or score/rank changes are not guaranteed.
+> **CURRENT DIRECTION — owner update 2026-10-31 (supersedes older Integrate-submission and implementation-first instructions below).** Anjoman is the Season II evaluation-material platform. The first `THREAT_INTELLIGENCE_INDICATOR` preference-pair pilot has been submitted: 18 rows stored and 18 marked eligible by the dashboard on October 30, 2026. The next milestone is to monitor the epoch rollover and verify whether any cases were actually used. Telegraph Integrate is not the evaluation-material destination. Keep actual pairs, labels, evidence mappings, and review notes in ignored local storage; never commit them to public GitHub. Do not build/publish WASM scoring adapters now. Eligibility does not prove evaluator use, rewards, or score/rank changes.
 
 ## Active workstream: Anjoman evaluation material
 
-1. Preserve and inspect the existing miner; do not change manifests, routing, or production behavior as part of dataset preparation.
-2. Use the exact canonical Intent name `THREAT_INTELLIGENCE_INDICATOR`. The owner reports it is present in Anjoman's selector; the live Telegraph registry confirmed that canonical name on 2026-10-30.
-3. Prepare a small, evidence-backed preference-pair pilot. Each upload JSONL record uses exactly `prompt`, `chosen`, and `rejected`, based on the owner-provided interface view. Keep source URLs, dates, evidence rationale, and reviewer status in a separate private evidence register.
-4. Investigate Truth source requirements independently before preparing or submitting one. Do not infer its schema from preference pairs or historical Telegraph Integrate docs.
+1. Preserve and inspect the existing miner; do not change manifests, routing, or production behavior as part of evaluation-material work.
+2. The pilot uses canonical Intent `THREAT_INTELLIGENCE_INDICATOR`; the live Telegraph registry confirmed its canonical name on 2026-10-30.
+3. The first preference-pair upload used records with exactly `prompt`, `chosen`, and `rejected`, matching the Anjoman interface format confirmed by the owner.
+4. Investigate Truth source requirements independently before preparing one. Do not infer its schema from preference pairs or historical Telegraph Integrate docs.
 5. Use the local validator only for structural and evidence-register completeness. It cannot certify facts or guarantee platform acceptance.
-6. The owner performs the Anjoman upload and any signing personally. No wallet access, signing, upload, or submission is authorized here.
+6. The owner performs Anjoman uploads and any signing personally. No wallet access, signing, upload, or submission is performed by this project automation.
 
 ## Verified pilot findings and limitations
 
 - Anjoman's public evaluation page returned HTTP 200 on 2026-10-30, but the unauthenticated page displayed “Sign in to see” the evaluation UI. Current limits, private preview behavior, Truth source schema, and signature steps could not be independently inspected. Use the owner-provided UI description for the preference-pair format and verify remaining details in the UI before final submission.
 - The live canonical registry describes `THREAT_INTELLIGENCE_INDICATOR` as an IP/domain/other-indicator reputation query and distinguishes URL scanning and hash malware verdicts. The repository's local handler remains under legacy name `THREAT_INTELLIGENCE`; it accepts IP/domain/URL/SHA-256 and queries AlienVault OTX. This pilot covers IP and domain cases only and does not repair the routing/manifest mismatch.
 - The 18-case private pilot is limited to dated CISA/NSA/MS-ISAC and FBI/CISA/DC3 reports, plus IETF TEST-NET documentation ranges. It evaluates historical source attribution, date sensitivity, overclaiming, and false-positive avoidance. It does not claim present-day feed status; no OTX API call or credentialed source was used.
+- On October 30, 2026, the Anjoman dashboard reported: 18 rows sent, 18 stored, 0 already existed, 0 refused, and 18 eligible for `THREAT_INTELLIGENCE_INDICATOR`; it displayed wallet `0xA560...B436` and time 9:34:18 PM. Its message says stored rows are checked and frozen at the next epoch rollover. This confirms submission, storage, and eligibility only.
 - The registration preflight and main-push GitHub workflows failed on this merge because existing checks expect old Intent names/count and the Integrate validator endpoint returns HTTP 404. Local typecheck, build, and unit tests passed. These failures are repository/platform compatibility blockers, not successful validation.
 
 ### Current verified tasks
@@ -22,8 +23,13 @@
 - [x] Confirm `THREAT_INTELLIGENCE_INDICATOR` canonical status and retrieve authoritative public evidence for the private pilot.
 - [x] Create 18 private preference pairs and a case-level evidence register; keep both ignored by Git.
 - [x] Add a local validator, synthetic tests, public source inventory, and Anjoman workflow documentation.
-- [ ] Owner review and manual Anjoman submission; no upload or signing was performed.
+- [x] Owner submitted the 18-row preference-pair pilot; dashboard confirmed all 18 stored and eligible, with no duplicates or refusals.
+- [ ] Observe the next epoch rollover and record evidence that Anjoman froze/checked the stored rows.
+- [ ] Check for a dashboard or evaluator record showing actual use of any case; eligibility alone is not use.
+- [ ] Record reward evidence only if Anjoman explicitly displays a credited reward.
+- [ ] Choose any next Intent expansion based on what the first pilot's rollover/use results show.
 - [ ] Investigate/align repository's legacy Intent-name and smoke-check assumptions in a separately approved miner-maintenance task; no manifest or route was changed here.
+- Workflow note: `.github/workflows/ci.yml` still runs legacy `npm run verify:telegraph`; `.github/workflows/render-smoke.yml` checks the production count, then runs Telegraph Integrate validation and legacy miner-registry checks. At the last check on SHA `309d9b9`, both workflows were red. A separate, narrowly scoped CI maintenance change should align the expected runtime catalogue and retire or replace obsolete Integrate validation only after the correct miner checks are confirmed. No workflow was changed in this milestone.
 
 ## Active workstream: evaluation material first
 

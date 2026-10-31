@@ -74,12 +74,12 @@ The active `miner.yaml` advertises the original 29 Telegraph Intents. This featu
 
 ## Season II evaluation material
 
-The current evaluation-material pilot is for `THREAT_INTELLIGENCE_INDICATOR` in Anjoman. See [the Anjoman preparation guide](docs/evaluation/anjoman-threat-intelligence-indicator.md). Private evaluation pairs and evidence labels are stored locally under ignored `private-evaluation/` and must not be committed. The owner performs any Anjoman upload or signing.
+The first Anjoman preference-pair pilot for `THREAT_INTELLIGENCE_INDICATOR` was stored (18/18) and marked eligible (18/18) on October 30, 2026. The next milestone is verifying the next epoch rollover and any actual evaluator use. See [the Anjoman preparation guide](docs/evaluation/anjoman-threat-intelligence-indicator.md). Private evaluation pairs and evidence labels remain local under ignored `private-evaluation/` and must not be committed.
 
 ## Next Steps
 
 1. Run `npm run typecheck`, `npm run build`, and `npm test` for local checks. The Render smoke workflow sends production requests; do not run it unless those effects are explicitly approved.
 2. Configure `GOOGLE_SAFE_BROWSING_API_KEY`, `ABUSEIPDB_API_KEY`, and `OTX_API_KEY` in Render if provider-backed reputation results are required; without these, the handlers abstain with `insufficient_evidence`.
 3. Configure `REGRESSION_ALLOWED_HOSTS` before using REGRESSION_VERIFY; it only executes read-only GET probes. CODE_PATCH_VERIFY uses the public GitHub Checks API; configure `GITHUB_TOKEN` only if higher API rate limits are needed.
-4. For the current evaluation-material pilot, use [Anjoman Evaluate](https://anjoman.ai/dashboard/eval). The owner performs the upload and any signing. Keep hidden evaluation material and evidence records out of public GitHub.
-5. Expand plagiarism checking only after adding a reliable, permissioned comparison corpus and measuring false positives/negatives.
+4. Monitor the submitted Anjoman pilot after the next epoch rollover and look for evidence of actual evaluator use. Eligibility alone does not confirm use or rewards.
+5. Choose any next evaluation-material Intent based on the first pilot's rollover/use results. Expand plagiarism checking only after adding a reliable, permissioned comparison corpus and measuring false positives/negatives.
